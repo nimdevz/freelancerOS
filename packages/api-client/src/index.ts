@@ -99,6 +99,21 @@ export class FreelancerOsClient {
   // Auth & Workspace
   auth = {
     getMe: () => this.request<{ user: User; organization: Organization }>('/auth/me'),
+    login: (data: { email: string; password?: string }) =>
+      this.request<{ token: string; user: User; organization: Organization }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    signup: (data: { email: string; password?: string; fullName?: string; studioName?: string; freelancerType?: string }) =>
+      this.request<{ token: string; user: User; organization: Organization }>('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    google: (data: { credential?: string; email?: string; name?: string; picture?: string }) =>
+      this.request<{ token: string; user: User; organization: Organization }>('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   };
 
   organizations = {

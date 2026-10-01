@@ -3,7 +3,9 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
+import { api } from '@/lib/api';
 import {
   LayoutDashboard,
   Users,
@@ -27,6 +29,7 @@ import {
   Moon,
   Sun,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 
 const NAVIGATION_GROUPS = [
@@ -79,12 +82,28 @@ const NAVIGATION_GROUPS = [
 
 export function MobileNavDrawer() {
   const pathname = usePathname();
+  const router = useRouter();
   const {
     isMobileDrawerOpen,
     setMobileDrawerOpen,
     isDarkMode,
     toggleDarkMode,
+    user,
+    logout,
   } = useAppStore();
+
+  const handleLogout = () => {
+    api.auth.logout();
+    logout();
+    setMobileDrawerOpen(false);
+    router.push('/login');
+  };
+
+  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Nimish Prabhu';
+  const roleName = user?.email || 'Studio Lead';
+  const initials = user
+    ? `${(user.firstName || 'C')[0]}${(user.lastName || 'P')[0]}`.toUpperCase()
+    : 'NP';
 
   // Close on ESC
   useEffect(() => {
@@ -201,25 +220,38 @@ export function MobileNavDrawer() {
         </div>
 
         {/* Footer with Theme toggle & Profile */}
-        <div className="p-3 border-t border-border bg-card/80 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-medium text-foreground">
-              NP
+        <div className="p-3 border-t border-border bg-card/80 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-medium text-foreground shrink-0 overflow-hidden">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-foreground leading-tight">
-                Nimish Prabhu
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-medium text-foreground leading-tight truncate">
+                {displayName}
               </span>
-              <span className="text-[10px] text-muted-foreground">Studio Lead</span>
+              <span className="text-[10px] text-muted-foreground truncate">{roleName}</span>
             </div>
           </div>
-          <button
-            onClick={toggleDarkMode}
-            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
-            title={isDarkMode ? 'Light mode' : 'Dark mode'}
-          >
-            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={toggleDarkMode}
+              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+              title={isDarkMode ? 'Light mode' : 'Dark mode'}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-muted rounded transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

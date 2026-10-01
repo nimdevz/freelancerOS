@@ -67,6 +67,22 @@ async function tryWithFallback<T>(apiFn: () => Promise<T>, fallbackFn: () => T |
 export const api = {
   auth: {
     getMe: () => tryWithFallback(() => rawClient.auth.getMe(), () => mockStorage.getMe()),
+    login: (data: { email: string; password?: string }) =>
+      tryWithFallback(
+        () => rawClient.auth.login(data),
+        () => mockStorage.login(data.email, data.password)
+      ),
+    signup: (data: { email: string; password?: string; fullName?: string; studioName?: string; freelancerType?: string }) =>
+      tryWithFallback(
+        () => rawClient.auth.signup(data),
+        () => mockStorage.signup(data)
+      ),
+    google: (data: { credential?: string; email?: string; name?: string; picture?: string }) =>
+      tryWithFallback(
+        () => rawClient.auth.google(data),
+        () => mockStorage.loginWithGoogle(data)
+      ),
+    logout: () => mockStorage.logout(),
   },
 
   organizations: {

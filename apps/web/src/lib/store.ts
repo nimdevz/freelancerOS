@@ -1,9 +1,14 @@
 import { create } from 'zustand';
-import { Organization } from '@freelanceros/types';
+import { Organization, User } from '@freelanceros/types';
 
 export type QuickCreateType = 'client' | 'lead' | 'project' | 'proposal' | 'invoice' | 'expense' | null;
 
 interface AppState {
+  // User & Auth
+  user: User | null;
+  setUser: (user: User | null) => void;
+  logout: () => void;
+
   // Command palette
   isCommandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
@@ -38,9 +43,41 @@ interface AppState {
   setOrganization: (org: Organization) => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  isCommandPaletteOpen: false,
-  setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
+export const useAppStore = create<AppState>((set, get) => {
+  let initialUser: User | null = null;
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('freelanceros_current_user');
+      if (stored) initialUser = JSON.parse(stored);
+    } catch {}
+  }
+
+  return {
+    user: initialUser,
+    setUser: (user) => {
+      if (typeof window !== 'undefined') {
+        try {
+          if (user) {
+            localStorage.setItem('freelanceros_current_user', JSON.stringify(user));
+          } else {
+            localStorage.removeItem('freelanceros_current_user');
+          }
+        } catch {}
+      }
+      set({ user });
+    },
+    logout: () => {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('freelanceros_current_user');
+          localStorage.removeItem('freelanceros_auth_token');
+        } catch {}
+      }
+      set({ user: null });
+    },
+
+    isCommandPaletteOpen: false,
+    setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
 
   quickCreateType: null,
   openQuickCreate: (type) => set({ quickCreateType: type }),
@@ -94,4 +131,5 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   organization: null,
   setOrganization: (org) => set({ organization: org }),
-}));
+  };
+});

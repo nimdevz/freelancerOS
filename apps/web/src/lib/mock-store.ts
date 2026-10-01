@@ -789,6 +789,135 @@ class MockStorage {
     return { user: this.user, organization: this.org };
   }
 
+  login(email: string, _password?: string) {
+    const cleanEmail = (email || 'nimish@freelanceros.com').toLowerCase().trim();
+    if (cleanEmail !== this.user.email) {
+      const parts = cleanEmail.split('@')[0].split(/[._-]/);
+      const firstName = parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : 'Creator';
+      const lastName = parts[1] ? parts[1].charAt(0).toUpperCase() + parts[1].slice(1) : 'Pro';
+      this.user = {
+        ...this.user,
+        id: makeId('usr'),
+        email: cleanEmail,
+        firstName,
+        lastName,
+        updatedAt: new Date().toISOString(),
+      };
+      this.org = {
+        ...this.org,
+        name: `${firstName}'s Studio`,
+        updatedAt: new Date().toISOString(),
+      };
+      this.saveToStorage();
+    }
+    const token = `bearer-token-${this.user.id}`;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('freelanceros_auth_token', token);
+        localStorage.setItem('freelanceros_current_user', JSON.stringify(this.user));
+      } catch {}
+    }
+    return { token, user: this.user, organization: this.org };
+  }
+
+  signup(data: { email: string; password?: string; fullName?: string; studioName?: string; freelancerType?: string }) {
+    const cleanEmail = (data.email || 'creator@freelanceros.io').toLowerCase().trim();
+    const nameParts = (data.fullName || 'Creator Pro').trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Creator';
+    const lastName = nameParts.slice(1).join(' ') || 'Studio';
+
+    this.user = {
+      id: makeId('usr'),
+      email: cleanEmail,
+      firstName,
+      lastName,
+      avatarUrl: null,
+      role: 'owner',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const studioName = data.studioName || `${firstName}'s Studio`;
+    this.org = {
+      ...this.org,
+      id: makeId('org'),
+      name: studioName,
+      slug: studioName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(Math.random() * 899 + 100),
+      freelancerType: data.freelancerType || 'creative',
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveToStorage();
+    const token = `bearer-token-${this.user.id}`;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('freelanceros_auth_token', token);
+        localStorage.setItem('freelanceros_current_user', JSON.stringify(this.user));
+      } catch {}
+    }
+    return { token, user: this.user, organization: this.org };
+  }
+
+  loginWithGoogle(data: { credential?: string; email?: string; name?: string; picture?: string }) {
+    let email = data.email || 'nimish.prabhu@gmail.com';
+    let name = data.name || 'Nimish Prabhu';
+    let picture = data.picture || null;
+
+    if (data.credential) {
+      try {
+        const parts = data.credential.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))));
+          if (payload.email) email = payload.email;
+          if (payload.name) name = payload.name;
+          if (payload.picture) picture = payload.picture;
+        }
+      } catch {
+        // fallback to provided values
+      }
+    }
+
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Google';
+    const lastName = nameParts.slice(1).join(' ') || 'Creator';
+
+    this.user = {
+      ...this.user,
+      id: makeId('usr-g'),
+      email: email.toLowerCase().trim(),
+      firstName,
+      lastName,
+      avatarUrl: picture,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.org = {
+      ...this.org,
+      name: `${firstName}'s Creative Studio`,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveToStorage();
+    const token = `google-token-${this.user.id}`;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('freelanceros_auth_token', token);
+        localStorage.setItem('freelanceros_current_user', JSON.stringify(this.user));
+      } catch {}
+    }
+    return { token, user: this.user, organization: this.org };
+  }
+
+  logout() {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('freelanceros_auth_token');
+        localStorage.removeItem('freelanceros_current_user');
+      } catch {}
+    }
+    return { message: 'Logged out successfully' };
+  }
+
   getCurrentOrg() {
     return this.org;
   }

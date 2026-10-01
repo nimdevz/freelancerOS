@@ -24,7 +24,11 @@ import {
   ShieldCheck,
   ChevronRight,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/lib/store';
+import { api } from '@/lib/api';
 
 const NAVIGATION_GROUPS = [
   {
@@ -76,6 +80,20 @@ const NAVIGATION_GROUPS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAppStore();
+
+  const handleLogout = () => {
+    api.auth.logout();
+    logout();
+    router.push('/login');
+  };
+
+  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Nimish Prabhu';
+  const roleName = user?.email || 'Video & Creative Lead';
+  const initials = user
+    ? `${(user.firstName || 'C')[0]}${(user.lastName || 'P')[0]}`.toUpperCase()
+    : 'NP';
 
   return (
     <aside className="hidden md:flex w-64 border-r border-border bg-card/60 backdrop-blur-sm flex-col h-screen select-none shrink-0 sticky top-0">
@@ -151,24 +169,37 @@ export function Sidebar() {
       {/* Bottom User / Status */}
       <div className="p-3 border-t border-border bg-card">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-medium text-foreground">
-              NP
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-semibold text-foreground shrink-0 overflow-hidden">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-foreground leading-tight">
-                Nimish Prabhu
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-medium text-foreground leading-tight truncate">
+                {displayName}
               </span>
-              <span className="text-[10px] text-muted-foreground">Video & Creative Lead</span>
+              <span className="text-[10px] text-muted-foreground truncate">{roleName}</span>
             </div>
           </div>
-          <Link
-            href="/settings"
-            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-1 shrink-0">
+            <Link
+              href="/settings"
+              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+              title="Settings"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-muted rounded transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </aside>
