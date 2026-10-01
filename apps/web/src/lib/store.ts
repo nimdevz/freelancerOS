@@ -58,6 +58,10 @@ interface AppState {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 
+  // Demo Workspace
+  isDemoMode: boolean;
+  setDemoMode: (isDemo: boolean) => void;
+
   // Current Organization
   organization: Organization | null;
   setOrganization: (org: Organization) => void;
@@ -66,11 +70,17 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => {
   let initialUser: User | null = null;
   let initialSidebarCollapsed = false;
+  let initialDemoMode = true;
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem('freelanceros_current_user');
       if (stored) initialUser = JSON.parse(stored);
       initialSidebarCollapsed = localStorage.getItem('freelanceros_sidebar_collapsed') === 'true';
+      const mockDb = localStorage.getItem('freelanceros_mock_db_v2');
+      if (mockDb) {
+        const parsed = JSON.parse(mockDb);
+        if (parsed.isDemoMode !== undefined) initialDemoMode = parsed.isDemoMode;
+      }
     } catch {}
   }
 
@@ -172,6 +182,9 @@ export const useAppStore = create<AppState>((set, get) => {
     }
     set({ isDarkMode: next });
   },
+
+  isDemoMode: initialDemoMode,
+  setDemoMode: (isDemo) => set({ isDemoMode: isDemo }),
 
   organization: null,
   setOrganization: (org) => set({ organization: org }),

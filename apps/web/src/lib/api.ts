@@ -236,5 +236,8 @@ export const api = {
 
   seed: {
     resetDemo: () => tryWithFallback(() => rawClient.seed.resetDemo(), () => mockStorage.resetDemo()),
+    enterDemo: () => mockStorage.enterDemo(),
+    exitDemo: () => mockStorage.exitDemo(),
+    getDemoStatus: () => mockStorage.getDemoStatus(),
   },
 };

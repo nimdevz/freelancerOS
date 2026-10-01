@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatRelativeTime } from '@freelanceros/ui';
 import { Users, Plus, Search, Mail, Phone, ArrowUpRight } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function ClientsPage() {
   const { openQuickCreate } = useAppStore();
@@ -80,19 +81,18 @@ export default function ClientsPage() {
             <tbody className="divide-y divide-border">
               {filteredClients.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
-                    <Users className="w-6 h-6 mx-auto mb-2 opacity-40" />
-                    <p className="font-medium text-xs text-foreground">No clients found</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Your first client starts everything. Add one to start tracking projects and invoices.
-                    </p>
-                    <button
-                      onClick={() => openQuickCreate('client')}
-                      className="mt-3 px-3 py-1.5 text-xs bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md inline-flex items-center gap-1.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add client</span>
-                    </button>
+                  <td colSpan={7}>
+                    <EmptyState
+                      compact
+                      icon={Users}
+                      title={searchTerm ? 'No clients matching search' : 'No clients yet'}
+                      description="Clients are the foundation of your business. Every project, contract, and invoice connects directly to a client."
+                      primaryAction={{
+                        label: 'Add First Client',
+                        onClick: () => openQuickCreate('client'),
+                        icon: Plus,
+                      }}
+                    />
                   </td>
                 </tr>
               ) : (

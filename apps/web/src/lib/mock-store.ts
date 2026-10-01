@@ -772,6 +772,7 @@ class MockStorage {
     },
   ];
   private activeTimer: TimeEntry | null = null;
+  private isDemoMode: boolean = true;
 
   constructor() {
     this.loadFromStorage();
@@ -783,6 +784,7 @@ class MockStorage {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const data = JSON.parse(saved);
+        if (data.isDemoMode !== undefined) this.isDemoMode = data.isDemoMode;
         if (data.org) this.org = data.org;
         if (data.clients) this.clients = data.clients;
         if (data.projects) this.projects = data.projects;
@@ -805,6 +807,7 @@ class MockStorage {
     if (typeof window === 'undefined') return;
     try {
       const data = {
+        isDemoMode: this.isDemoMode,
         org: this.org,
         clients: this.clients,
         projects: this.projects,
@@ -824,19 +827,51 @@ class MockStorage {
     }
   }
 
-  public resetDemo() {
+  public getDemoStatus() {
+    return {
+      isDemo: this.isDemoMode,
+      workspaceName: this.org.name,
+      clientCount: this.clients.length,
+      projectCount: this.projects.length,
+    };
+  }
+
+  public exitDemo() {
+    this.isDemoMode = false;
+    this.clients = [];
+    this.projects = [];
+    this.leads = [];
+    this.invoices = [];
+    this.tasks = [];
+    this.deliverables = [];
+    this.approvals = [];
+    this.retainers = [];
+    this.timeEntries = [];
+    this.expenses = [];
+    this.payments = [];
+    this.activeTimer = null;
+    this.org = {
+      ...this.org,
+      name: `${this.user.firstName || 'My'} Studio`,
+    };
+    this.saveToStorage();
+    return { message: 'Exited demo mode. Workspace cleared.', isDemo: false };
+  }
+
+  public enterDemo() {
+    this.isDemoMode = true;
     this.user = INITIAL_USER;
     this.org = INITIAL_ORG;
-    this.clients = INITIAL_CLIENTS;
-    this.projects = INITIAL_PROJECTS;
-    this.leads = INITIAL_LEADS;
-    this.invoices = INITIAL_INVOICES;
-    this.tasks = INITIAL_TASKS;
-    this.deliverables = INITIAL_DELIVERABLES;
-    this.approvals = INITIAL_APPROVALS;
-    this.retainers = INITIAL_RETAINERS;
-    this.timeEntries = INITIAL_TIME_ENTRIES;
-    this.expenses = INITIAL_EXPENSES;
+    this.clients = JSON.parse(JSON.stringify(INITIAL_CLIENTS));
+    this.projects = JSON.parse(JSON.stringify(INITIAL_PROJECTS));
+    this.leads = JSON.parse(JSON.stringify(INITIAL_LEADS));
+    this.invoices = JSON.parse(JSON.stringify(INITIAL_INVOICES));
+    this.tasks = JSON.parse(JSON.stringify(INITIAL_TASKS));
+    this.deliverables = JSON.parse(JSON.stringify(INITIAL_DELIVERABLES));
+    this.approvals = JSON.parse(JSON.stringify(INITIAL_APPROVALS));
+    this.retainers = JSON.parse(JSON.stringify(INITIAL_RETAINERS));
+    this.timeEntries = JSON.parse(JSON.stringify(INITIAL_TIME_ENTRIES));
+    this.expenses = JSON.parse(JSON.stringify(INITIAL_EXPENSES));
     this.payments = [
       {
         id: 'pay-1',
@@ -850,16 +885,26 @@ class MockStorage {
         reference: 'HDFC-NEFT-99182',
         createdAt: '2026-09-20T00:00:00Z',
       },
+      {
+        id: 'pay-2',
+        organizationId: INITIAL_ORG.id,
+        invoiceId: 'inv-2',
+        clientId: '44444444-4444-4444-4444-444444444444',
+        amount: 50000,
+        currency: 'INR',
+        paymentMethod: 'upi',
+        paymentDate: '2026-09-28',
+        reference: 'UPI-NSTAR-3321',
+        createdAt: '2026-09-28T00:00:00Z',
+      },
     ];
     this.activeTimer = null;
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch {
-        // ignore
-      }
-    }
-    return { message: 'Workspace demo data restored.', workspace: this.org.name };
+    this.saveToStorage();
+    return { message: 'Realistic demo workspace loaded.', isDemo: true, workspace: this.org.name };
+  }
+
+  public resetDemo() {
+    return this.enterDemo();
   }
 
   // Auth & Org
@@ -924,6 +969,21 @@ class MockStorage {
       freelancerType: data.freelancerType || 'creative',
       updatedAt: new Date().toISOString(),
     };
+
+    // Clean workspace isolation: fresh user starts with 0 records
+    this.isDemoMode = false;
+    this.clients = [];
+    this.projects = [];
+    this.leads = [];
+    this.invoices = [];
+    this.tasks = [];
+    this.deliverables = [];
+    this.approvals = [];
+    this.retainers = [];
+    this.timeEntries = [];
+    this.expenses = [];
+    this.payments = [];
+    this.activeTimer = null;
 
     this.saveToStorage();
     const token = `bearer-token-${this.user.id}`;
@@ -2161,15 +2221,29 @@ class MockStorage {
     return this.getDashboardSummary().recentActivity;
   }
 
-  // Global search
+  // Global search across all 7 entities
   search(q: string) {
     const query = q.toLowerCase();
+    const matchedProposals = this.listProposals().filter(
+      (p) =>
+        p.title.toLowerCase().includes(query) ||
+        p.proposalNumber?.toLowerCase().includes(query) ||
+        p.clientName?.toLowerCase().includes(query)
+    );
+    const matchedDeliverables = this.deliverables.filter(
+      (d) =>
+        d.title.toLowerCase().includes(query) ||
+        (d.description && d.description.toLowerCase().includes(query)) ||
+        (d.projectName && d.projectName.toLowerCase().includes(query))
+    );
     return {
       clients: this.clients.filter((c) => c.name.toLowerCase().includes(query) || c.company?.toLowerCase().includes(query)),
       projects: this.projects.filter((p) => p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query)),
       invoices: this.invoices.filter((i) => i.invoiceNumber.toLowerCase().includes(query) || i.title.toLowerCase().includes(query)),
       tasks: this.tasks.filter((t) => t.title.toLowerCase().includes(query)),
       leads: this.leads.filter((l) => l.title.toLowerCase().includes(query) || l.clientName.toLowerCase().includes(query)),
+      proposals: matchedProposals,
+      deliverables: matchedDeliverables,
     };
   }
 }

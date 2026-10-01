@@ -81,6 +81,7 @@ export function MobileNavDrawer() {
     toggleDarkMode,
     user,
     logout,
+    isDemoMode,
   } = useAppStore();
 
   const handleLogout = () => {
@@ -142,11 +143,11 @@ export function MobileNavDrawer() {
               F
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold tracking-tight leading-none text-foreground">
-                Nimish Studio
+              <span className="text-sm font-semibold tracking-tight leading-none text-foreground truncate max-w-[150px]">
+                {isDemoMode ? 'Demo Studio' : (user?.firstName ? `${user.firstName}'s Studio` : 'My Studio')}
               </span>
               <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                FreelancerOS Pro
+                {isDemoMode ? 'Demo Workspace' : 'Production'}
               </span>
             </div>
           </Link>

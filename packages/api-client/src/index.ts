@@ -275,6 +275,8 @@ export class FreelancerOsClient {
       invoices: Invoice[];
       tasks: Task[];
       leads: Lead[];
+      proposals?: Proposal[];
+      deliverables?: Deliverable[];
     }>(`/search?q=${encodeURIComponent(q)}`),
   };
 

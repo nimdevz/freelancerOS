@@ -54,6 +54,8 @@ export function Header() {
     tickTimer,
     toggleMobileDrawer,
     user,
+    isDemoMode,
+    setDemoMode,
   } = useAppStore();
 
   const [isResettingDemo, setIsResettingDemo] = useState(false);
@@ -125,15 +127,32 @@ export function Header() {
     }
   };
 
-  const handleResetDemo = async () => {
-    if (confirm('Reset workspace with realistic creative studio demo data (Nike, Acme, Northstar, INR currency)?')) {
+  const handleExitDemo = async () => {
+    if (confirm('Exit Demo Mode? This will clear demo data (Nike, Acme, etc.) and give you a clean production workspace ready for your own clients and projects.')) {
       setIsResettingDemo(true);
       try {
-        await api.seed.resetDemo();
+        await api.seed.exitDemo();
+        setDemoMode(false);
         queryClient.invalidateQueries();
         window.location.reload();
       } catch (err) {
-        alert('Failed to reset demo: ' + err);
+        alert('Failed to exit demo: ' + err);
+      } finally {
+        setIsResettingDemo(false);
+      }
+    }
+  };
+
+  const handleEnterDemo = async () => {
+    if (confirm('Load realistic Demo Workspace (Nike India, Acme Corp, Northstar, INR currency)?')) {
+      setIsResettingDemo(true);
+      try {
+        await api.seed.enterDemo();
+        setDemoMode(true);
+        queryClient.invalidateQueries();
+        window.location.reload();
+      } catch (err) {
+        alert('Failed to load demo: ' + err);
       } finally {
         setIsResettingDemo(false);
       }
@@ -142,7 +161,7 @@ export function Header() {
 
   return (
     <header className="h-14 border-b border-border bg-card/80 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none">
-      {/* Left: Mobile drawer button & Breadcrumbs */}
+      {/* Left: Mobile drawer button & Breadcrumbs & Demo pill */}
       <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
         <button
           onClick={toggleMobileDrawer}
@@ -161,6 +180,14 @@ export function Header() {
             {breadcrumb.title}
           </span>
         </div>
+
+        {/* Demo Mode Badge */}
+        {isDemoMode && (
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-medium text-amber-700 dark:text-amber-400 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span>Demo Workspace</span>
+          </div>
+        )}
       </div>
 
       {/* Right Controls: Search, + New, Stopwatch, Reset Demo, Theme */}
@@ -223,16 +250,28 @@ export function Header() {
           </button>
         )}
 
-        {/* Reset Demo Data trigger */}
-        <button
-          onClick={handleResetDemo}
-          disabled={isResettingDemo}
-          className="hidden md:flex items-center gap-1.5 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors border border-dashed border-border/80"
-          title="Restore realistic demo data"
-        >
-          <RotateCcw className={`w-3 h-3 ${isResettingDemo ? 'animate-spin' : ''}`} />
-          <span>Demo Data</span>
-        </button>
+        {/* Demo Mode Toggle Button */}
+        {isDemoMode ? (
+          <button
+            onClick={handleExitDemo}
+            disabled={isResettingDemo}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors border border-border"
+            title="Exit demo mode and start with your clean, empty workspace"
+          >
+            <RotateCcw className={`w-3 h-3 ${isResettingDemo ? 'animate-spin' : ''}`} />
+            <span>Exit Demo (My Workspace)</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleEnterDemo}
+            disabled={isResettingDemo}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-md transition-colors border border-dashed border-amber-500/40"
+            title="Load realistic sample data to explore FreelancerOS"
+          >
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            <span>Explore Demo</span>
+          </button>
+        )}
 
         {/* Theme mode toggle */}
         <button

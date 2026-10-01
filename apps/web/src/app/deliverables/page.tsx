@@ -20,6 +20,7 @@ import {
   Send,
   FileCheck2,
 } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function DeliverablesPage() {
   const queryClient = useQueryClient();
@@ -207,8 +208,17 @@ export default function DeliverablesPage() {
             {/* Deliverables Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {deliverables.length === 0 ? (
-                <div className="col-span-full p-8 text-center border border-border rounded-lg bg-card text-muted-foreground text-xs">
-                  No deliverables found. Create one to share assets and collect frame-accurate client feedback.
+                <div className="col-span-full">
+                  <EmptyState
+                    icon={PackageCheck}
+                    title="No deliverables created yet"
+                    description="Upload review links, track version iterations (V1, V2, Final), and enforce agreed revision caps."
+                    primaryAction={{
+                      label: 'Create Deliverable',
+                      onClick: () => setIsCreateModalOpen(true),
+                      icon: Plus,
+                    }}
+                  />
                 </div>
               ) : (
                 deliverables.map((d) => {

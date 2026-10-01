@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatDate, getStatusBadgeClass } from '@freelanceros/ui';
 import { FolderKanban, Plus, Search, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function ProjectsPage() {
   const { openQuickCreate } = useAppStore();
@@ -101,12 +102,18 @@ export default function ProjectsPage() {
             <tbody className="divide-y divide-border">
               {filteredProjects.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-muted-foreground">
-                    <FolderKanban className="w-6 h-6 mx-auto mb-2 opacity-40" />
-                    <p className="font-medium text-xs text-foreground">No projects found</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Create a project to start assigning tasks, deliverables, and tracking billable time.
-                    </p>
+                  <td colSpan={8}>
+                    <EmptyState
+                      compact
+                      icon={FolderKanban}
+                      title={searchTerm || filter !== 'all' ? 'No projects matching filter' : 'No projects yet'}
+                      description="Projects keep client deliverables organized, revisions bounded, and billable hours on track."
+                      primaryAction={{
+                        label: 'Create First Project',
+                        onClick: () => openQuickCreate('project'),
+                        icon: Plus,
+                      }}
+                    />
                   </td>
                 </tr>
               ) : (

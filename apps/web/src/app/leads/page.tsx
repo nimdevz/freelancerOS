@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatDate } from '@freelanceros/ui';
 import { Target, Plus, ArrowRight, Calendar, CheckCircle2, ChevronRight } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 const STAGES = [
   { id: 'new', label: 'New' },
@@ -67,10 +68,22 @@ export default function LeadsPage() {
         </div>
 
         {/* Pipeline Board */}
-        <div className="flex md:grid md:grid-cols-7 gap-3 overflow-x-auto pb-4 snap-x snap-mandatory -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
-          {STAGES.map((stage) => {
-            const stageLeads = leads.filter((l) => l.stage === stage.id);
-            const stageValue = stageLeads.reduce((sum, l) => sum + (l.value || 0), 0);
+        {leads.length === 0 ? (
+          <EmptyState
+            icon={Target}
+            title="No prospective leads in pipeline"
+            description="Track prospective opportunities, follow-up dates, deal probability, and convert won leads directly into active projects."
+            primaryAction={{
+              label: 'Capture New Lead',
+              onClick: () => openQuickCreate('lead'),
+              icon: Plus,
+            }}
+          />
+        ) : (
+          <div className="flex md:grid md:grid-cols-7 gap-3 overflow-x-auto pb-4 snap-x snap-mandatory -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+            {STAGES.map((stage) => {
+              const stageLeads = leads.filter((l) => l.stage === stage.id);
+              const stageValue = stageLeads.reduce((sum, l) => sum + (l.value || 0), 0);
 
             return (
               <div
@@ -170,6 +183,7 @@ export default function LeadsPage() {
             );
           })}
         </div>
+        )}
       </div>
     </AppShell>
   );

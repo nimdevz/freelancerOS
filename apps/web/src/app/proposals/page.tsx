@@ -21,6 +21,7 @@ import {
   Calculator,
   Zap,
 } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function ProposalsPage() {
   const queryClient = useQueryClient();
@@ -196,8 +197,18 @@ export default function ProposalsPage() {
                 <tbody className="divide-y divide-border">
                   {proposals.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                        No proposals created yet. Pitch your creative services with a high-conversion proposal.
+                      <td colSpan={6}>
+                        <EmptyState
+                          compact
+                          icon={FileText}
+                          title="No proposals created yet"
+                          description="Pitch your creative services with clear deliverables, milestone payment breakdowns, and validity deadlines."
+                          primaryAction={{
+                            label: 'Draft Proposal',
+                            onClick: () => setIsCreateModalOpen(true),
+                            icon: Plus,
+                          }}
+                        />
                       </td>
                     </tr>
                   ) : (
@@ -289,8 +300,18 @@ export default function ProposalsPage() {
                 <tbody className="divide-y divide-border">
                   {quotes.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                        No quotes or quick estimates generated yet.
+                      <td colSpan={6}>
+                        <EmptyState
+                          compact
+                          icon={Calculator}
+                          title="No quotes generated yet"
+                          description="Generate rapid estimates and formal quotes with instant 1-click conversion into active client projects."
+                          primaryAction={{
+                            label: 'Draft Proposal / Quote',
+                            onClick: () => setIsCreateModalOpen(true),
+                            icon: Plus,
+                          }}
+                        />
                       </td>
                     </tr>
                   ) : (

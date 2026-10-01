@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
-import { clients, projects, invoices, tasks, leads } from '../../database/schema';
-import { eq, ilike } from 'drizzle-orm';
+import { clients, projects, invoices, tasks, leads, proposals, deliverables } from '../../database/schema';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class SearchService {
@@ -9,7 +9,7 @@ export class SearchService {
 
   async search(organizationId: string, query: string) {
     if (!query || query.trim().length === 0) {
-      return { clients: [], projects: [], invoices: [], tasks: [], leads: [] };
+      return { clients: [], projects: [], invoices: [], tasks: [], leads: [], proposals: [], deliverables: [] };
     }
 
     const q = query.toLowerCase();
@@ -52,12 +52,32 @@ export class SearchService {
       (l) => l.title.toLowerCase().includes(q) || l.clientName.toLowerCase().includes(q),
     ).slice(0, 5);
 
+    const allProposals = await this.dbService.db.query.proposals.findMany({
+      where: eq(proposals.organizationId, organizationId),
+    });
+    const matchedProposals = allProposals.filter(
+      (pr) =>
+        pr.title.toLowerCase().includes(q) ||
+        (pr.proposalNumber && pr.proposalNumber.toLowerCase().includes(q)),
+    ).slice(0, 5);
+
+    const allDeliverables = await this.dbService.db.query.deliverables.findMany({
+      where: eq(deliverables.organizationId, organizationId),
+    });
+    const matchedDeliverables = allDeliverables.filter(
+      (d) =>
+        d.title.toLowerCase().includes(q) ||
+        (d.description && d.description.toLowerCase().includes(q)),
+    ).slice(0, 5);
+
     return {
       clients: matchedClients,
       projects: matchedProjects,
       invoices: matchedInvoices,
       tasks: matchedTasks,
       leads: matchedLeads,
+      proposals: matchedProposals,
+      deliverables: matchedDeliverables,
     };
   }
 }

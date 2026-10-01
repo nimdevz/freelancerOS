@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Trash2,
 } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
@@ -193,8 +194,18 @@ export default function ExpensesPage() {
               <tbody className="divide-y divide-border">
                 {filteredExpenses.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                      No expenses recorded matching category.
+                    <td colSpan={7}>
+                      <EmptyState
+                        compact
+                        icon={Receipt}
+                        title={categoryFilter !== 'all' ? 'No expenses in this category' : 'No expenses recorded yet'}
+                        description="Track production costs, software subscriptions, equipment rentals, and reimbursable client disbursements."
+                        primaryAction={{
+                          label: 'Record Expense',
+                          onClick: () => setIsCreateModalOpen(true),
+                          icon: Plus,
+                        }}
+                      />
                     </td>
                   </tr>
                 ) : (

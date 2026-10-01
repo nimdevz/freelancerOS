@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatDate, getStatusBadgeClass } from '@freelanceros/ui';
 import { CheckSquare, Plus, CheckCircle2, LayoutGrid, List } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 const STATUS_COLUMNS = [
   { id: 'todo', label: 'Todo' },
@@ -106,6 +107,7 @@ export default function TasksPage() {
             <input
               type="text"
               placeholder="Add a new task and press Enter..."
+              id="new-task-input"
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               className="flex-1 px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
@@ -135,8 +137,23 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Kanban Board View */}
-        {viewMode === 'kanban' && (
+        {tasks.length === 0 ? (
+          <EmptyState
+            icon={CheckSquare}
+            title={selectedProjectId ? 'No tasks in this project' : 'No tasks yet'}
+            description="Break projects down into actionable steps. Track what is in progress, what is waiting on the client, and what is ready for review."
+            primaryAction={{
+              label: 'Add Task Above',
+              onClick: () => {
+                const el = document.getElementById('new-task-input');
+                el?.focus();
+              },
+            }}
+          />
+        ) : (
+          <>
+            {/* Kanban Board View */}
+            {viewMode === 'kanban' && (
           <div className="flex md:grid md:grid-cols-5 gap-3 overflow-x-auto pb-4 snap-x snap-mandatory -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
             {STATUS_COLUMNS.map((col) => {
               const colTasks = tasks.filter((t) => t.status === col.id);
@@ -274,6 +291,8 @@ export default function TasksPage() {
             </table>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
     </AppShell>

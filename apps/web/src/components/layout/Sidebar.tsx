@@ -60,7 +60,7 @@ const NAVIGATION_GROUPS = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, isSidebarCollapsed, toggleSidebarCollapse } = useAppStore();
+  const { user, logout, isSidebarCollapsed, toggleSidebarCollapse, isDemoMode } = useAppStore();
 
   const handleLogout = () => {
     api.auth.logout();
@@ -95,8 +95,12 @@ export function Sidebar() {
               <span className="text-xs font-semibold tracking-tight leading-none text-foreground truncate">
                 FreelancerOS
               </span>
-              <span className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate">
-                Creative Studio
+              <span className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate flex items-center gap-1">
+                {isDemoMode ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">Demo Studio</span>
+                ) : (
+                  <span>Production</span>
+                )}
               </span>
             </div>
           )}

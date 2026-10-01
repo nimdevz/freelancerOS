@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
@@ -26,6 +26,7 @@ import {
   Activity,
   History,
   ShieldAlert,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -160,6 +161,49 @@ export default function ProjectDetailPage() {
       }
     }
   };
+
+  const healthFactors = useMemo(() => {
+    if (!project) return [];
+    const list: Array<{ type: 'ok' | 'warning' | 'alert'; text: string }> = [];
+    const overdueTasks = tasks.filter((t) => t.status !== 'done' && t.dueDate && new Date(t.dueDate) < new Date());
+    if (overdueTasks.length > 0) {
+      list.push({ type: 'alert', text: `${overdueTasks.length} task overdue: "${overdueTasks[0].title}"` });
+    }
+    const pendingReviewDeliverables = deliverables.filter((d) => (d.status as string) === 'client_review' || d.status === 'internal_review');
+    if (pendingReviewDeliverables.length > 0) {
+      list.push({ type: 'warning', text: `${pendingReviewDeliverables.length} deliverable awaiting client review and approval` });
+    }
+    if (project.completedRevisions >= project.includedRevisions) {
+      list.push({ type: 'alert', text: `Contractual revision cap reached (${project.completedRevisions}/${project.includedRevisions} used). Extra revisions require addendum.` });
+    } else {
+      list.push({ type: 'ok', text: `${project.includedRevisions - project.completedRevisions} revisions remaining within included scope` });
+    }
+    const overdueInvoices = projectInvoices.filter((i) => i.status === 'overdue');
+    if (overdueInvoices.length > 0) {
+      list.push({ type: 'alert', text: `${overdueInvoices.length} project invoice overdue for payment` });
+    }
+    if (project.deadline) {
+      const daysLeft = Math.ceil((new Date(project.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      if (daysLeft < 0) {
+        list.push({ type: 'alert', text: `Delivery deadline passed (${Math.abs(daysLeft)} days ago)` });
+      } else if (daysLeft <= 3) {
+        list.push({ type: 'warning', text: `Final delivery deadline in ${daysLeft} day${daysLeft > 1 ? 's' : ''}` });
+      } else {
+        list.push({ type: 'ok', text: `Timeline on schedule (${daysLeft} days remaining)` });
+      }
+    }
+    return list;
+  }, [project, tasks, deliverables, projectInvoices]);
+
+  const todayTasks = useMemo(() => {
+    return tasks.filter(
+      (t) =>
+        t.status !== 'done' &&
+        (t.priority === 'high' ||
+          t.priority === 'urgent' ||
+          (t.dueDate && new Date(t.dueDate) <= new Date(Date.now() + 86400000)))
+    );
+  }, [tasks]);
 
   const filteredTasks = tasks.filter((t) => {
     if (taskFilter === 'all') return true;
@@ -451,6 +495,85 @@ export default function ProjectDetailPage() {
                 {project.completedRevisions >= project.includedRevisions && (
                   <div className="pt-2 text-[11px] text-rose-600 dark:text-rose-400 font-medium border-t border-border mt-2">
                     ⚠️ Included revisions exhausted. Scope change or extra billing applies.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Health Analysis & Today's Action Checklist */}
+            <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* Health Diagnostics Breakdown */}
+              <div className="p-5 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border">
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-foreground" />
+                    <span>Health Diagnostics</span>
+                  </h3>
+                  <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(project.health)}`}>
+                    {project.health === 'healthy' ? 'Healthy' : project.health === 'at_risk' ? 'At Risk' : 'Blocked'}
+                  </span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  {healthFactors.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic py-1">All project health indicators normal.</p>
+                  ) : (
+                    healthFactors.map((factor, idx) => (
+                      <div key={idx} className="flex items-start gap-2.5">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+                            factor.type === 'alert'
+                              ? 'bg-rose-500 ring-2 ring-rose-500/20'
+                              : factor.type === 'warning'
+                                ? 'bg-amber-500 ring-2 ring-amber-500/20'
+                                : 'bg-emerald-500 ring-2 ring-emerald-500/20'
+                          }`}
+                        />
+                        <span className={factor.type === 'alert' ? 'text-rose-600 dark:text-rose-400 font-medium' : factor.type === 'warning' ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'}>
+                          {factor.text}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Today's Action Checklist */}
+              <div className="p-5 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border">
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <CheckSquare className="w-4 h-4 text-foreground" />
+                    <span>Today&apos;s Focus Checklist</span>
+                  </h3>
+                  <span className="text-[11px] font-mono text-muted-foreground">
+                    {todayTasks.length} active
+                  </span>
+                </div>
+
+                {todayTasks.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-3">
+                    No urgent tasks due today. All high-priority milestones are up to date.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {todayTasks.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border text-xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <button
+                            onClick={() => toggleTaskMutation.mutate({ taskId: t.id, currentStatus: t.status })}
+                            className="w-4 h-4 rounded border border-border flex items-center justify-center hover:border-foreground transition-colors shrink-0"
+                          >
+                            {t.status === 'done' && <CheckCircle2 className="w-3.5 h-3.5 text-foreground" />}
+                          </button>
+                          <span className="truncate font-medium text-foreground">{t.title}</span>
+                        </div>
+                        <span className={`px-1.5 py-0.2 rounded text-[9px] uppercase font-mono font-medium border shrink-0 ml-2 ${getStatusBadgeClass(t.priority)}`}>
+                          {t.priority}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

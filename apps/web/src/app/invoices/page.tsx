@@ -23,7 +23,9 @@ import {
   Printer,
   Receipt,
   ArrowUpRight,
+  FileCheck2,
 } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export default function InvoicesPage() {
   const queryClient = useQueryClient();
@@ -205,8 +207,18 @@ export default function InvoicesPage() {
                   <tbody className="divide-y divide-border">
                     {filteredInvoices.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                          No invoices matching this filter.
+                        <td colSpan={7}>
+                          <EmptyState
+                            compact
+                            icon={FileCheck2}
+                            title={filterStatus !== 'all' ? 'No invoices in this status' : 'No invoices yet'}
+                            description="Create professional tax invoices with automated GST breakdown and share payment links with clients."
+                            primaryAction={{
+                              label: 'Create Invoice',
+                              onClick: () => openQuickCreate('invoice'),
+                              icon: Plus,
+                            }}
+                          />
                         </td>
                       </tr>
                     ) : (
@@ -313,8 +325,18 @@ export default function InvoicesPage() {
                   <tbody className="divide-y divide-border">
                     {payments.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                          No payment transactions recorded yet.
+                        <td colSpan={5}>
+                          <EmptyState
+                            compact
+                            icon={Receipt}
+                            title="No payment receipts recorded yet"
+                            description="Record client settlements, partial milestone deposits, and wire transfers against issued invoices."
+                            primaryAction={{
+                              label: 'View Invoices to Record Payment',
+                              onClick: () => setActiveTab('invoices'),
+                              icon: CreditCard,
+                            }}
+                          />
                         </td>
                       </tr>
                     ) : (
@@ -440,6 +462,36 @@ export default function InvoicesPage() {
                   <span>{formatCurrency(previewInvoice.balanceDue)}</span>
                 </div>
               </div>
+
+              {/* Itemized Payment History Ledger */}
+              {(() => {
+                const invoicePayments = payments.filter((p) => p.invoiceId === previewInvoice.id);
+                if (invoicePayments.length === 0) return null;
+                return (
+                  <div className="space-y-2 border border-border rounded-lg p-4 bg-muted/20">
+                    <div className="flex items-center justify-between text-xs font-semibold text-foreground pb-2 border-b border-border">
+                      <span className="font-mono uppercase tracking-wider text-[10px]">Payment Ledger ({invoicePayments.length})</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-mono">
+                        Total Settled: {formatCurrency(invoicePayments.reduce((acc, p) => acc + (p.amount || 0), 0))}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-border/60 text-xs">
+                      {invoicePayments.map((p) => (
+                        <div key={p.id} className="py-2 flex items-center justify-between font-mono">
+                          <div>
+                            <span className="text-foreground font-medium">{formatDate(p.paymentDate || p.createdAt)}</span>
+                            <span className="text-muted-foreground ml-2 capitalize">({p.paymentMethod?.replace('_', ' ') || 'Bank Transfer'})</span>
+                            {p.reference && <span className="text-[10px] text-muted-foreground block font-sans">{p.reference}</span>}
+                          </div>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            +{formatCurrency(p.amount, p.currency)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Payment Details */}
               <div className="p-3.5 rounded bg-neutral-50 dark:bg-neutral-900 border border-border text-xs space-y-1">
