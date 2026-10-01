@@ -12,6 +12,7 @@ out/
 # Turborepo & caches
 .turbo/
 .cache/
+.wrangler/
 
 # Local databases, storage, and uploads
 data/

@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "freelanceros",
+  "compatibility_date": "2026-09-30",
+  "assets": {
+    "directory": "./apps/web/out",
+    "not_found_handling": "single-page-application"
+  }
+}

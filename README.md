@@ -117,5 +117,24 @@ pnpm --filter=@freelanceros/web dev
 
 ---
 
+## Cloudflare Workers Deployment
+
+FreelancerOS is optimized for deployment via **Cloudflare Workers Static Assets** with zero configuration required in your dashboard:
+
+- **Root `wrangler.json`**: Configured to serve the exported Next.js client application (`apps/web/out`) with Single Page Application (`SPA`) client-side routing fallback.
+- **Build Command**: `pnpm run build`
+- **Deploy Command**: `npx wrangler deploy`
+
+To deploy from CLI:
+```bash
+# Build the monorepo & Next.js static assets
+pnpm run build
+
+# Deploy to Cloudflare Workers
+npx wrangler deploy
+```
+
+---
+
 ## License
 MIT
