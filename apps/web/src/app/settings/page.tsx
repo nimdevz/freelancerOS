@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAppStore } from '@/lib/store';
+import { CurrencyCode } from '@freelanceros/types';
 import {
   Building,
   CreditCard,
@@ -18,6 +20,7 @@ import {
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
+  const { setActiveCurrency } = useAppStore();
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Fetch organization
@@ -27,12 +30,12 @@ export default function SettingsPage() {
   });
 
   const [name, setName] = useState(org?.name || 'Nimish Studio');
-  const [currency, setCurrency] = useState<string>(org?.currency || 'INR');
-  const [defaultHourlyRate, setDefaultHourlyRate] = useState(String(org?.hourlyRate || org?.defaultHourlyRate || 1500));
-  const [taxId, setTaxId] = useState('27AAAAA0000A1Z5');
+  const [currency, setCurrency] = useState<string>(org?.currency || 'USD');
+  const [defaultHourlyRate, setDefaultHourlyRate] = useState(String(org?.hourlyRate || org?.defaultHourlyRate || 125));
+  const [taxId, setTaxId] = useState('US-EIN-98-7654321');
   const [paymentTerms, setPaymentTerms] = useState('14');
   const [bankInfo, setBankInfo] = useState(
-    'HDFC Bank • Account: 50100492817291 • IFSC: HDFC0000123 • UPI: nimish@hdfcbank'
+    'Silicon Valley Bank • Routing: 121140399 • Account: 9821839120 • SWIFT: SVBUS6S'
   );
 
   // Update mutation
@@ -134,13 +137,18 @@ export default function SettingsPage() {
                 </label>
                 <select
                   value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
+                  onChange={(e) => {
+                    setCurrency(e.target.value);
+                    setActiveCurrency(e.target.value as CurrencyCode);
+                  }}
                   className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 >
-                  <option value="INR">INR (₹ Indian Rupee)</option>
                   <option value="USD">USD ($ US Dollar)</option>
                   <option value="EUR">EUR (€ Euro)</option>
                   <option value="GBP">GBP (£ British Pound)</option>
+                  <option value="CAD">CAD (C$ Canadian Dollar)</option>
+                  <option value="AUD">AUD (A$ Australian Dollar)</option>
+                  <option value="INR">INR (₹ Indian Rupee)</option>
                 </select>
               </div>
 

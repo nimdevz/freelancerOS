@@ -16,8 +16,12 @@ import {
   Clock,
   Menu,
   Sparkles,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { APP_CONFIG } from '@freelanceros/config';
+import { CurrencyCode } from '@freelanceros/types';
 
 function getBreadcrumb(path: string) {
   if (path === '/dashboard') return { group: 'Home', title: 'Dashboard' };
@@ -56,10 +60,26 @@ export function Header() {
     user,
     isDemoMode,
     setDemoMode,
+    activeCurrency,
+    setActiveCurrency,
   } = useAppStore();
 
   const [isResettingDemo, setIsResettingDemo] = useState(false);
+  const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const breadcrumb = getBreadcrumb(pathname);
+
+  const handleSelectCurrency = async (curr: CurrencyCode) => {
+    setActiveCurrency(curr);
+    setCurrencyDropdownOpen(false);
+    try {
+      await api.organizations.update({ currency: curr });
+    } catch {}
+    queryClient.invalidateQueries({ queryKey: ['organization'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
+    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    queryClient.invalidateQueries({ queryKey: ['reports'] });
+  };
 
   // Poll active timer on load
   const { data: activeTimerData } = useQuery({
@@ -272,6 +292,52 @@ export function Header() {
             <span>Explore Demo</span>
           </button>
         )}
+
+        {/* Currency Switcher Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setCurrencyDropdownOpen(!currencyDropdownOpen)}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-mono text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors border border-border"
+            title="Change workspace display currency"
+          >
+            <span>{activeCurrency}</span>
+            <ChevronDown className="w-3 h-3 opacity-60" />
+          </button>
+
+          {currencyDropdownOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setCurrencyDropdownOpen(false)}
+              />
+              <div className="absolute right-0 mt-1 w-44 rounded-lg border border-border bg-card shadow-lg py-1 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
+                <div className="px-2.5 py-1 text-[10px] font-mono text-muted-foreground uppercase border-b border-border/60">
+                  Select Currency
+                </div>
+                {APP_CONFIG.supportedCurrencies.map((curr) => {
+                  const isSelected = activeCurrency === curr.code;
+                  return (
+                    <button
+                      key={curr.code}
+                      onClick={() => handleSelectCurrency(curr.code as CurrencyCode)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-left text-xs transition-colors ${
+                        isSelected
+                          ? 'bg-neutral-100 dark:bg-neutral-800 text-foreground font-semibold'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono font-medium">{curr.symbol}</span>
+                        <span>{curr.name}</span>
+                      </span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-emerald-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Theme mode toggle */}
         <button

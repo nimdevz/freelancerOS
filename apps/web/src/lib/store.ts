@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Organization, User } from '@freelanceros/types';
+import { Organization, User, CurrencyCode } from '@freelanceros/types';
 
 export type QuickCreateType =
   | 'client'
@@ -19,6 +19,10 @@ interface AppState {
   user: User | null;
   setUser: (user: User | null) => void;
   logout: () => void;
+
+  // Currency (Global user preference, defaults to USD)
+  activeCurrency: CurrencyCode;
+  setActiveCurrency: (currency: CurrencyCode) => void;
 
   // Sidebar Collapse (Persisted)
   isSidebarCollapsed: boolean;
@@ -71,11 +75,14 @@ export const useAppStore = create<AppState>((set, get) => {
   let initialUser: User | null = null;
   let initialSidebarCollapsed = false;
   let initialDemoMode = true;
+  let initialCurrency: CurrencyCode = 'USD';
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem('freelanceros_current_user');
       if (stored) initialUser = JSON.parse(stored);
       initialSidebarCollapsed = localStorage.getItem('freelanceros_sidebar_collapsed') === 'true';
+      const storedCurrency = localStorage.getItem('freelanceros_active_currency') as CurrencyCode | null;
+      if (storedCurrency) initialCurrency = storedCurrency;
       const mockDb = localStorage.getItem('freelanceros_mock_db_v2');
       if (mockDb) {
         const parsed = JSON.parse(mockDb);
@@ -106,6 +113,16 @@ export const useAppStore = create<AppState>((set, get) => {
         } catch {}
       }
       set({ user: null });
+    },
+
+    activeCurrency: initialCurrency,
+    setActiveCurrency: (currency: CurrencyCode) => {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('freelanceros_active_currency', currency);
+        } catch {}
+      }
+      set({ activeCurrency: currency });
     },
 
     isSidebarCollapsed: initialSidebarCollapsed,

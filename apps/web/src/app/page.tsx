@@ -145,7 +145,7 @@ export default function LandingPage() {
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                       <span className="font-medium text-foreground">
-                        Invoice #INV-2026-003 overdue by 3 days (₹45,000)
+                        Invoice #INV-2026-003 overdue by 3 days ($3,200)
                       </span>
                       <span className="text-[10px] text-muted-foreground font-mono">— Nexus Media</span>
                     </div>
@@ -172,16 +172,16 @@ export default function LandingPage() {
                 <div className="p-3 rounded-lg border border-border bg-background">
                   <span className="text-[10px] uppercase text-muted-foreground block">Net Profit</span>
                   <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
-                    ₹2,41,000
+                    $14,850
                   </span>
                 </div>
                 <div className="p-3 rounded-lg border border-border bg-background">
                   <span className="text-[10px] uppercase text-muted-foreground block">Effective Hourly</span>
-                  <span className="text-base font-semibold text-foreground">₹2,151 / hr</span>
+                  <span className="text-base font-semibold text-foreground">$135 / hr</span>
                 </div>
                 <div className="p-3 rounded-lg border border-border bg-background">
                   <span className="text-[10px] uppercase text-muted-foreground block">Outstanding</span>
-                  <span className="text-base font-semibold text-foreground">₹45,000</span>
+                  <span className="text-base font-semibold text-foreground">$3,200</span>
                 </div>
               </div>
             </div>
@@ -278,8 +278,8 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  When you charge ₹1,50,000 for a project, spend ₹20,000 on stock assets and music licenses,
-                  and log 50 hours of work, your effective rate is exactly ₹2,600/hr. FreelancerOS tracks
+                  When you charge $8,500 for a project, spend $500 on stock assets and music licenses,
+                  and log 40 hours of work, your effective rate is exactly $200/hr. FreelancerOS tracks
                   this automatically across every single client job.
                 </p>
               </div>
@@ -291,23 +291,23 @@ export default function LandingPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Gross Invoiced:</span>
-                  <span className="font-semibold text-foreground">₹1,50,000</span>
+                  <span className="font-semibold text-foreground">$8,500</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Direct Contractor Costs:</span>
-                  <span>-₹20,000</span>
+                  <span>-$500</span>
                 </div>
                 <div className="flex justify-between font-bold text-emerald-600 dark:text-emerald-400 pt-1 border-t border-border">
                   <span>Net Studio Profit:</span>
-                  <span>₹1,30,000</span>
+                  <span>$8,000</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Deep Work Logged:</span>
-                  <span>50 hrs</span>
+                  <span>40 hrs</span>
                 </div>
                 <div className="flex justify-between font-bold text-foreground text-sm pt-1 border-t border-border">
                   <span>Effective Hourly Rate:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">₹2,600 / hr</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">$200 / hr</span>
                 </div>
               </div>
             </div>
@@ -349,8 +349,8 @@ export default function LandingPage() {
                   </div>
 
                   <div className="text-3xl font-mono font-bold text-foreground">
-                    {plan.priceINR === 0 ? 'Free' : formatCurrency(plan.priceINR)}
-                    {plan.priceINR > 0 && <span className="text-xs font-normal text-muted-foreground"> / month</span>}
+                    {plan.priceUSD === 0 ? 'Free' : formatCurrency(plan.priceUSD, 'USD')}
+                    {plan.priceUSD > 0 && <span className="text-xs font-normal text-muted-foreground"> / month</span>}
                   </div>
 
                   <p className="text-xs text-muted-foreground min-h-[32px]">{plan.description}</p>

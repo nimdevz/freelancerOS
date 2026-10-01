@@ -1,15 +1,15 @@
 import { CurrencyCode } from '@freelanceros/types';
 import { APP_CONFIG } from '@freelanceros/config';
 
-export function formatCurrency(amount: number, currency: CurrencyCode = 'INR'): string {
+export function formatCurrency(amount: number, currency: CurrencyCode = 'USD'): string {
   try {
     const localeMap: Record<CurrencyCode, string> = {
-      INR: 'en-IN',
       USD: 'en-US',
       EUR: 'de-DE',
       GBP: 'en-GB',
-      AUD: 'en-AU',
       CAD: 'en-CA',
+      AUD: 'en-AU',
+      INR: 'en-IN',
       SGD: 'en-SG',
       AED: 'ar-AE',
     };

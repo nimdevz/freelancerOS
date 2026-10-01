@@ -119,8 +119,8 @@ export default function BillingPage() {
                     </div>
 
                     <div className="text-2xl font-mono font-bold text-foreground">
-                      {plan.priceINR === 0 ? 'Free' : formatCurrency(plan.priceINR)}
-                      {plan.priceINR > 0 && <span className="text-xs font-normal text-muted-foreground"> / month</span>}
+                      {plan.priceUSD === 0 ? 'Free' : formatCurrency(plan.priceUSD, 'USD')}
+                      {plan.priceUSD > 0 && <span className="text-xs font-normal text-muted-foreground"> / month</span>}
                     </div>
 
                     <p className="text-xs text-muted-foreground min-h-[32px]">{plan.description}</p>

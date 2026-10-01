@@ -64,8 +64,8 @@ export class AuthService {
         id: orgId,
         name: `${user?.firstName || 'Creator'}'s Studio`,
         slug: `studio-${Date.now().toString(36)}`,
-        currency: 'INR',
-        hourlyRate: 2500,
+        currency: 'USD',
+        hourlyRate: 125,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -112,9 +112,9 @@ export class AuthService {
       id: orgId,
       name: studioName,
       slug,
-      currency: 'INR',
+      currency: 'USD',
       freelancerType: data.freelancerType || 'creative',
-      hourlyRate: 2500,
+      hourlyRate: 125,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -179,8 +179,8 @@ export class AuthService {
         id: orgId,
         name: `${firstName} Studio`,
         slug: `studio-${Date.now().toString(36)}`,
-        currency: 'INR',
-        hourlyRate: 2500,
+        currency: 'USD',
+        hourlyRate: 125,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
