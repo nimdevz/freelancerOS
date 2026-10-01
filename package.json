@@ -1,0 +1,18 @@
+{
+  "name": "freelanceros-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.8.1",
+  "scripts": {
+    "build": "pnpm -r --filter=!./apps/web run build && pnpm --filter=@freelanceros/web run build",
+    "dev:api": "pnpm --filter=@freelanceros/api run dev",
+    "dev:web": "pnpm --filter=@freelanceros/web run dev",
+    "dev": "pnpm -r --parallel run dev",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "seed": "pnpm --filter=@freelanceros/api run seed"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

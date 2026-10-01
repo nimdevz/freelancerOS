@@ -1,0 +1,18 @@
+{
+  "name": "@freelanceros/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@freelanceros/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@freelanceros/tsconfig": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}
