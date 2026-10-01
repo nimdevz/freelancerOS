@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatDate, formatRelativeTime, getStatusBadgeClass } from '@freelanceros/ui';
@@ -20,14 +20,19 @@ import {
   ArrowLeft,
   Clock,
   CheckCircle2,
+  FileSignature,
+  Repeat,
+  PenTool,
 } from 'lucide-react';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 
 export default function ClientDetailPage() {
   const params = useParams();
   const id = params?.id as string;
+  const queryClient = useQueryClient();
   const { openQuickCreate } = useAppStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'invoices' | 'timeline'>('overview');
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'invoices' | 'contracts' | 'timeline'>('overview');
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any | null>(null);
 
   const { data: client, isLoading } = useQuery({
@@ -40,6 +45,24 @@ export default function ClientDetailPage() {
     queryKey: ['clientTimeline', id],
     queryFn: () => api.clients.getTimeline(id),
     enabled: Boolean(id),
+  });
+
+  const { data: allContracts = [] } = useQuery({
+    queryKey: ['contracts'],
+    queryFn: () => api.contracts.list(),
+  });
+
+  const { data: allRetainers = [] } = useQuery({
+    queryKey: ['retainers'],
+    queryFn: () => api.retainers.list(),
+  });
+
+  const signContractMutation = useMutation({
+    mutationFn: ({ contractId, signer }: { contractId: string; signer: string }) =>
+      api.contracts.sign(contractId, signer),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
   });
 
   if (isLoading) {
@@ -70,6 +93,10 @@ export default function ClientDetailPage() {
   const projects = client.projects || [];
   const invoices = client.invoices || [];
   const payments = client.payments || [];
+
+  // Filter contracts and retainers for this client
+  const clientContracts = allContracts.filter((c) => c.clientId === id);
+  const clientRetainers = allRetainers.filter((r) => r.clientId === id);
 
   return (
     <AppShell>
@@ -183,6 +210,16 @@ export default function ClientDetailPage() {
             Invoices & Payments ({invoices.length})
           </button>
           <button
+            onClick={() => setActiveTab('contracts')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'contracts'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Contracts & Retainers ({clientContracts.length + clientRetainers.length})
+          </button>
+          <button
             onClick={() => setActiveTab('timeline')}
             className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
               activeTab === 'timeline'
@@ -225,7 +262,7 @@ export default function ClientDetailPage() {
               <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
                 Client Notes & Scope Guidelines
               </h3>
-              <div className="p-3 bg-muted/40 rounded-md border border-border text-xs text-foreground leading-relaxed">
+              <div className="p-3 bg-muted/40 rounded-md border border-border text-xs text-foreground leading-relaxed whitespace-pre-wrap">
                 {client.notes || 'No client notes entered.'}
               </div>
             </div>
@@ -235,119 +272,262 @@ export default function ClientDetailPage() {
         {/* Tab 2: Projects */}
         {activeTab === 'projects' && (
           <div className="border border-border rounded-lg bg-card overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
-                <tr>
-                  <th className="py-2.5 px-4 font-medium">Project</th>
-                  <th className="py-2.5 px-4 font-medium">Status</th>
-                  <th className="py-2.5 px-4 font-medium">Deadline</th>
-                  <th className="py-2.5 px-4 font-medium">Progress</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Budget</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {projects.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[540px] text-left text-xs">
+                <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                      No projects created for this client yet.
-                    </td>
+                    <th className="py-2.5 px-4 font-medium">Project</th>
+                    <th className="py-2.5 px-4 font-medium">Status</th>
+                    <th className="py-2.5 px-4 font-medium">Deadline</th>
+                    <th className="py-2.5 px-4 font-medium">Progress</th>
+                    <th className="py-2.5 px-4 font-medium text-right">Budget</th>
                   </tr>
-                ) : (
-                  projects.map((p: any) => (
-                    <tr key={p.id} className="table-row-hover">
-                      <td className="py-3 px-4 font-medium text-foreground">
-                        <Link href={`/projects/${p.id}`} className="hover:underline">
-                          {p.name}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(p.status)}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground font-mono">
-                        {formatDate(p.deadline)}
-                      </td>
-                      <td className="py-3 px-4 font-mono">{p.progressPercent}%</td>
-                      <td className="py-3 px-4 text-right font-medium font-mono">
-                        {formatCurrency(p.budget, p.currency)}
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {projects.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                        No projects created for this client yet.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    projects.map((p: any) => (
+                      <tr key={p.id} className="table-row-hover">
+                        <td className="py-3 px-4 font-medium text-foreground">
+                          <Link href={`/projects/${p.id}`} className="hover:underline">
+                            {p.name}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(p.status)}`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground font-mono">
+                          {formatDate(p.deadline)}
+                        </td>
+                        <td className="py-3 px-4 font-mono">{p.progressPercent}%</td>
+                        <td className="py-3 px-4 text-right font-medium font-mono">
+                          {formatCurrency(p.budget, p.currency)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {/* Tab 3: Invoices */}
         {activeTab === 'invoices' && (
           <div className="border border-border rounded-lg bg-card overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
-                <tr>
-                  <th className="py-2.5 px-4 font-medium">Invoice #</th>
-                  <th className="py-2.5 px-4 font-medium">Title</th>
-                  <th className="py-2.5 px-4 font-medium">Status</th>
-                  <th className="py-2.5 px-4 font-medium">Due Date</th>
-                  <th className="py-2.5 px-4 font-medium">Total</th>
-                  <th className="py-2.5 px-4 font-medium">Balance Due</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {invoices.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[580px] text-left text-xs">
+                <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                      No invoices issued to this client yet.
-                    </td>
+                    <th className="py-2.5 px-4 font-medium">Invoice #</th>
+                    <th className="py-2.5 px-4 font-medium">Title</th>
+                    <th className="py-2.5 px-4 font-medium">Status</th>
+                    <th className="py-2.5 px-4 font-medium">Due Date</th>
+                    <th className="py-2.5 px-4 font-medium">Total</th>
+                    <th className="py-2.5 px-4 font-medium">Balance Due</th>
+                    <th className="py-2.5 px-4 font-medium text-right">Action</th>
                   </tr>
-                ) : (
-                  invoices.map((inv: any) => (
-                    <tr key={inv.id} className="table-row-hover">
-                      <td className="py-3 px-4 font-medium font-mono text-foreground">
-                        {inv.invoiceNumber}
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">{inv.title}</td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(inv.status)}`}>
-                          {inv.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground font-mono">
-                        {formatDate(inv.dueDate)}
-                      </td>
-                      <td className="py-3 px-4 font-mono font-medium">
-                        {formatCurrency(inv.totalAmount, inv.currency)}
-                      </td>
-                      <td className="py-3 px-4 font-mono">
-                        {inv.balanceDue > 0 ? (
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">
-                            {formatCurrency(inv.balanceDue, inv.currency)}
-                          </span>
-                        ) : (
-                          <span className="text-emerald-600 dark:text-emerald-400">Paid</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {inv.balanceDue > 0 && (
-                          <button
-                            onClick={() => setSelectedInvoiceForPayment(inv)}
-                            className="px-2 py-1 text-[11px] font-medium bg-muted hover:bg-muted/80 rounded border border-border"
-                          >
-                            Record Pay
-                          </button>
-                        )}
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {invoices.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                        No invoices issued to this client yet.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    invoices.map((inv: any) => (
+                      <tr key={inv.id} className="table-row-hover">
+                        <td className="py-3 px-4 font-medium font-mono text-foreground">
+                          {inv.invoiceNumber}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">{inv.title}</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(inv.status)}`}>
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground font-mono">
+                          {formatDate(inv.dueDate)}
+                        </td>
+                        <td className="py-3 px-4 font-mono font-medium">
+                          {formatCurrency(inv.totalAmount || inv.total, inv.currency)}
+                        </td>
+                        <td className="py-3 px-4 font-mono">
+                          {inv.balanceDue > 0 ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">
+                              {formatCurrency(inv.balanceDue, inv.currency)}
+                            </span>
+                          ) : (
+                            <span className="text-emerald-600 dark:text-emerald-400">Paid</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {inv.balanceDue > 0 && (
+                            <button
+                              onClick={() => setSelectedInvoiceForPayment(inv)}
+                              className="px-2 py-1 text-[11px] font-medium bg-muted hover:bg-muted/80 rounded border border-border"
+                            >
+                              Record Pay
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        {/* Tab 4: Relationship Timeline */}
+        {/* Tab 4: Contracts & Retainers (Contextual) */}
+        {activeTab === 'contracts' && (
+          <div className="space-y-6">
+            {/* Contracts Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileSignature className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                    Service Agreements & Contracts
+                  </h3>
+                </div>
+              </div>
+
+              <div className="border border-border rounded-lg bg-card overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px] text-left text-xs">
+                    <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
+                      <tr>
+                        <th className="py-2.5 px-4 font-medium">Agreement Title</th>
+                        <th className="py-2.5 px-4 font-medium">Status</th>
+                        <th className="py-2.5 px-4 font-medium">Value</th>
+                        <th className="py-2.5 px-4 font-medium">Valid Until</th>
+                        <th className="py-2.5 px-4 font-medium text-right">Signature Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {clientContracts.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                            No contracts registered for this client.
+                          </td>
+                        </tr>
+                      ) : (
+                        clientContracts.map((c) => (
+                          <tr key={c.id} className="table-row-hover">
+                            <td className="py-3 px-4 font-medium text-foreground">
+                              {c.title}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(c.status)}`}>
+                                {c.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 font-mono font-medium">
+                              {(c as any).value ? formatCurrency((c as any).value) : 'Standard MSA'}
+                            </td>
+                            <td className="py-3 px-4 text-muted-foreground font-mono">
+                              {c.endDate ? formatDate(c.endDate) : 'Ongoing'}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              {c.status === 'signed' ? (
+                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-end gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Signed by {c.signerName || 'Client'}</span>
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    signContractMutation.mutate({
+                                      contractId: c.id,
+                                      signer: client.name,
+                                    })
+                                  }
+                                  disabled={signContractMutation.isPending}
+                                  className="px-2.5 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded transition-colors"
+                                >
+                                  Sign Agreement
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Retainers Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Repeat className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Recurring Retainers
+                </h3>
+              </div>
+
+              <div className="border border-border rounded-lg bg-card overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px] text-left text-xs">
+                    <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
+                      <tr>
+                        <th className="py-2.5 px-4 font-medium">Billing Period</th>
+                        <th className="py-2.5 px-4 font-medium">Monthly Retainer</th>
+                        <th className="py-2.5 px-4 font-medium">Allocated Hours</th>
+                        <th className="py-2.5 px-4 font-medium">Rollover Policy</th>
+                        <th className="py-2.5 px-4 font-medium text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {clientRetainers.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                            No active retainers established for this client.
+                          </td>
+                        </tr>
+                      ) : (
+                        clientRetainers.map((r) => (
+                          <tr key={r.id} className="table-row-hover">
+                            <td className="py-3 px-4 font-medium text-foreground capitalize">
+                              {r.title || 'Monthly Retainer'}
+                            </td>
+                            <td className="py-3 px-4 font-mono font-medium">
+                              {formatCurrency(r.monthlyAmount, r.currency)}
+                            </td>
+                            <td className="py-3 px-4 font-mono">
+                              {r.includedHours} hrs / month
+                            </td>
+                            <td className="py-3 px-4 text-muted-foreground font-mono">
+                              {r.usedHours} used ({r.remainingHours} remaining)
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(r.status)}`}>
+                                {r.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Relationship Timeline */}
         {activeTab === 'timeline' && (
           <div className="p-6 rounded-lg border border-border bg-card space-y-4">
             <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">

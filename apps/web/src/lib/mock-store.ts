@@ -122,6 +122,23 @@ const INITIAL_CLIENTS: Client[] = [
     createdAt: '2026-09-10T00:00:00Z',
     updatedAt: '2026-09-27T00:00:00Z',
   },
+  {
+    id: '66666666-6666-6666-6666-666666666666',
+    organizationId: INITIAL_ORG.id,
+    name: 'Atlas Media',
+    company: 'Atlas Media Network',
+    email: 'editorial@atlasmedia.tv',
+    phone: '+91 98111 22334',
+    currency: 'INR',
+    address: 'Worli Sea Face, Mumbai',
+    notes: 'High volume social & trailer campaign partner with recurring quarterly retainers.',
+    status: 'active',
+    activeProjectsCount: 1,
+    totalRevenue: 85000,
+    outstandingBalance: 35000,
+    createdAt: '2026-08-15T00:00:00Z',
+    updatedAt: '2026-09-30T00:00:00Z',
+  },
 ];
 
 const INITIAL_PROJECTS: Project[] = [
@@ -229,6 +246,33 @@ const INITIAL_PROJECTS: Project[] = [
     completedRevisions: 0,
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-27T00:00:00Z',
+  },
+  {
+    id: '88888888-8888-8888-8888-888888888888',
+    organizationId: INITIAL_ORG.id,
+    clientId: '66666666-6666-6666-6666-666666666666',
+    name: 'Atlas Episodic Social Campaign',
+    code: 'PRJ-105',
+    description: 'Weekly teaser clips and vertical trailers for episodic documentary series.',
+    status: 'active',
+    health: 'blocked',
+    healthReason: 'Waiting on raw media delivery from client shoot team',
+    startDate: '2026-09-20',
+    deadline: '2026-10-08',
+    budget: 85000,
+    currency: 'INR',
+    includedRevisions: 2,
+    progressPercent: 30,
+    clientName: 'Atlas Media',
+    totalHoursTracked: 3.5,
+    totalInvoiced: 41300,
+    totalPaid: 0,
+    totalExpenses: 1500,
+    profit: -1500,
+    effectiveHourlyRate: 0,
+    completedRevisions: 0,
+    createdAt: '2026-09-20T00:00:00Z',
+    updatedAt: '2026-09-30T00:00:00Z',
   },
 ];
 
@@ -403,6 +447,40 @@ const INITIAL_INVOICES: Invoice[] = [
     ],
     createdAt: '2026-09-17T00:00:00Z',
     updatedAt: '2026-09-17T00:00:00Z',
+  },
+  {
+    id: 'inv-4',
+    organizationId: INITIAL_ORG.id,
+    clientId: '66666666-6666-6666-6666-666666666666',
+    projectId: '88888888-8888-8888-8888-888888888888',
+    invoiceNumber: 'INV-2026-004',
+    title: 'Episodic Trailer Cut — Delivery Milestone',
+    status: 'overdue',
+    issueDate: '2026-09-10',
+    dueDate: '2026-09-24',
+    subtotal: 35000,
+    discountPercent: 0,
+    discountAmount: 0,
+    taxPercent: 18,
+    taxAmount: 6300,
+    total: 41300,
+    totalAmount: 41300,
+    amountPaid: 0,
+    balanceDue: 41300,
+    currency: 'INR',
+    clientName: 'Atlas Media',
+    projectName: 'Atlas Episodic Social Campaign',
+    items: [
+      {
+        id: 'item-4',
+        description: 'Teaser trailer edit & audio mixdown (overdue balance)',
+        quantity: 1,
+        unitPrice: 35000,
+        amount: 35000,
+      },
+    ],
+    createdAt: '2026-09-10T00:00:00Z',
+    updatedAt: '2026-09-24T00:00:00Z',
   },
 ];
 
@@ -983,93 +1061,218 @@ class MockStorage {
   getDashboardSummary(): DashboardData {
     const totalCollected = this.invoices.reduce((acc, inv) => acc + (inv.amountPaid || 0), 0);
     const outstanding = this.invoices
-      .filter((inv) => inv.status !== 'paid' && inv.status !== 'draft')
+      .filter((inv) => inv.status !== 'paid' && inv.status !== 'draft' && inv.status !== 'cancelled')
       .reduce((acc, inv) => acc + (inv.balanceDue || 0), 0);
     const overdue = this.invoices
-      .filter((inv) => inv.status === 'overdue')
+      .filter((inv) => inv.status === 'overdue' || (inv.dueDate && inv.dueDate < '2026-10-01' && (inv.balanceDue || 0) > 0))
       .reduce((acc, inv) => acc + (inv.balanceDue || 0), 0);
-    const totalHours = this.timeEntries.reduce((acc, te) => acc + ((te.durationMinutes || 0) / 60), 0);
+    const totalHours = Math.round(
+      this.timeEntries.reduce((acc, te) => acc + ((te.durationMinutes || 0) / 60), 0) * 10
+    ) / 10;
     const pendingApprovals = this.approvals.filter((a) => a.status === 'pending').length;
+    const projectedIncoming = this.leads
+      .filter((l) => l.stage === 'qualified' || l.stage === 'proposal' || l.stage === 'negotiation')
+      .reduce((acc, l) => acc + Math.round((l.value * (l.probabilityPercent || 50)) / 100), 0);
+
+    // Build dynamic Needs Attention queue
+    const attentionItems: any[] = [];
+    const today = '2026-10-01';
+
+    // 1. HIGH PRIORITY: Overdue Invoices
+    this.invoices
+      .filter((inv) => inv.status === 'overdue' || (inv.dueDate && inv.dueDate < today && (inv.balanceDue || 0) > 0))
+      .forEach((inv) => {
+        attentionItems.push({
+          id: `att-inv-${inv.id}`,
+          title: `Invoice overdue: ${inv.clientName || 'Client'} (₹${(inv.balanceDue || 0).toLocaleString()})`,
+          description: `${inv.invoiceNumber} was due on ${inv.dueDate}. Balance ₹${(inv.balanceDue || 0).toLocaleString()} pending.`,
+          severity: 'critical',
+          urgency: 'high',
+          category: 'invoice',
+          actionUrl: '/invoices',
+          actionText: 'View Invoice',
+          dueDate: inv.dueDate,
+          amount: inv.balanceDue,
+        });
+      });
+
+    // 2. HIGH PRIORITY: Blocked Projects
+    this.projects
+      .filter((p) => p.health === 'blocked')
+      .forEach((p) => {
+        attentionItems.push({
+          id: `att-prj-blk-${p.id}`,
+          title: `Project blocked: ${p.name}`,
+          description: p.healthReason || 'Requires client input or raw media to continue.',
+          severity: 'critical',
+          urgency: 'high',
+          category: 'project',
+          actionUrl: `/projects/${p.id}`,
+          actionText: 'Open Workspace',
+          dueDate: p.deadline || today,
+        });
+      });
+
+    // 3. MEDIUM PRIORITY: Client Approval Pending
+    this.approvals
+      .filter((a) => a.status === 'pending')
+      .forEach((a) => {
+        attentionItems.push({
+          id: `att-appr-${a.id}`,
+          title: `Client approval pending: ${a.deliverableTitle}`,
+          description: `Version ${a.versionNumber} awaiting formal client sign-off.`,
+          severity: 'warning',
+          urgency: 'medium',
+          category: 'approval',
+          actionUrl: '/deliverables',
+          actionText: 'Review Sign-off',
+          dueDate: a.requestedAt?.split('T')[0] || today,
+        });
+      });
+
+    // 4. MEDIUM PRIORITY: Projects At Risk or Deadline Near
+    this.projects
+      .filter((p) => p.status === 'active' && p.health === 'at_risk')
+      .forEach((p) => {
+        attentionItems.push({
+          id: `att-prj-risk-${p.id}`,
+          title: `Project deadline approaching: ${p.name}`,
+          description: `${p.clientName} delivery on ${p.deadline}. ${p.healthReason || `${p.progressPercent}% complete.`}`,
+          severity: 'warning',
+          urgency: 'medium',
+          category: 'project',
+          actionUrl: `/projects/${p.id}`,
+          actionText: 'Open Project',
+          dueDate: p.deadline,
+        });
+      });
+
+    // 5. MEDIUM PRIORITY: Revision Limits Reached / Exceeded
+    this.deliverables
+      .filter((d) => d.isScopeExceeded || (d.usedRevisions >= d.includedRevisions))
+      .forEach((d) => {
+        const prj = this.projects.find((p) => p.id === d.projectId);
+        attentionItems.push({
+          id: `att-del-scope-${d.id}`,
+          title: `Revision limit reached: ${d.title}`,
+          description: `${d.usedRevisions} of ${d.includedRevisions} included revisions used in ${prj?.name || 'Project'}.`,
+          severity: 'warning',
+          urgency: 'medium',
+          category: 'deliverable',
+          actionUrl: `/projects/${d.projectId}`,
+          actionText: 'Manage Revisions',
+          dueDate: today,
+        });
+      });
+
+    // 6. LOW PRIORITY: Proposals Expiring Soon
+    this.leads
+      .filter((l) => l.stage === 'proposal' || l.stage === 'negotiation')
+      .forEach((l) => {
+        attentionItems.push({
+          id: `att-lead-${l.id}`,
+          title: `Proposal follow-up: ${l.title}`,
+          description: `${l.clientName} (${l.company}) — expected decision by ${l.expectedCloseDate}.`,
+          severity: 'info',
+          urgency: 'low',
+          category: 'proposal',
+          actionUrl: '/leads',
+          actionText: 'View Pipeline',
+          dueDate: l.expectedCloseDate,
+        });
+      });
+
+    // Sort by urgency: high (critical) -> medium (warning) -> low (info)
+    const priorityWeight: Record<string, number> = { high: 3, medium: 2, low: 1 };
+    attentionItems.sort((a, b) => (priorityWeight[b.urgency] || 0) - (priorityWeight[a.urgency] || 0));
+
+    // Upcoming dates
+    const upcomingDates: import('@freelanceros/types').DashboardData['upcomingDates'] = [
+      {
+        id: 'up-1',
+        title: 'Brand Manifesto Film Delivery',
+        date: '2026-10-03',
+        type: 'deadline',
+        link: '/projects/2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+      },
+      {
+        id: 'up-2',
+        title: 'Summer Campaign Final Cuts',
+        date: '2026-10-06',
+        type: 'deadline',
+        link: '/projects/027c41fa-8f90-4bac-989d-b5f80652ab0c',
+      },
+      {
+        id: 'up-3',
+        title: 'Atlas Media Social Campaign Milestone',
+        date: '2026-10-08',
+        type: 'deadline',
+        link: '/projects/88888888-8888-8888-8888-888888888888',
+      },
+      {
+        id: 'up-4',
+        title: 'Vogue India Proposal Decision',
+        date: '2026-10-10',
+        type: 'proposal_expire',
+        link: '/leads',
+      },
+    ];
+
+    // Recent activity
+    const recentActivity = [
+      {
+        id: 'act-1',
+        organizationId: this.org.id,
+        entityType: 'approval',
+        entityId: 'appr-1',
+        action: 'approval_requested',
+        description: 'Client review requested for Nike 60s Hero 4K Cut (V2)',
+        createdAt: '2026-09-29T10:00:00Z',
+      },
+      {
+        id: 'act-2',
+        organizationId: this.org.id,
+        entityType: 'payment',
+        entityId: 'pay-2',
+        action: 'payment_received',
+        description: 'Recorded payment of ₹50,000 for Northstar Luxury',
+        createdAt: '2026-09-28T16:00:00Z',
+      },
+      {
+        id: 'act-3',
+        organizationId: this.org.id,
+        entityType: 'project',
+        entityId: 'prj-105',
+        action: 'project_updated',
+        description: 'Marked Atlas Episodic Social Campaign as Blocked (waiting on footage)',
+        createdAt: '2026-09-27T14:30:00Z',
+      },
+      {
+        id: 'act-4',
+        organizationId: this.org.id,
+        entityType: 'time',
+        entityId: 'time-2',
+        action: 'time_tracked',
+        description: 'Logged 5h sound design and Dolby mix for Nike Summer Campaign',
+        createdAt: '2026-09-29T16:00:00Z',
+      },
+    ];
 
     return {
       metrics: {
         monthlyRevenue: totalCollected,
         outstandingRevenue: outstanding,
         overdueRevenue: overdue,
+        projectedIncoming,
         trackedHoursThisMonth: totalHours,
-        activeProjectsCount: this.projects.filter((p) => p.status === 'active').length,
+        activeProjectsCount: this.projects.filter((p) => p.status === 'active' || p.status === 'review').length,
         pendingApprovalsCount: pendingApprovals,
         currency: this.org.currency,
       },
-      needsAttention: [
-        {
-          id: 'att-1',
-          title: 'Invoice Overdue: Northstar Luxury (₹97,500)',
-          description: 'Payment terms expired on 11th Sept. Follow up with client contact.',
-          severity: 'critical',
-          category: 'invoice',
-          actionUrl: '/invoices',
-          actionText: 'View Invoice',
-          dueDate: '2026-09-11',
-        },
-        {
-          id: 'att-2',
-          title: 'Deliverable Awaiting Sign-off (Nike 4K Cut)',
-          description: 'Client approval requested 2 days ago. Check status.',
-          severity: 'warning',
-          category: 'approval',
-          actionUrl: '/approvals',
-          actionText: 'Review Sign-off',
-          dueDate: '2026-10-02',
-        },
-        {
-          id: 'att-3',
-          title: 'Upcoming Project Delivery: Brand Manifesto Film',
-          description: 'Final cut deadline in 2 days. 3 revisions already completed.',
-          severity: 'info',
-          category: 'project',
-          actionUrl: '/projects/2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
-          actionText: 'Open Project',
-          dueDate: '2026-10-03',
-        },
-      ],
+      needsAttention: attentionItems,
       activeProjects: this.projects,
-      upcomingDates: [
-        {
-          id: 'up-1',
-          title: 'Summer Campaign Film Delivery',
-          date: '2026-10-06',
-          type: 'deadline',
-          link: '/projects/027c41fa-8f90-4bac-989d-b5f80652ab0c',
-        },
-        {
-          id: 'up-2',
-          title: 'Acme Initial Deposit Due',
-          date: '2026-10-01',
-          type: 'invoice_due',
-          link: '/invoices',
-        },
-      ],
-      recentActivity: [
-        {
-          id: 'act-1',
-          organizationId: this.org.id,
-          entityType: 'payment',
-          entityId: 'pay-2',
-          action: 'payment_received',
-          description: 'Recorded partial payment of ₹50,000 for Northstar Luxury',
-          createdAt: '2026-09-28T16:00:00Z',
-        },
-        {
-          id: 'act-2',
-          organizationId: this.org.id,
-          entityType: 'deliverable',
-          entityId: 'del-1',
-          action: 'version_uploaded',
-          description: 'Uploaded V2 4K Cut for Summer Campaign Film',
-          createdAt: '2026-09-29T11:30:00Z',
-        },
-      ],
+      upcomingDates,
+      recentActivity,
     };
   }
 

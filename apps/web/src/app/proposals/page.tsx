@@ -18,10 +18,13 @@ import {
   Building,
   DollarSign,
   ArrowRight,
+  Calculator,
+  Zap,
 } from 'lucide-react';
 
 export default function ProposalsPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'proposals' | 'quotes'>('proposals');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [previewProposal, setPreviewProposal] = useState<Proposal | null>(null);
 
@@ -47,7 +50,13 @@ export default function ProposalsPage() {
     queryFn: () => api.proposals.list(),
   });
 
-  // Create mutation
+  // Fetch quotes
+  const { data: quotes = [] } = useQuery({
+    queryKey: ['quotes'],
+    queryFn: () => api.quotes.list(),
+  });
+
+  // Create proposal mutation
   const createMutation = useMutation({
     mutationFn: (data: any) => api.proposals.create(data),
     onSuccess: () => {
@@ -75,6 +84,15 @@ export default function ProposalsPage() {
   const declineMutation = useMutation({
     mutationFn: (id: string) => api.proposals.decline(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['proposals'] }),
+  });
+
+  const convertQuoteMutation = useMutation({
+    mutationFn: (id: string) => api.quotes.convertToProject(id),
+    onSuccess: () => {
+      alert('Quote converted to active project successfully!');
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
   });
 
   const handleAddItem = () => {
@@ -122,110 +140,205 @@ export default function ProposalsPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Proposals</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">Proposals & Estimates</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Send clean, high-conversion commercial proposals with automated pricing and project conversion.
+              Send clean, high-conversion commercial proposals and cost estimates with 1-click project conversion.
             </p>
           </div>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create Proposal</span>
           </button>
         </div>
 
-        {/* Proposals Table */}
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
-                  <th className="py-2.5 px-4">Title</th>
-                  <th className="py-2.5 px-4">Client</th>
-                  <th className="py-2.5 px-4">Value</th>
-                  <th className="py-2.5 px-4">Valid Until</th>
-                  <th className="py-2.5 px-4">Status</th>
-                  <th className="py-2.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {proposals.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                      No proposals created yet. Pitch your creative services with a high-conversion proposal.
-                    </td>
+        {/* Tab Switcher: Proposals vs Quotes */}
+        <div className="flex border-b border-border gap-5 sm:space-x-6 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
+          <button
+            onClick={() => setActiveTab('proposals')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'proposals'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Proposals ({proposals.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('quotes')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'quotes'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Quotes & Estimates ({quotes.length})
+          </button>
+        </div>
+
+        {/* Tab 1: Proposals */}
+        {activeTab === 'proposals' && (
+          <div className="border border-border rounded-lg bg-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
+                    <th className="py-2.5 px-4">Title</th>
+                    <th className="py-2.5 px-4">Client</th>
+                    <th className="py-2.5 px-4">Value</th>
+                    <th className="py-2.5 px-4">Valid Until</th>
+                    <th className="py-2.5 px-4">Status</th>
+                    <th className="py-2.5 px-4 text-right">Actions</th>
                   </tr>
-                ) : (
-                  proposals.map((proposal) => {
-                    const client = clients.find((c) => c.id === proposal.clientId);
-                    return (
-                      <tr key={proposal.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors">
-                        <td className="py-3 px-4 font-semibold text-foreground">
-                          {proposal.title}
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {proposals.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                        No proposals created yet. Pitch your creative services with a high-conversion proposal.
+                      </td>
+                    </tr>
+                  ) : (
+                    proposals.map((proposal) => {
+                      const client = clients.find((c) => c.id === proposal.clientId);
+                      return (
+                        <tr key={proposal.id} className="table-row-hover transition-colors">
+                          <td className="py-3 px-4 font-semibold text-foreground">
+                            {proposal.title}
+                          </td>
+                          <td className="py-3 px-4 text-foreground">
+                            {client ? `${client.name} (${client.company || 'Direct'})` : 'Client'}
+                          </td>
+                          <td className="py-3 px-4 font-mono font-semibold text-foreground">
+                            {formatCurrency(proposal.totalAmount || proposal.total || 0)}
+                          </td>
+                          <td className="py-3 px-4 text-muted-foreground font-mono">
+                            {proposal.validUntil ? formatDate(proposal.validUntil) : '14 Days'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase font-mono ${
+                                proposal.status === 'accepted'
+                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200'
+                                  : proposal.status === 'sent' || proposal.status === 'viewed'
+                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200'
+                                    : proposal.status === 'declined'
+                                      ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200'
+                                      : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200'
+                              }`}
+                            >
+                              {proposal.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => setPreviewProposal(proposal)}
+                                className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded text-muted-foreground hover:text-foreground"
+                                title="Preview Document"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+
+                              {proposal.status === 'draft' && (
+                                <button
+                                  onClick={() => sendMutation.mutate(proposal.id)}
+                                  className="px-2 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded hover:opacity-90"
+                                >
+                                  Send
+                                </button>
+                              )}
+
+                              {(proposal.status === 'sent' || proposal.status === 'viewed') && (
+                                <button
+                                  onClick={() => acceptMutation.mutate(proposal.id)}
+                                  className="px-2 py-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 rounded border border-emerald-200 dark:border-emerald-800"
+                                >
+                                  Accept & Convert
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: Contextual Quotes & Estimates */}
+        {activeTab === 'quotes' && (
+          <div className="border border-border rounded-lg bg-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
+                    <th className="py-2.5 px-4">Quote #</th>
+                    <th className="py-2.5 px-4">Title</th>
+                    <th className="py-2.5 px-4">Estimated Value</th>
+                    <th className="py-2.5 px-4">Valid Until</th>
+                    <th className="py-2.5 px-4">Status</th>
+                    <th className="py-2.5 px-4 text-right">Conversion</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {quotes.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                        No quotes or quick estimates generated yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    quotes.map((q) => (
+                      <tr key={q.id} className="table-row-hover transition-colors">
+                        <td className="py-3 px-4 font-mono font-medium text-foreground">
+                          {q.quoteNumber || q.id.slice(0, 8)}
                         </td>
-                        <td className="py-3 px-4 text-foreground">
-                          {client ? `${client.name} (${client.company || 'Direct'})` : 'Client'}
+                        <td className="py-3 px-4 font-medium text-foreground">
+                          {q.title}
                         </td>
                         <td className="py-3 px-4 font-mono font-semibold text-foreground">
-                          {formatCurrency(proposal.totalAmount || proposal.total || 0)}
+                          {formatCurrency(q.totalAmount || q.total || 0, q.currency)}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground font-mono">
-                          {proposal.validUntil ? formatDate(proposal.validUntil) : '14 Days'}
+                          {q.validUntil ? formatDate(q.validUntil) : '14 Days'}
                         </td>
                         <td className="py-3 px-4">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase font-mono ${
-                              proposal.status === 'accepted'
-                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                                : proposal.status === 'sent' || proposal.status === 'viewed'
-                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                                  : proposal.status === 'declined'
-                                    ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
-                                    : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
+                              q.status === 'accepted'
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200'
+                                : q.status === 'sent'
+                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200'
+                                  : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200'
                             }`}
                           >
-                            {proposal.status}
+                            {q.status}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => setPreviewProposal(proposal)}
-                              className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded text-muted-foreground hover:text-foreground"
-                              title="Preview Document"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-
-                            {proposal.status === 'draft' && (
-                              <button
-                                onClick={() => sendMutation.mutate(proposal.id)}
-                                className="px-2 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded hover:opacity-90"
-                              >
-                                Send
-                              </button>
-                            )}
-
-                            {(proposal.status === 'sent' || proposal.status === 'viewed') && (
-                              <button
-                                onClick={() => acceptMutation.mutate(proposal.id)}
-                                className="px-2 py-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 rounded border border-emerald-200 dark:border-emerald-800"
-                              >
-                                Accept & Convert
-                              </button>
-                            )}
-                          </div>
+                          <button
+                            onClick={() => convertQuoteMutation.mutate(q.id)}
+                            disabled={convertQuoteMutation.isPending}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded hover:opacity-90 transition-opacity"
+                          >
+                            <Zap className="w-3 h-3" />
+                            <span>Convert to Project</span>
+                          </button>
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Create Proposal Modal */}
         {isCreateModalOpen && (
@@ -338,7 +451,7 @@ export default function ProposalsPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveItem(idx)}
-                            className="p-1 text-muted-foreground hover:text-red-500"
+                            className="p-1 text-muted-foreground hover:text-rose-500"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -375,7 +488,7 @@ export default function ProposalsPage() {
                   <button
                     type="submit"
                     disabled={createMutation.isPending}
-                    className="px-4 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
+                    className="px-4 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"
                   >
                     {createMutation.isPending ? 'Saving...' : 'Save Proposal'}
                   </button>
@@ -463,7 +576,7 @@ export default function ProposalsPage() {
                         acceptMutation.mutate(previewProposal.id);
                         setPreviewProposal(null);
                       }}
-                      className="px-3.5 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-md shadow-sm"
+                      className="px-3.5 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-md shadow-xs"
                     >
                       Accept & Convert to Project
                     </button>

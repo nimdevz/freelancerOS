@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -14,6 +14,11 @@ import {
   Calculator,
   ShieldCheck,
   Building,
+  Printer,
+  Sparkles,
+  AlertCircle,
+  Clock,
+  Award,
 } from 'lucide-react';
 
 export default function ReportsPage() {
@@ -32,15 +37,44 @@ export default function ReportsPage() {
   const clientBreakdown = reports?.revenueByClient ?? [];
   const monthlyRevenue = reports?.monthlyCashFlow ?? [];
 
+  // Sort project profitability by effective hourly rate to identify star performers vs time sinks
+  const rankedProjects = useMemo(() => {
+    return [...projectProfitability].sort((a, b) => b.effectiveHourlyRate - a.effectiveHourlyRate);
+  }, [projectProfitability]);
+
+  const topPerformer = rankedProjects.length > 0 ? rankedProjects[0] : null;
+  const lowestPerformer = rankedProjects.length > 1 ? rankedProjects[rankedProjects.length - 1] : null;
+
   return (
     <AppShell>
       <div className="space-y-6">
         {/* Header */}
-        <div className="pb-2 border-b border-border">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">Financial & Profitability Reports</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Transparent unit economics: Revenue – Expenses = Profit. Profit ÷ Hours = Effective Hourly Rate.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">Financial & Profitability Reports</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Transparent unit economics: Revenue – Expenses = Profit. Profit ÷ Hours = Effective Hourly Rate.
+            </p>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border bg-card hover:bg-muted rounded-md transition-colors shadow-xs"
+          >
+            <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Print Report</span>
+          </button>
+        </div>
+
+        {/* Formula Bar Banner */}
+        <div className="p-3 bg-muted/30 border border-border rounded-lg flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-muted-foreground font-mono">
+            <Calculator className="w-4 h-4 text-foreground" />
+            <span>Formulas:</span>
+            <span className="text-foreground font-semibold">Net Profit = Revenue – Expenses</span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-foreground font-semibold">Effective Hourly Rate = Net Profit ÷ Hours</span>
+          </div>
+          <span className="text-[11px] text-muted-foreground">GST (18%) and direct shoot expenses accounted</span>
         </div>
 
         {/* Core Financial Metrics */}
@@ -88,6 +122,55 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        {/* "WORTH YOUR TIME" INTELLIGENCE SECTION */}
+        <div className="p-4 sm:p-5 rounded-lg border border-border bg-card space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-500" />
+              <h2 className="text-sm font-semibold text-foreground">Worth Your Time Intelligence</h2>
+            </div>
+            <span className="text-[11px] text-muted-foreground">Effective rate per project comparison</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {topPerformer && (
+              <div className="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-300 font-mono flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Highest Effective Yield</span>
+                  </span>
+                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatCurrency(topPerformer.effectiveHourlyRate)}/hr
+                  </span>
+                </div>
+                <h4 className="text-sm font-semibold text-foreground">{topPerformer.projectName}</h4>
+                <p className="text-xs text-muted-foreground">
+                  Client: {topPerformer.clientName} • Generated {formatCurrency(topPerformer.profit)} profit across {topPerformer.trackedHours}h tracked.
+                </p>
+              </div>
+            )}
+
+            {lowestPerformer && (
+              <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/20 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-amber-700 dark:text-amber-300 font-mono flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>Review Hourly Yield</span>
+                  </span>
+                  <span className="text-xs font-mono font-bold text-foreground">
+                    {formatCurrency(lowestPerformer.effectiveHourlyRate)}/hr
+                  </span>
+                </div>
+                <h4 className="text-sm font-semibold text-foreground">{lowestPerformer.projectName}</h4>
+                <p className="text-xs text-muted-foreground">
+                  Client: {lowestPerformer.clientName} • Heavy revisions consumed {lowestPerformer.trackedHours}h. Consider rate adjustment or scope boundaries.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Project Profitability Ledger */}
         <div className="border border-border rounded-lg bg-card overflow-hidden space-y-3 p-4">
           <div className="flex items-center justify-between pb-2 border-b border-border">
@@ -126,7 +209,7 @@ export default function ReportsPage() {
                   </tr>
                 ) : (
                   projectProfitability.map((item) => (
-                    <tr key={item.projectId} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors">
+                    <tr key={item.projectId} className="table-row-hover transition-colors">
                       <td className="py-3 px-3 font-sans font-medium text-foreground">
                         {item.projectName}
                       </td>

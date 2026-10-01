@@ -103,6 +103,54 @@ export function QuickCreateModal() {
           date: formData.date || new Date().toISOString().split('T')[0],
         });
         queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      } else if (quickCreateType === 'task') {
+        const targetProjectId = formData.projectId || (projects[0] ? projects[0].id : '');
+        await api.tasks.create({
+          projectId: targetProjectId,
+          title: formData.title || 'New Task',
+          priority: formData.priority || 'medium',
+          dueDate: formData.dueDate,
+          status: 'todo',
+        });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['projectTasks'] });
+      } else if (quickCreateType === 'quote') {
+        await api.quotes.create({
+          title: formData.title || 'Production Quote',
+          clientId: formData.clientId || (clients[0] ? clients[0].id : ''),
+          projectId: formData.projectId || null,
+          validUntil: formData.validUntil || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+          currency: 'INR',
+          items: [
+            {
+              description: formData.itemDescription || 'Scope deliverables & licenses',
+              quantity: 1,
+              unitPrice: Number(formData.amount || 45000),
+            },
+          ],
+        });
+        queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      } else if (quickCreateType === 'deliverable') {
+        const targetProjectId = formData.projectId || (projects[0] ? projects[0].id : '');
+        await api.deliverables.create({
+          projectId: targetProjectId,
+          title: formData.title || 'Master Video Asset',
+          description: formData.description || 'Master cut for client review',
+          includedRevisions: Number(formData.includedRevisions || 2),
+        });
+        queryClient.invalidateQueries({ queryKey: ['deliverables'] });
+        queryClient.invalidateQueries({ queryKey: ['projectDeliverables'] });
+      } else if (quickCreateType === 'time') {
+        const targetProjectId = formData.projectId || (projects[0] ? projects[0].id : '');
+        const durationMinutes = Number(formData.durationMinutes || (formData.durationHours ? Number(formData.durationHours) * 60 : 60));
+        await api.time.create({
+          projectId: targetProjectId,
+          description: formData.description || 'Focus production session',
+          durationMinutes,
+          date: formData.date || new Date().toISOString().split('T')[0],
+          billable: true,
+        });
+        queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
       }
 
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -119,9 +167,13 @@ export function QuickCreateModal() {
     client: 'New Client',
     lead: 'New Sales Lead',
     project: 'New Project',
+    task: 'New Task',
     proposal: 'New Proposal',
+    quote: 'New Quote',
     invoice: 'New Invoice',
     expense: 'Log Expense',
+    time: 'Log Time Entry',
+    deliverable: 'New Deliverable',
   };
 
   return (
@@ -456,6 +508,225 @@ export function QuickCreateModal() {
                     </option>
                   ))}
                 </select>
+              </div>
+            </>
+          )}
+
+          {quickCreateType === 'task' && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Task Title *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Export 9:16 cuts or Review client color notes"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Project *</label>
+                <select
+                  required
+                  value={formData.projectId || ''}
+                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                >
+                  <option value="">Select project...</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Priority</label>
+                  <select
+                    value={formData.priority || 'medium'}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={formData.dueDate || ''}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {quickCreateType === 'quote' && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Quote Title *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Video Production & Editorial Estimate"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Client *</label>
+                <select
+                  required
+                  value={formData.clientId || ''}
+                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                >
+                  <option value="">Select client...</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Estimated Amount (₹) *</label>
+                  <input
+                    required
+                    type="number"
+                    placeholder="45000"
+                    value={formData.amount || ''}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Valid Until</label>
+                  <input
+                    type="date"
+                    value={formData.validUntil || ''}
+                    onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {quickCreateType === 'deliverable' && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Deliverable Title *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Master 4K ProRes Film Cut"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Project *</label>
+                <select
+                  required
+                  value={formData.projectId || ''}
+                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                >
+                  <option value="">Select project...</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Included Revisions</label>
+                  <input
+                    type="number"
+                    defaultValue={2}
+                    value={formData.includedRevisions || 2}
+                    onChange={(e) => setFormData({ ...formData, includedRevisions: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Description</label>
+                  <input
+                    type="text"
+                    placeholder="Final delivery specs"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {quickCreateType === 'time' && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Project *</label>
+                <select
+                  required
+                  value={formData.projectId || ''}
+                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                >
+                  <option value="">Select project...</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Activity / Focus Description *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Sound design pass and audio stem conform"
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Duration (Hours) *</label>
+                  <input
+                    required
+                    type="number"
+                    step="0.25"
+                    placeholder="2.5"
+                    value={formData.durationHours || ''}
+                    onChange={(e) => setFormData({ ...formData, durationHours: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={formData.date || new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
               </div>
             </>
           )}

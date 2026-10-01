@@ -496,22 +496,26 @@ export interface ActivityLog {
 
 // ----------------- NEEDS ATTENTION & DASHBOARD -----------------
 export type AttentionSeverity = 'critical' | 'warning' | 'info';
+export type AttentionUrgency = 'high' | 'medium' | 'low';
 
 export interface AttentionItem {
   id: string;
   title: string;
   description: string;
   severity: AttentionSeverity;
+  urgency?: AttentionUrgency;
   category: 'invoice' | 'project' | 'proposal' | 'approval' | 'revision' | 'retainer';
   actionUrl: string;
   actionText: string;
   dueDate?: string;
+  amount?: number;
 }
 
 export interface DashboardMetrics {
   monthlyRevenue: number;
   outstandingRevenue: number;
   overdueRevenue: number;
+  projectedIncoming?: number;
   trackedHoursThisMonth: number;
   activeProjectsCount: number;
   pendingApprovalsCount: number;

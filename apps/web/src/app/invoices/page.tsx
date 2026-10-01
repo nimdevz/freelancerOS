@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -20,11 +21,14 @@ import {
   Download,
   Building,
   Printer,
+  Receipt,
+  ArrowUpRight,
 } from 'lucide-react';
 
 export default function InvoicesPage() {
   const queryClient = useQueryClient();
   const { openQuickCreate } = useAppStore();
+  const [activeTab, setActiveTab] = useState<'invoices' | 'payments'>('invoices');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
@@ -41,10 +45,10 @@ export default function InvoicesPage() {
     queryFn: () => api.clients.list(),
   });
 
-  // Fetch projects
-  const { data: projects = [] } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => api.projects.list(),
+  // Fetch payments
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments'],
+    queryFn: () => api.payments.list(),
   });
 
   // Send invoice mutation
@@ -73,18 +77,20 @@ export default function InvoicesPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Invoices</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">Invoices & Collections</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Track outstanding balances, payment collections, and automated reminder alerts.
             </p>
           </div>
-          <button
-            onClick={() => openQuickCreate('invoice')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Invoice</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => openQuickCreate('invoice')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Invoice</span>
+            </button>
+          </div>
         </div>
 
         {/* Financial KPI Cards */}
@@ -122,142 +128,224 @@ export default function InvoicesPage() {
           </div>
 
           <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
-            <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400 uppercase tracking-wider">
               Overdue
             </span>
-            <div className="text-lg sm:text-xl font-semibold text-amber-600 dark:text-amber-400 mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-rose-600 dark:text-rose-400 mt-1 font-mono">
               {formatCurrency(totalOverdue)}
             </div>
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">Requires action</span>
+            <span className="text-[10px] sm:text-[11px] text-rose-500 mt-1 block">
+              {totalOverdue > 0 ? 'Requires immediate action' : 'All accounts current'}
+            </span>
           </div>
         </div>
 
-        {/* Filter bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap">
-          {['all', 'unpaid', 'overdue', 'paid', 'draft'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1 text-xs rounded-md font-medium capitalize whitespace-nowrap shrink-0 transition-colors ${
-                filterStatus === status
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
-                  : 'bg-neutral-100 dark:bg-neutral-800 text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {status === 'all'
-                ? 'All Invoices'
-                : status === 'unpaid'
-                  ? 'Unpaid / Pending'
-                  : status}
-            </button>
-          ))}
+        {/* Primary View Switcher: Invoices vs Payment History */}
+        <div className="flex border-b border-border gap-5 sm:space-x-6 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
+          <button
+            onClick={() => setActiveTab('invoices')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'invoices'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Invoices ({invoices.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'payments'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Payment History & Receipts ({payments.length})
+          </button>
         </div>
 
-        {/* Invoices Table */}
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
-                  <th className="py-2.5 px-4">Invoice #</th>
-                  <th className="py-2.5 px-4">Client</th>
-                  <th className="py-2.5 px-4">Due Date</th>
-                  <th className="py-2.5 px-4">Amount</th>
-                  <th className="py-2.5 px-4">Balance Due</th>
-                  <th className="py-2.5 px-4">Status</th>
-                  <th className="py-2.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredInvoices.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                      No invoices found. Generate an invoice to get paid on time.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredInvoices.map((inv) => {
-                    const client = clients.find((c) => c.id === inv.clientId);
-                    return (
-                      <tr key={inv.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors">
-                        <td className="py-3 px-4 font-mono font-semibold text-foreground">
-                          {inv.number}
-                        </td>
-                        <td className="py-3 px-4 text-foreground font-medium">
-                          {client ? client.name : 'Client'}
-                          {client?.company && (
-                            <span className="block text-[11px] text-muted-foreground font-normal">
-                              {client.company}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground font-mono">
-                          {inv.dueDate ? formatDate(inv.dueDate) : 'On Receipt'}
-                        </td>
-                        <td className="py-3 px-4 font-mono font-medium text-foreground">
-                          {formatCurrency(inv.totalAmount || inv.total || 0)}
-                        </td>
-                        <td className="py-3 px-4 font-mono font-semibold text-foreground">
-                          {inv.balanceDue > 0 ? (
-                            <span className={inv.status === 'overdue' ? 'text-amber-600 dark:text-amber-400' : ''}>
-                              {formatCurrency(inv.balanceDue)}
-                            </span>
-                          ) : (
-                            <span className="text-emerald-600 dark:text-emerald-400">Paid in Full</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase font-mono ${
-                              inv.status === 'paid'
-                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                                : inv.status === 'overdue'
-                                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                                  : inv.status === 'partially_paid'
-                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                                    : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
-                            }`}
-                          >
-                            {inv.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => setPreviewInvoice(inv)}
-                              className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded text-muted-foreground hover:text-foreground"
-                              title="Preview PDF"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
+        {activeTab === 'invoices' && (
+          <div className="space-y-4">
+            {/* Filter bar */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap">
+              {['all', 'unpaid', 'overdue', 'paid', 'draft'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`px-3 py-1 text-xs rounded-md font-medium capitalize whitespace-nowrap shrink-0 transition-colors ${
+                    filterStatus === status
+                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {status === 'all'
+                    ? 'All Invoices'
+                    : status === 'unpaid'
+                      ? 'Unpaid / Pending'
+                      : status}
+                </button>
+              ))}
+            </div>
 
-                            {inv.status === 'draft' && (
-                              <button
-                                onClick={() => sendMutation.mutate(inv.id)}
-                                className="px-2 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded hover:opacity-90"
-                              >
-                                Send
-                              </button>
-                            )}
-
-                            {inv.balanceDue > 0 && (
-                              <button
-                                onClick={() => setPaymentInvoice(inv)}
-                                className="px-2.5 py-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 rounded border border-emerald-200 dark:border-emerald-800 transition-colors"
-                              >
-                                Record Payment
-                              </button>
-                            )}
-                          </div>
+            {/* Invoices Table */}
+            <div className="border border-border rounded-lg bg-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[620px] text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
+                      <th className="py-2.5 px-4">Invoice #</th>
+                      <th className="py-2.5 px-4">Client</th>
+                      <th className="py-2.5 px-4">Due Date</th>
+                      <th className="py-2.5 px-4">Amount</th>
+                      <th className="py-2.5 px-4">Balance Due</th>
+                      <th className="py-2.5 px-4">Status</th>
+                      <th className="py-2.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredInvoices.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                          No invoices matching this filter.
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                    ) : (
+                      filteredInvoices.map((inv) => {
+                        const client = clients.find((c) => c.id === inv.clientId);
+                        return (
+                          <tr key={inv.id} className="table-row-hover transition-colors">
+                            <td className="py-3 px-4 font-mono font-semibold text-foreground">
+                              {inv.invoiceNumber || inv.number}
+                            </td>
+                            <td className="py-3 px-4 text-foreground font-medium">
+                              {client ? client.name : 'Client'}
+                              {client?.company && (
+                                <span className="block text-[11px] text-muted-foreground font-normal">
+                                  {client.company}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-muted-foreground font-mono">
+                              {inv.dueDate ? formatDate(inv.dueDate) : 'On Receipt'}
+                            </td>
+                            <td className="py-3 px-4 font-mono font-medium text-foreground">
+                              {formatCurrency(inv.totalAmount || inv.total || 0, inv.currency)}
+                            </td>
+                            <td className="py-3 px-4 font-mono font-semibold text-foreground">
+                              {inv.balanceDue > 0 ? (
+                                <span className={inv.status === 'overdue' ? 'text-rose-600 dark:text-rose-400' : ''}>
+                                  {formatCurrency(inv.balanceDue, inv.currency)}
+                                </span>
+                              ) : (
+                                <span className="text-emerald-600 dark:text-emerald-400">Paid in Full</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase font-mono ${
+                                  inv.status === 'paid'
+                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                    : inv.status === 'overdue'
+                                      ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                                      : inv.status === 'partially_paid'
+                                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                                        : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700'
+                                }`}
+                              >
+                                {inv.status.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => setPreviewInvoice(inv)}
+                                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded text-muted-foreground hover:text-foreground"
+                                  title="Preview PDF"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+
+                                {inv.status === 'draft' && (
+                                  <button
+                                    onClick={() => sendMutation.mutate(inv.id)}
+                                    className="px-2 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded hover:opacity-90"
+                                  >
+                                    Send
+                                  </button>
+                                )}
+
+                                {inv.balanceDue > 0 && (
+                                  <button
+                                    onClick={() => setPaymentInvoice(inv)}
+                                    className="px-2.5 py-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 rounded border border-emerald-200 dark:border-emerald-800 transition-colors"
+                                  >
+                                    Record Payment
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Tab 2: Contextual Payments History */}
+        {activeTab === 'payments' && (
+          <div className="space-y-4">
+            <div className="border border-border rounded-lg bg-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[620px] text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
+                      <th className="py-2.5 px-4">Payment Date</th>
+                      <th className="py-2.5 px-4">Invoice Ref</th>
+                      <th className="py-2.5 px-4">Method</th>
+                      <th className="py-2.5 px-4">Reference Note</th>
+                      <th className="py-2.5 px-4 text-right">Amount Received</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {payments.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                          No payment transactions recorded yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      payments.map((p) => (
+                        <tr key={p.id} className="table-row-hover transition-colors">
+                          <td className="py-3 px-4 font-mono text-muted-foreground">
+                            {formatDate(p.paymentDate || p.createdAt)}
+                          </td>
+                          <td className="py-3 px-4 font-mono font-medium text-foreground">
+                            {p.invoiceNumber || p.invoiceId?.slice(0, 8)}
+                          </td>
+                          <td className="py-3 px-4 capitalize text-foreground">
+                            <span className="px-2 py-0.5 rounded border border-border bg-muted/40 font-mono text-[10px]">
+                              {p.paymentMethod || 'Bank Transfer'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-muted-foreground">
+                            {p.notes || p.reference || 'Standard settlement'}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            +{formatCurrency(p.amount, p.currency)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Record Payment Dialog */}
         {paymentInvoice && (
@@ -299,7 +387,7 @@ export default function InvoicesPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-xl font-bold tracking-tight text-foreground">INVOICE</h2>
-                  <div className="font-mono text-xs text-muted-foreground mt-0.5">{previewInvoice.number}</div>
+                  <div className="font-mono text-xs text-muted-foreground mt-0.5">{previewInvoice.invoiceNumber || previewInvoice.number}</div>
                 </div>
                 <div className="text-right text-xs">
                   <div className="font-semibold text-foreground">Nimish Studio</div>

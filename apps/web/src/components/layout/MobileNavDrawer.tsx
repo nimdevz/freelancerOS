@@ -36,46 +36,37 @@ const NAVIGATION_GROUPS = [
   {
     title: 'Work',
     items: [
-      { name: 'Leads', href: '/leads', icon: Target },
-      { name: 'Clients', href: '/clients', icon: Users },
       { name: 'Projects', href: '/projects', icon: FolderKanban },
       { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+      { name: 'Deliverables', href: '/deliverables', icon: PackageCheck },
     ],
   },
   {
-    title: 'Sales',
+    title: 'Clients',
     items: [
-      { name: 'Proposals', href: '/proposals', icon: FileText },
-      { name: 'Quotes', href: '/quotes', icon: ReceiptText },
-      { name: 'Contracts', href: '/contracts', icon: ScrollText },
+      { name: 'Clients', href: '/clients', icon: Users },
+      { name: 'Leads', href: '/leads', icon: Target },
     ],
   },
   {
     title: 'Money',
     items: [
       { name: 'Invoices', href: '/invoices', icon: FileCheck2 },
-      { name: 'Payments', href: '/payments', icon: CreditCard },
       { name: 'Expenses', href: '/expenses', icon: Receipt },
     ],
   },
   {
-    title: 'Operations',
+    title: 'Business',
     items: [
-      { name: 'Time Tracking', href: '/time', icon: Timer },
-      { name: 'Deliverables', href: '/deliverables', icon: PackageCheck },
-      { name: 'Approvals', href: '/approvals', icon: Stamp },
-      { name: 'Retainers', href: '/retainers', icon: Repeat },
+      { name: 'Proposals', href: '/proposals', icon: FileText },
+      { name: 'Time', href: '/time', icon: Timer },
+      { name: 'Reports', href: '/reports', icon: BarChart3 },
     ],
-  },
-  {
-    title: 'Insights',
-    items: [{ name: 'Reports & Profit', href: '/reports', icon: BarChart3 }],
   },
   {
     title: 'Settings',
     items: [
-      { name: 'Workspace', href: '/settings', icon: Settings },
-      { name: 'Billing', href: '/settings/billing', icon: ShieldCheck },
+      { name: 'Settings', href: '/settings', icon: Settings },
     ],
   },
 ];

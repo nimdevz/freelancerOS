@@ -7,6 +7,7 @@ import { BottomNav } from './BottomNav';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { CommandPalette } from '../command-palette/CommandPalette';
 import { QuickCreateModal } from '../modals/QuickCreateModal';
+import { GlobalNewMenu } from './GlobalNewMenu';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -31,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Global Interactive Overlays */}
       <CommandPalette />
       <QuickCreateModal />
+      <GlobalNewMenu />
     </div>
   );
 }
