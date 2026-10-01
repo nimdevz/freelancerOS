@@ -26,7 +26,7 @@ export class DashboardService {
     const org = await this.dbService.db.query.organizations.findFirst({
       where: eq(organizations.id, organizationId),
     });
-    const currency = org?.currency || 'INR';
+    const currency = org?.currency || 'USD';
 
     const clientList = await this.dbService.db.query.clients.findMany({
       where: eq(clients.organizationId, organizationId),

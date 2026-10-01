@@ -15,7 +15,7 @@ export class ReportsService {
     const org = await this.dbService.db.query.organizations.findFirst({
       where: eq(organizations.id, organizationId),
     });
-    const currency = org?.currency || 'INR';
+    const currency = org?.currency || 'USD';
 
     const projectList = await this.projectsService.list(organizationId);
 
@@ -44,7 +44,7 @@ export class ReportsService {
 
     const totalHoursAll = projectList.reduce((sum, p) => sum + (p.totalHoursTracked || 0), 0);
     const averageHourlyRate =
-      totalHoursAll > 0 ? Math.round(netProfitYTD / totalHoursAll) : org?.hourlyRate || 2000;
+      totalHoursAll > 0 ? Math.round(netProfitYTD / totalHoursAll) : org?.hourlyRate || 125;
 
     // Monthly cashflow for last 6 months
     const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];

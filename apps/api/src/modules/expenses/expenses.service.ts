@@ -69,7 +69,7 @@ export class ExpensesService {
       vendor: data.vendor,
       category: data.category || 'software',
       amount: data.amount,
-      currency: data.currency || 'INR',
+      currency: data.currency || 'USD',
       projectId: data.projectId || null,
       clientId: data.clientId || null,
       receiptUrl: data.receiptUrl || null,
@@ -84,7 +84,7 @@ export class ExpensesService {
       entityType: 'expense',
       entityId: id,
       action: 'created',
-      description: `Logged expense of ${data.currency || 'INR'} ${data.amount} for "${data.vendor}"`,
+      description: `Logged expense of ${data.currency || 'USD'} ${data.amount} for "${data.vendor}"`,
     });
 
     return this.get(organizationId, id);

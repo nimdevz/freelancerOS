@@ -94,7 +94,7 @@ export class QuotesService {
       title: data.title,
       status: 'draft',
       validUntil: data.validUntil || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
-      currency: data.currency || 'INR',
+      currency: data.currency || 'USD',
       subtotal,
       discountAmount,
       taxAmount,

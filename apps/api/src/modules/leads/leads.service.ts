@@ -45,7 +45,7 @@ export class LeadsService {
       phone: data.phone || null,
       stage: data.stage || 'new',
       value: data.value ?? data.estimatedValue ?? 0,
-      currency: data.currency || 'INR',
+      currency: data.currency || 'USD',
       probabilityPercent: data.probabilityPercent || 50,
       expectedCloseDate: data.expectedCloseDate || null,
       nextAction: data.nextAction || null,

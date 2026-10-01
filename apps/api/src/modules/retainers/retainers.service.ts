@@ -65,7 +65,7 @@ export class RetainersService {
       organizationId,
       clientId: data.clientId,
       monthlyAmount: data.monthlyAmount,
-      currency: data.currency || 'INR',
+      currency: data.currency || 'USD',
       includedHours: data.includedHours || 20,
       usedHours: 0,
       startDate: data.startDate || now.split('T')[0],
@@ -80,7 +80,7 @@ export class RetainersService {
       entityType: 'retainer',
       entityId: id,
       action: 'created',
-      description: `Created monthly retainer of ${data.currency || 'INR'} ${data.monthlyAmount}`,
+      description: `Created monthly retainer of ${data.currency || 'USD'} ${data.monthlyAmount}`,
     });
 
     return this.get(organizationId, id);

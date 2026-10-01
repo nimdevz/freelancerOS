@@ -100,7 +100,7 @@ export class ClientsService {
       phone: data.phone || null,
       website: data.website || null,
       address: data.address || null,
-      currency: data.currency || 'INR',
+      currency: data.currency || 'USD',
       notes: data.notes || null,
       status: data.status || 'active',
       createdAt: now,

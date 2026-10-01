@@ -122,7 +122,7 @@ export class InvoicesService {
       status: 'draft',
       issueDate: data.issueDate || now.split('T')[0],
       dueDate: data.dueDate || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
-      currency: data.currency || 'INR',
+      currency: data.currency || 'USD',
       subtotal,
       discountPercent,
       discountAmount,

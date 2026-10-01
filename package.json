@@ -11,6 +11,10 @@
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",
     "seed": "pnpm --filter=@freelanceros/api run seed",
+    "db:generate": "pnpm --filter=@freelanceros/api run db:generate",
+    "db:migrate": "pnpm --filter=@freelanceros/api run db:migrate",
+    "db:push": "pnpm --filter=@freelanceros/api run db:push",
+    "db:studio": "pnpm --filter=@freelanceros/api run db:studio",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {

@@ -91,7 +91,7 @@ export class TimeTrackingService {
       startTime: now,
       durationMinutes: 0,
       billable: data.billable !== false ? 1 : 0,
-      hourlyRate: org?.hourlyRate || 2000,
+      hourlyRate: org?.hourlyRate || 125,
       isRunning: 1,
       createdAt: now,
       updatedAt: now,
@@ -149,7 +149,7 @@ export class TimeTrackingService {
     });
 
     const durationMinutes = data.durationMinutes || 60;
-    const hourlyRate = data.hourlyRate || org?.hourlyRate || 2000;
+    const hourlyRate = data.hourlyRate || org?.hourlyRate || 125;
 
     await this.dbService.db.insert(timeEntries).values({
       id,

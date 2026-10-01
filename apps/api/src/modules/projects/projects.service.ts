@@ -179,7 +179,7 @@ export class ProjectsService {
       startDate: data.startDate || now.split('T')[0],
       deadline: data.deadline || null,
       budget: data.budget || 0,
-      currency: data.currency || 'INR',
+      currency: data.currency || 'USD',
       includedRevisions: data.includedRevisions || 2,
       progressPercent: data.progressPercent || 0,
       createdAt: now,
