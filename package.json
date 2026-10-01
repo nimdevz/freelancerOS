@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm -r --filter=!./apps/web run build && pnpm --filter=@freelanceros/web run build",
     "dev:api": "pnpm --filter=@freelanceros/api run dev",
+    "dev:worker": "pnpm --filter=@freelanceros/api run dev:worker",
     "dev:web": "pnpm --filter=@freelanceros/web run dev",
     "dev": "pnpm -r --parallel run dev",
     "lint": "pnpm -r run lint",
@@ -15,7 +16,9 @@
     "db:migrate": "pnpm --filter=@freelanceros/api run db:migrate",
     "db:push": "pnpm --filter=@freelanceros/api run db:push",
     "db:studio": "pnpm --filter=@freelanceros/api run db:studio",
-    "deploy": "wrangler deploy"
+    "deploy:worker": "pnpm --filter=@freelanceros/api run deploy:worker",
+    "deploy:web": "wrangler pages deploy apps/web/out --project-name=freelanceros",
+    "deploy": "pnpm run deploy:worker"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

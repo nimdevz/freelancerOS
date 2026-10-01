@@ -6,38 +6,43 @@ FreelancerOS is a production-grade business operating system designed for indepe
 
 ---
 
-## 1. Core Architecture & Two-Phase Deployment
+## 1. Core Architecture & Serverless Infrastructure
 
-FreelancerOS features a resilient, dual-layer architecture built to support both **frictionless standalone beta testing** and **full-scale multi-tenant cloud production**:
+FreelancerOS is built on a **100% serverless, Cloudflare-native architecture** designed to eliminate all persistent VPS, Railway, and always-running Node.js server dependencies:
 
 ```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Next.js 15 Web Frontend                        │
-│          (Statically exported to apps/web/out for Cloudflare CDN)       │
-└───────────────────────────────────┬────────────────────────────────────┘
+                               FREELANCEROS
                                     │
-           ┌────────────────────────┴────────────────────────┐
-           ▼                                                 ▼
-┌───────────────────────────────┐         ┌───────────────────────────────┐
-│     PHASE 1: BETA TESTING     │         │     PHASE 2: CLOUD PRODUCTION │
-│  (Embedded In-Browser Engine) │         │       (NestJS + Turso Cloud)  │
-│                               │         │                               │
-│  • Runs 100% on Cloudflare CDN│         │  • NestJS 11 Modular REST API │
-│  • $0 server maintenance / VPS│         │  • Drizzle ORM (libsql driver)│
-│  • Client-side persistent DB  │         │  • Turso Serverless Database  │
-│  • Private to each tester     │         │  • Multi-tenant isolation     │
-└───────────────────────────────┘         └───────────────────────────────┘
+                      ┌─────────────┴─────────────┐
+                      │                           │
+                   Next.js                    API Layer
+                      │                           │
+              Cloudflare Pages             Hono on Workers
+                      │                           │
+                      └─────────────┬─────────────┘
+                                    │
+                           Cloudflare Network
+                                    │
+                ┌───────────────────┼───────────────────┐
+                │                   │                   │
+                ▼                   ▼                   ▼
+              Turso                 R2              Queues & Crons
+            Database              Files            Background Jobs
+                │                   │                   │
+                │                   │                   ▼
+                │                   │             Scheduled Sweep
+                │                   │
+                └───────────────────┴───────────────────
 ```
 
-### Phase 1: Standalone Beta Testing (Active Now)
-- **Zero Backend Maintenance:** The web application is compiled as a static Single Page Application (`apps/web/out`) served directly from Cloudflare’s global edge network.
-- **Embedded Client Store:** Features a complete client-side data engine (`localStorage`). Each tester gets an isolated, interactive workspace where they can create clients, log projects, track time, generate invoices, record payments, and test currency switching.
-- **Zero Server Costs & 100% Uptime:** No servers can crash, time out, or sleep during your beta test period.
-
-### Phase 2: Full-Stack Production (Ready Whenever You Are)
-- **Database:** Hosted on **Turso / libSQL** serverless edge database.
-- **Backend:** NestJS 11 modular API with Drizzle ORM connecting to Turso.
-- **Data Model:** 26 relational tables with strict foreign keys, query indexes, and workspace isolation.
+### Infrastructure Components
+- **Frontend (`apps/web`):** Next.js 15 statically compiled (`output: 'export'`) to `apps/web/out` and served from Cloudflare's global edge network.
+- **Serverless API (`apps/api`):** Hono running natively on Cloudflare Workers (`compatibility_flags: ["nodejs_compat"]`). Zero cold starts, global edge latency.
+- **Database:** Hosted on **Turso / libSQL** serverless edge database using HTTP web client (`@libsql/client/web`) and Drizzle ORM.
+- **File Storage:** **Cloudflare R2** bucket (`R2_BUCKET`) for deliverables, version previews, and invoice attachments without hitting Worker memory limits.
+- **Scheduled Jobs:** **Cloudflare Cron Triggers** (`0 * * * *`) for automated overdue invoice detection and sweep.
+- **Asynchronous Jobs:** **Cloudflare Queues** (`BACKGROUND_QUEUE`) for reliable background processing.
+- **$0 Idle Cost:** Scales to zero when not in use. No persistent VM, VPS, Docker daemon, or Railway instance required.
 
 ---
 
@@ -181,34 +186,41 @@ PORT=4000
 
 ---
 
-## 7. Cloudflare Deployment (Web Frontend)
+## 7. Cloudflare Serverless Deployment
 
-FreelancerOS is optimized for zero-overhead static deployment on Cloudflare.
+FreelancerOS is optimized for zero-overhead serverless deployment on Cloudflare:
 
-### Important: Why Cloudflare Secret Configuration is Not Required
-When deploying the web app to Cloudflare:
-- The web app is compiled to **100% static HTML, CSS, and JS** in `apps/web/out`.
-- Cloudflare serves these assets directly from its global CDN without executing server-side Worker scripts.
-- **You do not need to add any secrets or runtime environment variables in the Cloudflare dashboard.** Leave the Variables / Secrets section blank.
-- Private database secrets (`TURSO_AUTH_TOKEN`, `GOOGLE_CLIENT_SECRET`) belong exclusively to your backend API server, protecting them from browser exposure.
+### A. Deploying Serverless API Worker (`apps/api`)
+The API runs as a Cloudflare Worker powered by Hono, Drizzle ORM, Turso, R2, and Cron triggers.
 
-### Deploying via Cloudflare Dashboard
-1. Go to **Cloudflare Dashboard** &rarr; **Workers & Pages** &rarr; **Create** &rarr; **Pages** &rarr; **Connect to Git**.
-2. Select `nimdevz/freelancerOS` (`main` branch).
-3. Build Settings:
-   - **Framework preset:** `None`
-   - **Build command:** `pnpm run build`
-   - **Build output directory:** `apps/web/out`
-4. Leave environment variables blank and click **Save and Deploy**.
+1. **Set Cloudflare Secrets for the Worker:**
+   ```bash
+   cd apps/api
+   npx wrangler secret put TURSO_DATABASE_URL
+   # Enter: libsql://freelanceros-nimdevz.aws-ap-southeast-2.turso.io
 
-### Deploying via CLI (Wrangler)
-```bash
-# Build static assets
-pnpm run build
+   npx wrangler secret put TURSO_AUTH_TOKEN
+   # Enter your Turso Auth Token
+   ```
+2. **Deploy the Worker:**
+   ```bash
+   pnpm run deploy:worker
+   ```
+3. Your Worker will deploy instantly to `https://freelanceros-api.<your-subdomain>.workers.dev`.
 
-# Deploy directly via Wrangler
-pnpm run deploy
-```
+### B. Deploying Static Frontend (`apps/web`)
+1. **Via Cloudflare Dashboard:**
+   - Go to **Cloudflare Dashboard** &rarr; **Workers & Pages** &rarr; **Create** &rarr; **Pages** &rarr; **Connect to Git**.
+   - Select `nimdevz/freelancerOS` (`main` branch).
+   - Build Settings:
+     - **Build command:** `pnpm run build`
+     - **Build output directory:** `apps/web/out`
+   - Leave environment variables blank and click **Save and Deploy**.
+2. **Via Wrangler CLI:**
+   ```bash
+   pnpm run build
+   pnpm run deploy:web
+   ```
 
 ---
 
