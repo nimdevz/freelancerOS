@@ -42,10 +42,27 @@ export default function ClientDetailPage() {
     enabled: Boolean(id),
   });
 
-  if (isLoading || !client) {
+  if (isLoading) {
     return (
       <AppShell>
-        <div className="py-20 text-center text-xs text-muted-foreground">Loading client details...</div>
+        <div className="py-20 text-center text-xs text-muted-foreground animate-pulse">Loading client details...</div>
+      </AppShell>
+    );
+  }
+
+  if (!client) {
+    return (
+      <AppShell>
+        <div className="py-16 text-center space-y-3">
+          <p className="text-xs text-muted-foreground">Client profile not found or ID is unavailable.</p>
+          <Link
+            href="/clients"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 dark:bg-white dark:text-neutral-900 rounded-md"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Clients</span>
+          </Link>
+        </div>
       </AppShell>
     );
   }

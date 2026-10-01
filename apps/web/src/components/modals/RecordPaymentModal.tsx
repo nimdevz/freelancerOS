@@ -52,7 +52,12 @@ export function RecordPaymentModal({ invoice, onClose }: RecordPaymentModalProps
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-100">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-100"
+    >
       <div className="w-full max-w-md bg-card rounded-lg sm:rounded-xl border border-border shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border shrink-0">
           <div className="flex flex-col">

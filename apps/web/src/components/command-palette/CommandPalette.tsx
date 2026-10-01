@@ -83,7 +83,12 @@ export function CommandPalette() {
     results.leads.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20 p-3 sm:px-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-100">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setCommandPaletteOpen(false);
+      }}
+      className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20 p-3 sm:px-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-100"
+    >
       <div className="w-full max-w-xl bg-card rounded-lg sm:rounded-xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[500px]">
         {/* Search Input Bar */}
         <div className="flex items-center px-3.5 sm:px-4 border-b border-border h-12 gap-2.5 sm:gap-3 shrink-0">
@@ -104,9 +109,15 @@ export function CommandPalette() {
               <X className="w-3.5 h-3.5" />
             </button>
           )}
-          <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded border border-border font-mono text-muted-foreground">
+          <kbd className="hidden sm:inline-block text-[10px] bg-muted px-1.5 py-0.5 rounded border border-border font-mono text-muted-foreground">
             ESC
           </kbd>
+          <button
+            onClick={() => setCommandPaletteOpen(false)}
+            className="sm:hidden text-xs text-muted-foreground hover:text-foreground px-1 py-0.5"
+          >
+            Cancel
+          </button>
         </div>
 
         {/* Results Container */}

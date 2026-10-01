@@ -112,10 +112,27 @@ export default function ProjectDetailPage() {
     }
   };
 
-  if (isLoading || !project) {
+  if (isLoading) {
     return (
       <AppShell>
-        <div className="py-20 text-center text-xs text-muted-foreground">Loading project...</div>
+        <div className="py-20 text-center text-xs text-muted-foreground animate-pulse">Loading project...</div>
+      </AppShell>
+    );
+  }
+
+  if (!project) {
+    return (
+      <AppShell>
+        <div className="py-16 text-center space-y-3">
+          <p className="text-xs text-muted-foreground">Project not found or ID is unavailable.</p>
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 dark:bg-white dark:text-neutral-900 rounded-md"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Projects</span>
+          </Link>
+        </div>
       </AppShell>
     );
   }
