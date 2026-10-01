@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { createClient, Client } from '@libsql/client';
 import { drizzle, LibSQLDatabase } from 'drizzle-orm/libsql';
@@ -58,6 +61,18 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async initTables() {
+    try {
+      const existing = await this.client.execute(
+        "SELECT count(*) as count FROM sqlite_master WHERE type = 'table' AND name = 'organizations';"
+      );
+      if (existing.rows[0]?.count && Number(existing.rows[0].count) > 0) {
+        this.logger.log('Database tables already provisioned and verified.');
+        return;
+      }
+    } catch {
+      // Continue to create tables if check fails
+    }
+
     const statements = [
       `CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
