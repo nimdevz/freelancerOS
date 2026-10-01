@@ -91,7 +91,7 @@ export default function SettingsPage() {
           )}
 
           {/* Business Profile */}
-          <div className="p-5 rounded-lg border border-border bg-card space-y-4">
+          <div className="p-4 sm:p-5 rounded-lg border border-border bg-card space-y-4">
             <h2 className="text-sm font-semibold text-foreground">Business Identity</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -104,7 +104,7 @@ export default function SettingsPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
 
@@ -117,14 +117,14 @@ export default function SettingsPage() {
                   value={taxId}
                   onChange={(e) => setTaxId(e.target.value)}
                   placeholder="e.g. 27AAAAA0000A1Z5"
-                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                  className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                 />
               </div>
             </div>
           </div>
 
           {/* Pricing & Commercial Defaults */}
-          <div className="p-5 rounded-lg border border-border bg-card space-y-4">
+          <div className="p-4 sm:p-5 rounded-lg border border-border bg-card space-y-4">
             <h2 className="text-sm font-semibold text-foreground">Commercial & Financial Defaults</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -135,7 +135,7 @@ export default function SettingsPage() {
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 >
                   <option value="INR">INR (₹ Indian Rupee)</option>
                   <option value="USD">USD ($ US Dollar)</option>
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                   min="0"
                   value={defaultHourlyRate}
                   onChange={(e) => setDefaultHourlyRate(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                  className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                 />
               </div>
 
@@ -164,7 +164,7 @@ export default function SettingsPage() {
                 <select
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 >
                   <option value="0">Due Immediately on Receipt</option>
                   <option value="7">Net 7 Days</option>
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                 rows={2}
                 value={bankInfo}
                 onChange={(e) => setBankInfo(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none font-mono"
+                className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none font-mono"
               />
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={updateMutation.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{updateMutation.isPending ? 'Saving Changes...' : 'Save Settings'}</span>

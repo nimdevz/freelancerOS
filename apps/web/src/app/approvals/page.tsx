@@ -146,12 +146,12 @@ export default function ApprovalsPage() {
         </div>
 
         {/* Filter bar */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
           {['all', 'pending', 'approved', 'changes_requested'].map((status) => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+              className={`px-3 py-1 text-xs rounded-md font-medium whitespace-nowrap transition-colors ${
                 filterStatus === status
                   ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
                   : 'bg-neutral-100 dark:bg-neutral-800 text-muted-foreground hover:text-foreground'
@@ -171,7 +171,7 @@ export default function ApprovalsPage() {
         {/* Approvals Table */}
         <div className="border border-border rounded-lg bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-xs min-w-[640px]">
               <thead>
                 <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
                   <th className="py-2.5 px-4">Deliverable</th>
@@ -276,8 +276,8 @@ export default function ApprovalsPage() {
 
         {/* Request Approval Modal */}
         {isRequestModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md p-5 bg-card border border-border rounded-lg shadow-xl space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-sm font-semibold text-foreground">Request Client Sign-off</h3>
                 <button
@@ -297,7 +297,7 @@ export default function ApprovalsPage() {
                     value={deliverableId}
                     onChange={(e) => setDeliverableId(e.target.value)}
                     required
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                   >
                     <option value="">Select deliverable...</option>
                     {deliverables.map((d) => (
@@ -336,8 +336,8 @@ export default function ApprovalsPage() {
 
         {/* Decide Approval Modal */}
         {isDecideModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md p-5 bg-card border border-border rounded-lg shadow-xl space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-sm font-semibold text-foreground">
                   Record Decision: {decideAction === 'approved' ? 'Approve Deliverable' : 'Request Changes'}
@@ -360,7 +360,7 @@ export default function ApprovalsPage() {
                     required
                     value={deciderName}
                     onChange={(e) => setDeciderName(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                   />
                 </div>
 
@@ -378,7 +378,7 @@ export default function ApprovalsPage() {
                     }
                     value={decideComments}
                     onChange={(e) => setDecideComments(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
                   />
                 </div>
 

@@ -201,8 +201,8 @@ export default function RetainersPage() {
 
         {/* Create Retainer Modal */}
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md p-5 bg-card border border-border rounded-lg shadow-xl space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-sm font-semibold text-foreground">Create Retainer Agreement</h3>
                 <button
@@ -222,7 +222,7 @@ export default function RetainersPage() {
                     value={clientId}
                     onChange={(e) => setClientId(e.target.value)}
                     required
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                   >
                     <option value="">Select Client...</option>
                     {clients.map((c) => (
@@ -243,11 +243,11 @@ export default function RetainersPage() {
                     placeholder="e.g. Monthly Design & Video Editing Retainer"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                       Monthly Rate (₹) *
@@ -258,7 +258,7 @@ export default function RetainersPage() {
                       min="0"
                       value={monthlyRate}
                       onChange={(e) => setMonthlyRate(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                      className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                     />
                   </div>
 
@@ -272,7 +272,7 @@ export default function RetainersPage() {
                       min="1"
                       value={includedHours}
                       onChange={(e) => setIncludedHours(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                      className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                     />
                   </div>
                 </div>

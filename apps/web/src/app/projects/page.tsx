@@ -84,7 +84,8 @@ export default function ProjectsPage() {
 
         {/* Projects Table */}
         <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-xs">
             <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
               <tr>
                 <th className="py-2.5 px-4 font-medium">Project Name</th>
@@ -153,6 +154,7 @@ export default function ProjectsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </AppShell>

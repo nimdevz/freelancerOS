@@ -57,8 +57,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-lg bg-card border border-border rounded-xl shadow-xl p-8 space-y-6">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col justify-center items-center p-3 sm:p-4">
+      <div className="w-full max-w-lg bg-card border border-border rounded-xl shadow-xl p-5 sm:p-8 space-y-6">
         {/* Step indicator */}
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export default function OnboardingPage() {
                   required
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
 
@@ -133,7 +133,7 @@ export default function OnboardingPage() {
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 >
                   <option value="INR">INR (₹ Indian Rupee)</option>
                   <option value="USD">USD ($ US Dollar)</option>
@@ -165,7 +165,7 @@ export default function OnboardingPage() {
                   min="0"
                   value={hourlyRate}
                   onChange={(e) => setHourlyRate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                  className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                 />
               </div>
 
@@ -199,7 +199,7 @@ export default function OnboardingPage() {
                   required
                   value={firstClientName}
                   onChange={(e) => setFirstClientName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
 
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
                   required
                   value={firstClientEmail}
                   onChange={(e) => setFirstClientEmail(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
             </div>
@@ -239,11 +239,11 @@ export default function OnboardingPage() {
                   required
                   value={firstProjectName}
                   onChange={(e) => setFirstProjectName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground mb-1">
                     Project Budget ({currency === 'INR' ? '₹' : '$'})
@@ -253,7 +253,7 @@ export default function OnboardingPage() {
                     min="0"
                     value={firstProjectBudget}
                     onChange={(e) => setFirstProjectBudget(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                    className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                   />
                 </div>
 
@@ -267,7 +267,7 @@ export default function OnboardingPage() {
                     max="10"
                     value={maxIncludedRevisions}
                     onChange={(e) => setMaxIncludedRevisions(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                    className="w-full px-3 py-2 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                   />
                 </div>
               </div>

@@ -19,6 +19,7 @@ import {
   Receipt,
   Bell,
   Clock,
+  Menu,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -37,6 +38,7 @@ export function Header() {
     startTimer,
     stopTimer,
     tickTimer,
+    toggleMobileDrawer,
   } = useAppStore();
 
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
@@ -124,49 +126,59 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 border-b border-border bg-card/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30 select-none">
-      {/* Global Search trigger */}
-      <div className="flex items-center gap-4">
+    <header className="h-14 border-b border-border bg-card/80 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none">
+      {/* Global Search trigger & Mobile Menu */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={toggleMobileDrawer}
+          aria-label="Open mobile menu"
+          className="p-1.5 md:hidden text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs text-muted-foreground bg-muted/60 hover:bg-muted border border-border/80 transition-colors w-64 justify-between"
+          className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-md text-xs text-muted-foreground bg-muted/60 hover:bg-muted border border-border/80 transition-colors sm:w-64 justify-between"
         >
           <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Search anything...</span>
+            <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className="hidden sm:inline">Search anything...</span>
+            <span className="sm:hidden text-[11px]">Search</span>
           </div>
-          <kbd className="text-[10px] bg-background px-1.5 py-0.5 rounded border border-border font-mono text-muted-foreground">
+          <kbd className="hidden sm:inline-block text-[10px] bg-background px-1.5 py-0.5 rounded border border-border font-mono text-muted-foreground">
             ⌘K
           </kbd>
         </button>
       </div>
 
       {/* Right Controls: Stopwatch, + New, Notifications, Theme, Demo reset */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         {/* Live Stopwatch Tracker */}
         {isTimerRunning ? (
-          <div className="flex items-center gap-2 px-3 py-1 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold">{formatStopwatch(timerElapsedSeconds)}</span>
-            <span className="text-[10px] opacity-70 truncate max-w-[100px]">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="font-semibold text-[11px] sm:text-xs">{formatStopwatch(timerElapsedSeconds)}</span>
+            <span className="hidden md:inline text-[10px] opacity-70 truncate max-w-[90px]">
               {timerProjectName || 'Project'}
             </span>
             <button
               onClick={handleStopActiveTimer}
-              className="p-1 hover:bg-white/20 dark:hover:bg-black/20 rounded transition-colors"
+              className="p-0.5 sm:p-1 hover:bg-white/20 dark:hover:bg-black/20 rounded transition-colors"
               title="Stop timer"
             >
-              <Square className="w-3 h-3 fill-current" />
+              <Square className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
             </button>
           </div>
         ) : (
           <button
             onClick={() => openQuickCreate('project')}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors border border-border/60"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors border border-border/60"
             title="Start time tracking"
           >
             <Clock className="w-3.5 h-3.5" />
-            <span>Timer</span>
+            <span className="hidden sm:inline">Timer</span>
           </button>
         )}
 
@@ -174,7 +186,7 @@ export function Header() {
         <div className="relative">
           <button
             onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md text-xs font-medium transition-colors shadow-sm"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md text-xs font-medium transition-colors shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New</span>

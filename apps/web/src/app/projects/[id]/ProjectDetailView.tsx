@@ -164,7 +164,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Profitability & Health Banner (Prompt Section 39 formulas) */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
           <div className="p-3.5 rounded-lg border border-border bg-card">
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block">
               Budget
@@ -221,7 +221,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Tabs Bar */}
-        <div className="flex border-b border-border space-x-6 text-xs">
+        <div className="flex border-b border-border gap-5 sm:space-x-6 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
           <button
             onClick={() => setActiveTab('overview')}
             className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
@@ -455,40 +455,42 @@ export default function ProjectDetailPage() {
         {/* Tab 4: Time Tracking */}
         {activeTab === 'time' && (
           <div className="border border-border rounded-lg bg-card overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
-                <tr>
-                  <th className="py-2.5 px-4 font-medium">Date</th>
-                  <th className="py-2.5 px-4 font-medium">Description</th>
-                  <th className="py-2.5 px-4 font-medium">Duration</th>
-                  <th className="py-2.5 px-4 font-medium">Billable</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Value</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {timeEntries.map((entry) => (
-                  <tr key={entry.id} className="table-row-hover">
-                    <td className="py-3 px-4 font-mono text-[11px]">
-                      {formatDate(entry.startTime)}
-                    </td>
-                    <td className="py-3 px-4 text-foreground">{entry.description}</td>
-                    <td className="py-3 px-4 font-mono">
-                      {Math.floor(entry.durationMinutes / 60)}h {entry.durationMinutes % 60}m
-                    </td>
-                    <td className="py-3 px-4">
-                      {entry.billable ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">Yes</span>
-                      ) : (
-                        <span className="text-muted-foreground">No</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right font-mono font-medium">
-                      {formatCurrency(entry.revenueAmount, 'INR')}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[540px] text-left text-xs">
+                <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
+                  <tr>
+                    <th className="py-2.5 px-4 font-medium">Date</th>
+                    <th className="py-2.5 px-4 font-medium">Description</th>
+                    <th className="py-2.5 px-4 font-medium">Duration</th>
+                    <th className="py-2.5 px-4 font-medium">Billable</th>
+                    <th className="py-2.5 px-4 font-medium text-right">Value</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {timeEntries.map((entry) => (
+                    <tr key={entry.id} className="table-row-hover">
+                      <td className="py-3 px-4 font-mono text-[11px]">
+                        {formatDate(entry.startTime)}
+                      </td>
+                      <td className="py-3 px-4 text-foreground">{entry.description}</td>
+                      <td className="py-3 px-4 font-mono">
+                        {Math.floor(entry.durationMinutes / 60)}h {entry.durationMinutes % 60}m
+                      </td>
+                      <td className="py-3 px-4">
+                        {entry.billable ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">Yes</span>
+                        ) : (
+                          <span className="text-muted-foreground">No</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-medium">
+                        {formatCurrency(entry.revenueAmount, 'INR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

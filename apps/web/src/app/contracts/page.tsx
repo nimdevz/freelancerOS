@@ -119,7 +119,7 @@ export default function ContractsPage() {
         {/* Contracts Table */}
         <div className="border border-border rounded-lg bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[560px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
                   <th className="py-2.5 px-4">Agreement Title</th>

@@ -137,14 +137,14 @@ export default function TasksPage() {
 
         {/* Kanban Board View */}
         {viewMode === 'kanban' && (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 overflow-x-auto pb-4">
+          <div className="flex md:grid md:grid-cols-5 gap-3 overflow-x-auto pb-4 snap-x snap-mandatory -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
             {STATUS_COLUMNS.map((col) => {
               const colTasks = tasks.filter((t) => t.status === col.id);
 
               return (
                 <div
                   key={col.id}
-                  className="bg-card rounded-lg border border-border p-3 flex flex-col min-w-[220px]"
+                  className="bg-card rounded-lg border border-border p-3 flex flex-col w-[260px] sm:w-[280px] md:w-auto shrink-0 md:shrink snap-center"
                 >
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-border">
                     <span className="text-xs font-semibold text-foreground">{col.label}</span>
@@ -210,7 +210,8 @@ export default function TasksPage() {
         {/* List View */}
         {viewMode === 'list' && (
           <div className="border border-border rounded-lg bg-card overflow-hidden">
-            <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left text-xs">
               <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
                 <tr>
                   <th className="py-2.5 px-4 font-medium">Task</th>
@@ -271,6 +272,7 @@ export default function TasksPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

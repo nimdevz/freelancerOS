@@ -114,57 +114,57 @@ export default function ExpensesPage() {
         </div>
 
         {/* Financial KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg border border-border bg-card">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Total Expenses
             </span>
-            <div className="text-xl font-semibold text-foreground mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-foreground mt-1 font-mono">
               {formatCurrency(totalExpenses)}
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">
               {expenses.length} total entries
             </span>
           </div>
 
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Project Direct Costs
             </span>
-            <div className="text-xl font-semibold text-foreground mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-foreground mt-1 font-mono">
               {formatCurrency(projectExpenses)}
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">Tied to client jobs</span>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">Tied to client jobs</span>
           </div>
 
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Studio Overhead
             </span>
-            <div className="text-xl font-semibold text-foreground mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-foreground mt-1 font-mono">
               {formatCurrency(overheadExpenses)}
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">General software & tools</span>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">General software & tools</span>
           </div>
 
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Tax Deductible
             </span>
-            <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
               {formatCurrency(taxDeductibleExpenses)}
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">Eligible write-offs</span>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">Eligible write-offs</span>
           </div>
         </div>
 
         {/* Filter bar */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap">
           {['all', 'software', 'contractors', 'assets', 'hardware', 'travel'].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1 text-xs rounded-md font-medium capitalize transition-colors ${
+              className={`px-3 py-1 text-xs rounded-md font-medium capitalize whitespace-nowrap shrink-0 transition-colors ${
                 categoryFilter === cat
                   ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
                   : 'bg-neutral-100 dark:bg-neutral-800 text-muted-foreground hover:text-foreground'
@@ -178,7 +178,7 @@ export default function ExpensesPage() {
         {/* Expenses Table */}
         <div className="border border-border rounded-lg bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[580px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
                   <th className="py-2.5 px-4">Date</th>

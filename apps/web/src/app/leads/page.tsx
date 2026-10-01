@@ -67,7 +67,7 @@ export default function LeadsPage() {
         </div>
 
         {/* Pipeline Board */}
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-3 overflow-x-auto pb-4">
+        <div className="flex md:grid md:grid-cols-7 gap-3 overflow-x-auto pb-4 snap-x snap-mandatory -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
           {STAGES.map((stage) => {
             const stageLeads = leads.filter((l) => l.stage === stage.id);
             const stageValue = stageLeads.reduce((sum, l) => sum + (l.value || 0), 0);
@@ -75,7 +75,7 @@ export default function LeadsPage() {
             return (
               <div
                 key={stage.id}
-                className="bg-card rounded-lg border border-border p-3 flex flex-col min-w-[200px]"
+                className="bg-card rounded-lg border border-border p-3 flex flex-col w-[270px] sm:w-[280px] md:w-auto shrink-0 md:shrink snap-center"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-border">

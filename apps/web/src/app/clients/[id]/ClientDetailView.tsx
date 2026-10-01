@@ -98,43 +98,43 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Client Financials Banner */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg border border-border bg-card">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
               Lifetime Revenue
             </span>
-            <div className="text-lg font-semibold text-foreground font-mono mt-1">
+            <div className="text-base sm:text-lg font-semibold text-foreground font-mono mt-1">
               {formatCurrency(client.totalRevenue, client.currency)}
             </div>
           </div>
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
               Outstanding Balance
             </span>
-            <div className="text-lg font-semibold font-mono mt-1 text-amber-600 dark:text-amber-400">
+            <div className="text-base sm:text-lg font-semibold font-mono mt-1 text-amber-600 dark:text-amber-400">
               {formatCurrency(client.outstandingBalance, client.currency)}
             </div>
           </div>
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
               Active Projects
             </span>
-            <div className="text-lg font-semibold text-foreground font-mono mt-1">
+            <div className="text-base sm:text-lg font-semibold text-foreground font-mono mt-1">
               {client.activeProjectsCount}
             </div>
           </div>
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
               Total Projects
             </span>
-            <div className="text-lg font-semibold text-foreground font-mono mt-1">
+            <div className="text-base sm:text-lg font-semibold text-foreground font-mono mt-1">
               {projects.length}
             </div>
           </div>
         </div>
 
         {/* Tabs Bar */}
-        <div className="flex border-b border-border space-x-6 text-xs">
+        <div className="flex border-b border-border gap-5 sm:space-x-6 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
           <button
             onClick={() => setActiveTab('overview')}
             className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${

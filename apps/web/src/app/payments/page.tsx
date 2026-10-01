@@ -94,12 +94,12 @@ export default function PaymentsPage() {
         </div>
 
         {/* Method filter */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap">
           {['all', 'bank_transfer', 'upi', 'stripe', 'card', 'cash'].map((m) => (
             <button
               key={m}
               onClick={() => setMethodFilter(m)}
-              className={`px-3 py-1 text-xs rounded-md font-medium capitalize transition-colors ${
+              className={`px-3 py-1 text-xs rounded-md font-medium capitalize whitespace-nowrap shrink-0 transition-colors ${
                 methodFilter === m
                   ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
                   : 'bg-neutral-100 dark:bg-neutral-800 text-muted-foreground hover:text-foreground'
@@ -113,7 +113,7 @@ export default function PaymentsPage() {
         {/* Payments Table */}
         <div className="border border-border rounded-lg bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[560px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
                   <th className="py-2.5 px-4">Date</th>

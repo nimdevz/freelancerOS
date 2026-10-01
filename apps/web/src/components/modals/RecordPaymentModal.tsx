@@ -52,21 +52,21 @@ export function RecordPaymentModal({ invoice, onClose }: RecordPaymentModalProps
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="w-full max-w-md bg-card rounded-lg border border-border shadow-2xl overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-100">
+      <div className="w-full max-w-md bg-card rounded-lg sm:rounded-xl border border-border shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border shrink-0">
           <div className="flex flex-col">
             <h2 className="text-sm font-semibold text-foreground">Record Payment</h2>
             <span className="text-xs text-muted-foreground">
               {invoice.invoiceNumber} — {invoice.clientName || 'Client'}
             </span>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground rounded">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
           <div className="p-3 bg-muted/50 rounded-md border border-border flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Outstanding Balance</span>
             <span className="font-semibold text-foreground font-mono">

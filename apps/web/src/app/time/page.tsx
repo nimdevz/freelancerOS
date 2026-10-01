@@ -189,12 +189,12 @@ export default function TimePage() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleStartTimer} className="flex flex-wrap items-center gap-2.5">
+              <form onSubmit={handleStartTimer} className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full md:w-auto">
                 <select
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
                   required
-                  className="px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full sm:w-auto px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 >
                   <option value="">Select Project...</option>
                   {projects.map((p) => (
@@ -208,12 +208,12 @@ export default function TimePage() {
                   placeholder="What are you working on?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground w-48 sm:w-64"
+                  className="w-full sm:w-64 px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
                 <button
                   type="submit"
                   disabled={!projectId || startTimerMutation.isPending}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm disabled:opacity-50"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm disabled:opacity-50"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
                   <span>Start Timer</span>
@@ -285,7 +285,7 @@ export default function TimePage() {
         {/* Time Entries Table */}
         <div className="border border-border rounded-lg bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[580px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
                   <th className="py-2.5 px-4">Date</th>

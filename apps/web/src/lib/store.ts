@@ -13,6 +13,11 @@ interface AppState {
   openQuickCreate: (type: QuickCreateType) => void;
   closeQuickCreate: () => void;
 
+  // Mobile Navigation Drawer
+  isMobileDrawerOpen: boolean;
+  setMobileDrawerOpen: (open: boolean) => void;
+  toggleMobileDrawer: () => void;
+
   // Active Timer
   isTimerRunning: boolean;
   timerElapsedSeconds: number;
@@ -40,6 +45,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   quickCreateType: null,
   openQuickCreate: (type) => set({ quickCreateType: type }),
   closeQuickCreate: () => set({ quickCreateType: null }),
+
+  isMobileDrawerOpen: false,
+  setMobileDrawerOpen: (open) => set({ isMobileDrawerOpen: open }),
+  toggleMobileDrawer: () => set((state) => ({ isMobileDrawerOpen: !state.isMobileDrawerOpen })),
 
   isTimerRunning: false,
   timerElapsedSeconds: 0,

@@ -83,18 +83,18 @@ export function CommandPalette() {
     results.leads.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="w-full max-w-xl bg-card rounded-lg border border-border shadow-2xl overflow-hidden flex flex-col max-h-[500px]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-20 p-3 sm:px-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-100">
+      <div className="w-full max-w-xl bg-card rounded-lg sm:rounded-xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[500px]">
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 border-b border-border h-12 gap-3">
+        <div className="flex items-center px-3.5 sm:px-4 border-b border-border h-12 gap-2.5 sm:gap-3 shrink-0">
           <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <input
             autoFocus
             type="text"
-            placeholder="Type a command or search clients, projects, invoices..."
+            placeholder="Type a command or search..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent border-none text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent border-none text-base sm:text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
           />
           {query && (
             <button

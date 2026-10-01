@@ -236,8 +236,8 @@ export default function DeliverablesPage() {
 
         {/* Create Deliverable Modal */}
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md p-5 bg-card border border-border rounded-lg shadow-xl space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-sm font-semibold text-foreground">Add Deliverable</h3>
                 <button
@@ -257,7 +257,7 @@ export default function DeliverablesPage() {
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                     required
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                   >
                     <option value="">Select Project...</option>
                     {projects.map((p) => (
@@ -278,7 +278,7 @@ export default function DeliverablesPage() {
                     placeholder="e.g. Hero Brand Video 4K Render, Figma UI Prototype"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                   />
                 </div>
 
@@ -291,7 +291,7 @@ export default function DeliverablesPage() {
                     placeholder="Provide details on what this deliverable contains..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
                   />
                 </div>
 
@@ -318,8 +318,8 @@ export default function DeliverablesPage() {
 
         {/* Upload Version Modal */}
         {isVersionModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md p-5 bg-card border border-border rounded-lg shadow-xl space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-sm font-semibold text-foreground">Upload Deliverable Version</h3>
                 <button
@@ -340,7 +340,7 @@ export default function DeliverablesPage() {
                     min="1"
                     value={versionNumber}
                     onChange={(e) => setVersionNumber(Number(e.target.value))}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                   />
                 </div>
 
@@ -353,7 +353,7 @@ export default function DeliverablesPage() {
                     placeholder="https://preview.freelanceros.app/asset-v2.mp4"
                     value={fileUrl}
                     onChange={(e) => setFileUrl(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
                   />
                 </div>
 
@@ -366,7 +366,7 @@ export default function DeliverablesPage() {
                     placeholder="e.g. Corrected color grading in scene 3 as requested; updated typography."
                     value={versionNotes}
                     onChange={(e) => setVersionNotes(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
+                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
                   />
                 </div>
 

@@ -44,47 +44,47 @@ export default function ReportsPage() {
         </div>
 
         {/* Core Financial Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg border border-border bg-card">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Total Revenue (YTD)
             </span>
-            <div className="text-xl font-semibold text-foreground mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-foreground mt-1 font-mono">
               {formatCurrency(totalRevenue)}
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">Invoiced & collected</span>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">Invoiced & collected</span>
           </div>
 
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Total Expenses
             </span>
-            <div className="text-xl font-semibold text-foreground mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-foreground mt-1 font-mono">
               {formatCurrency(totalExpenses)}
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">Production & overhead costs</span>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">Production & overhead costs</span>
           </div>
 
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Net Profit
             </span>
-            <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
               {formatCurrency(netProfit)}
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">
               {profitMargin}% net margin
             </span>
           </div>
 
-          <div className="p-4 rounded-lg border border-border bg-card">
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Effective Hourly Rate
             </span>
-            <div className="text-xl font-semibold text-foreground mt-1 font-mono">
+            <div className="text-lg sm:text-xl font-semibold text-foreground mt-1 font-mono">
               {formatCurrency(effectiveHourlyRate)}/hr
             </div>
-            <span className="text-[11px] text-muted-foreground mt-1 block">Across all logged time</span>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 block">Across all logged time</span>
           </div>
         </div>
 
@@ -104,7 +104,7 @@ export default function ReportsPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[580px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-neutral-50/50 dark:bg-neutral-900/50 text-muted-foreground font-medium">
                   <th className="py-2.5 px-3">Project</th>

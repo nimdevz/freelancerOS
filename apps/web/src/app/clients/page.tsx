@@ -64,7 +64,8 @@ export default function ClientsPage() {
 
         {/* Clients Table */}
         <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] text-left text-xs">
             <thead className="bg-muted/40 border-b border-border text-muted-foreground font-medium">
               <tr>
                 <th className="py-2.5 px-4 font-medium">Client / Company</th>
@@ -154,6 +155,7 @@ export default function ClientsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </AppShell>
