@@ -5,6 +5,6 @@
   "files": [
     "base.json",
     "nextjs.json",
-    "nestjs.json"
+    "worker.json"
   ]
 }

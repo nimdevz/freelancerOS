@@ -5,10 +5,15 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import dynamic from 'next/dynamic';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatDate } from '@freelanceros/ui';
-import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 import { Invoice } from '@freelanceros/types';
+
+const RecordPaymentModal = dynamic(
+  () => import('@/components/modals/RecordPaymentModal').then((m) => m.RecordPaymentModal),
+  { ssr: false }
+);
 import { exportInvoicesToCsv } from '@/lib/csv-export';
 import {
   CreditCard,

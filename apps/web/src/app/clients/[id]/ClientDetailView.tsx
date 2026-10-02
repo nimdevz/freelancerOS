@@ -29,7 +29,12 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
-import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
+import dynamic from 'next/dynamic';
+
+const RecordPaymentModal = dynamic(
+  () => import('@/components/modals/RecordPaymentModal').then((m) => m.RecordPaymentModal),
+  { ssr: false }
+);
 
 export default function ClientDetailPage() {
   const params = useParams();

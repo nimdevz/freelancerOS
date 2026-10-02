@@ -1,13 +1,26 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
-import { MobileNavDrawer } from './MobileNavDrawer';
-import { CommandPalette } from '../command-palette/CommandPalette';
-import { QuickCreateModal } from '../modals/QuickCreateModal';
 import { GlobalNewMenu } from './GlobalNewMenu';
+
+const MobileNavDrawer = dynamic(
+  () => import('./MobileNavDrawer').then((m) => m.MobileNavDrawer),
+  { ssr: false }
+);
+
+const CommandPalette = dynamic(
+  () => import('../command-palette/CommandPalette').then((m) => m.CommandPalette),
+  { ssr: false }
+);
+
+const QuickCreateModal = dynamic(
+  () => import('../modals/QuickCreateModal').then((m) => m.QuickCreateModal),
+  { ssr: false }
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (

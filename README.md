@@ -86,7 +86,7 @@ SETTINGS        Organization profile, commercial rates, tax ID, wire details
 - **Authentication:** Integrated Google Identity Services (GIS) OAuth 2.0 with instant fallback
 
 ### Backend API (`apps/api`)
-- **Framework:** NestJS 11 (Modular Domain Architecture, OpenAPI / Swagger 3.0)
+- **Framework:** **Hono** running on **Cloudflare Workers** (Edge-native, sub-millisecond cold starts, serverless-first)
 - **Database Engine:** **Turso / libSQL** (Distributed SQLite at the edge)
 - **ORM:** **Drizzle ORM** (`drizzle-orm/libsql` & `drizzle-orm/sqlite-core`)
 - **Migrations:** Managed via **Drizzle Kit** (`drizzle-kit`)
@@ -96,15 +96,14 @@ SETTINGS        Organization profile, commercial rates, tax ID, wire details
 freelanceros/
 ├── apps/
 │   ├── web/               # Next.js 15 static export frontend
-│   └── api/               # NestJS 11 REST API with Drizzle ORM & Turso
+│   └── api/               # Cloudflare Workers Serverless API (Hono + Drizzle + Turso)
 ├── packages/
 │   ├── types/             # Shared TypeScript domain models & DTOs
 │   ├── validation/        # Zod validation schemas shared across client & server
 │   ├── api-client/        # Type-safe API client for web & future mobile apps
 │   ├── config/            # Constants, currency definitions, pricing plans
 │   ├── ui/                # Shared UI primitives and formatters
-│   ├── tsconfig/          # Base TypeScript configurations
-│   └── eslint-config/     # Workspace linting rules
+│   └── tsconfig/          # Base TypeScript configurations
 ├── wrangler.json          # Cloudflare Workers / Pages static assets configuration
 └── package.json           # Monorepo scripts
 ```
