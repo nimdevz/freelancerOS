@@ -30,7 +30,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 
 export default function InvoicesPage() {
   const queryClient = useQueryClient();
-  const { openQuickCreate } = useAppStore();
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [activeTab, setActiveTab] = useState<'invoices' | 'payments'>('invoices');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);

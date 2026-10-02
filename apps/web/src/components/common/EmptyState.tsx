@@ -33,7 +33,8 @@ export function EmptyState({
   className = '',
 }: EmptyStateProps) {
   const queryClient = useQueryClient();
-  const { setDemoMode, isDemoMode } = useAppStore();
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
+  const setDemoMode = useAppStore((s) => s.setDemoMode);
   const [isLoadingDemo, setIsLoadingDemo] = useState(false);
 
   const handleExploreDemo = async () => {

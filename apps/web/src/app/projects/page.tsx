@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
@@ -308,9 +308,10 @@ const PROJECT_TEMPLATES: ProjectTemplatePreset[] = [
 export default function ProjectsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { openQuickCreate } = useAppStore();
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [filter, setFilter] = useState<'all' | 'active' | 'review' | 'completed' | 'archived'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearch = useDeferredValue(searchTerm);
 
   // Project Templates Modal State
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -434,9 +435,9 @@ export default function ProjectsPage() {
     })
     .filter(
       (p) =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.code.toLowerCase().includes(searchTerm.toLowerCase()),
+        p.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+        p.clientName?.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+        p.code.toLowerCase().includes(deferredSearch.toLowerCase()),
     );
 
   return (

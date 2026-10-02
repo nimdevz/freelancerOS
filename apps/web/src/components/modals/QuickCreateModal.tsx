@@ -8,7 +8,8 @@ import { X, Loader2 } from 'lucide-react';
 
 export function QuickCreateModal() {
   const queryClient = useQueryClient();
-  const { quickCreateType, closeQuickCreate } = useAppStore();
+  const quickCreateType = useAppStore((s) => s.quickCreateType);
+  const closeQuickCreate = useAppStore((s) => s.closeQuickCreate);
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});

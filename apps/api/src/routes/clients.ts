@@ -9,22 +9,21 @@ clientsRouter.get('/', async (c) => {
   const db = getDb(c.env);
   const orgId = c.get('organizationId')!;
 
-  const clientList = await db.query.clients.findMany({
-    where: eq(schema.clients.organizationId, orgId),
-    orderBy: [desc(schema.clients.createdAt)],
-  });
-
-  const allProjects = await db.query.projects.findMany({
-    where: eq(schema.projects.organizationId, orgId),
-  });
-
-  const allInvoices = await db.query.invoices.findMany({
-    where: eq(schema.invoices.organizationId, orgId),
-  });
-
-  const allPayments = await db.query.payments.findMany({
-    where: eq(schema.payments.organizationId, orgId),
-  });
+  const [clientList, allProjects, allInvoices, allPayments] = await Promise.all([
+    db.query.clients.findMany({
+      where: eq(schema.clients.organizationId, orgId),
+      orderBy: [desc(schema.clients.createdAt)],
+    }),
+    db.query.projects.findMany({
+      where: eq(schema.projects.organizationId, orgId),
+    }),
+    db.query.invoices.findMany({
+      where: eq(schema.invoices.organizationId, orgId),
+    }),
+    db.query.payments.findMany({
+      where: eq(schema.payments.organizationId, orgId),
+    }),
+  ]);
 
   const enriched = clientList.map((client) => {
     const projs = allProjects.filter((p) => p.clientId === client.id);
@@ -59,21 +58,20 @@ clientsRouter.get('/:id', async (c) => {
     return c.json({ message: 'Client not found' }, 404);
   }
 
-  const projs = await db.query.projects.findMany({
-    where: and(eq(schema.projects.clientId, id), eq(schema.projects.organizationId, orgId)),
-  });
-
-  const invs = await db.query.invoices.findMany({
-    where: and(eq(schema.invoices.clientId, id), eq(schema.invoices.organizationId, orgId)),
-  });
-
-  const contacts = await db.query.clientContacts.findMany({
-    where: eq(schema.clientContacts.clientId, id),
-  });
-
-  const contractsList = await db.query.contracts.findMany({
-    where: and(eq(schema.contracts.clientId, id), eq(schema.contracts.organizationId, orgId)),
-  });
+  const [projs, invs, contacts, contractsList] = await Promise.all([
+    db.query.projects.findMany({
+      where: and(eq(schema.projects.clientId, id), eq(schema.projects.organizationId, orgId)),
+    }),
+    db.query.invoices.findMany({
+      where: and(eq(schema.invoices.clientId, id), eq(schema.invoices.organizationId, orgId)),
+    }),
+    db.query.clientContacts.findMany({
+      where: eq(schema.clientContacts.clientId, id),
+    }),
+    db.query.contracts.findMany({
+      where: and(eq(schema.contracts.clientId, id), eq(schema.contracts.organizationId, orgId)),
+    }),
+  ]);
 
   return c.json({
     ...client,

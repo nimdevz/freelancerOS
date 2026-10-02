@@ -21,17 +21,29 @@ import {
 } from 'lucide-react';
 import { exportTimeEntriesToCsv } from '@/lib/csv-export';
 
+function ActiveTimerClockDisplay() {
+  const timerElapsedSeconds = useAppStore((s) => s.timerElapsedSeconds);
+  const hours = Math.floor(timerElapsedSeconds / 3600);
+  const minutes = Math.floor((timerElapsedSeconds % 3600) / 60);
+  const seconds = timerElapsedSeconds % 60;
+  const formatted = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(
+    seconds,
+  ).padStart(2, '0')}`;
+  return (
+    <div className="text-2xl font-mono font-semibold tracking-tight text-foreground mt-0.5">
+      {formatted}
+    </div>
+  );
+}
+
 export default function TimePage() {
   const queryClient = useQueryClient();
-  const {
-    isTimerRunning,
-    timerElapsedSeconds,
-    timerProjectId,
-    timerDescription,
-    activeTimeEntryId,
-    startTimer,
-    stopTimer,
-  } = useAppStore();
+  const isTimerRunning = useAppStore((s) => s.isTimerRunning);
+  const timerProjectId = useAppStore((s) => s.timerProjectId);
+  const timerDescription = useAppStore((s) => s.timerDescription);
+  const activeTimeEntryId = useAppStore((s) => s.activeTimeEntryId);
+  const startTimer = useAppStore((s) => s.startTimer);
+  const stopTimer = useAppStore((s) => s.stopTimer);
 
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
@@ -178,9 +190,7 @@ export default function TimePage() {
                 <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   {isTimerRunning ? 'Timer Active' : 'Ready to Track'}
                 </span>
-                <div className="text-2xl font-mono font-semibold tracking-tight text-foreground mt-0.5">
-                  {formatTimerClock(timerElapsedSeconds)}
-                </div>
+                <ActiveTimerClockDisplay />
               </div>
             </div>
 

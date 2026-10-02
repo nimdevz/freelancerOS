@@ -36,6 +36,7 @@ export const proposals = sqliteTable(
   (table) => [
     index('idx_proposals_org').on(table.organizationId),
     index('idx_proposals_client').on(table.clientId),
+    index('idx_proposals_project').on(table.projectId),
     index('idx_proposals_status').on(table.status),
   ],
 );

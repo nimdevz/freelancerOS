@@ -9,20 +9,19 @@ invoicesRouter.get('/', async (c) => {
   const db = getDb(c.env);
   const orgId = c.get('organizationId')!;
 
-  const list = await db.query.invoices.findMany({
-    where: eq(schema.invoices.organizationId, orgId),
-    orderBy: [desc(schema.invoices.issueDate)],
-  });
-
-  const clientList = await db.query.clients.findMany({
-    where: eq(schema.clients.organizationId, orgId),
-  });
-
-  const projectList = await db.query.projects.findMany({
-    where: eq(schema.projects.organizationId, orgId),
-  });
-
-  const allItems = await db.query.invoiceItems.findMany();
+  const [list, clientList, projectList, allItems] = await Promise.all([
+    db.query.invoices.findMany({
+      where: eq(schema.invoices.organizationId, orgId),
+      orderBy: [desc(schema.invoices.issueDate)],
+    }),
+    db.query.clients.findMany({
+      where: eq(schema.clients.organizationId, orgId),
+    }),
+    db.query.projects.findMany({
+      where: eq(schema.projects.organizationId, orgId),
+    }),
+    db.query.invoiceItems.findMany(),
+  ]);
 
   const enriched = list.map((inv) => {
     const client = clientList.find((cl) => cl.id === inv.clientId);
@@ -53,22 +52,21 @@ invoicesRouter.get('/:id', async (c) => {
     return c.json({ message: 'Invoice not found' }, 404);
   }
 
-  const client = await db.query.clients.findFirst({
-    where: eq(schema.clients.id, inv.clientId),
-  });
-
-  const proj = inv.projectId
-    ? await db.query.projects.findFirst({ where: eq(schema.projects.id, inv.projectId) })
-    : null;
-
-  const items = await db.query.invoiceItems.findMany({
-    where: eq(schema.invoiceItems.invoiceId, id),
-  });
-
-  const invPayments = await db.query.payments.findMany({
-    where: and(eq(schema.payments.invoiceId, id), eq(schema.payments.organizationId, orgId)),
-    orderBy: [desc(schema.payments.paymentDate)],
-  });
+  const [client, proj, items, invPayments] = await Promise.all([
+    db.query.clients.findFirst({
+      where: eq(schema.clients.id, inv.clientId),
+    }),
+    inv.projectId
+      ? db.query.projects.findFirst({ where: eq(schema.projects.id, inv.projectId) })
+      : Promise.resolve(null),
+    db.query.invoiceItems.findMany({
+      where: eq(schema.invoiceItems.invoiceId, id),
+    }),
+    db.query.payments.findMany({
+      where: and(eq(schema.payments.invoiceId, id), eq(schema.payments.organizationId, orgId)),
+      orderBy: [desc(schema.payments.paymentDate)],
+    }),
+  ]);
 
   return c.json({
     ...inv,

@@ -14,7 +14,8 @@ import {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { toggleMobileDrawer, isMobileDrawerOpen } = useAppStore();
+  const isMobileDrawerOpen = useAppStore((s) => s.isMobileDrawerOpen);
+  const toggleMobileDrawer = useAppStore((s) => s.toggleMobileDrawer);
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },

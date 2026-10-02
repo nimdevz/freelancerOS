@@ -9,16 +9,16 @@ proposalsRouter.get('/', async (c) => {
   const db = getDb(c.env);
   const orgId = c.get('organizationId')!;
 
-  const list = await db.query.proposals.findMany({
-    where: eq(schema.proposals.organizationId, orgId),
-    orderBy: [desc(schema.proposals.createdAt)],
-  });
-
-  const clientList = await db.query.clients.findMany({
-    where: eq(schema.clients.organizationId, orgId),
-  });
-
-  const allItems = await db.query.proposalItems.findMany();
+  const [list, clientList, allItems] = await Promise.all([
+    db.query.proposals.findMany({
+      where: eq(schema.proposals.organizationId, orgId),
+      orderBy: [desc(schema.proposals.createdAt)],
+    }),
+    db.query.clients.findMany({
+      where: eq(schema.clients.organizationId, orgId),
+    }),
+    db.query.proposalItems.findMany(),
+  ]);
 
   const enriched = list.map((p) => {
     const client = clientList.find((cl) => cl.id === p.clientId);
@@ -46,13 +46,14 @@ proposalsRouter.get('/:id', async (c) => {
     return c.json({ message: 'Proposal not found' }, 404);
   }
 
-  const client = await db.query.clients.findFirst({
-    where: eq(schema.clients.id, proposal.clientId),
-  });
-
-  const items = await db.query.proposalItems.findMany({
-    where: eq(schema.proposalItems.proposalId, id),
-  });
+  const [client, items] = await Promise.all([
+    db.query.clients.findFirst({
+      where: eq(schema.clients.id, proposal.clientId),
+    }),
+    db.query.proposalItems.findMany({
+      where: eq(schema.proposalItems.proposalId, id),
+    }),
+  ]);
 
   return c.json({
     ...proposal,

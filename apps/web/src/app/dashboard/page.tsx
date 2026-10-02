@@ -29,7 +29,7 @@ import {
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
-  const { openQuickCreate } = useAppStore();
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [attentionFilter, setAttentionFilter] = useState<'all' | 'high' | 'invoices' | 'projects'>('all');
 
   const { data: user } = useQuery({
@@ -40,7 +40,6 @@ export default function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => api.dashboard.getSummary(),
-    refetchInterval: 15000,
   });
 
   const resetDemoMutation = useMutation({

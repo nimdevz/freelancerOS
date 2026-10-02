@@ -5,35 +5,58 @@ import { eq, and, desc } from 'drizzle-orm';
 
 export const projectsRouter = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
-export async function getEnrichedProjects(db: any, orgId: string) {
-  const projectList = await db.query.projects.findMany({
-    where: eq(schema.projects.organizationId, orgId),
-    orderBy: [desc(schema.projects.createdAt)],
-  });
-
-  const clientList = await db.query.clients.findMany({
-    where: eq(schema.clients.organizationId, orgId),
-  });
-
-  const allTime = await db.query.timeEntries.findMany({
-    where: eq(schema.timeEntries.organizationId, orgId),
-  });
-
-  const allInvoices = await db.query.invoices.findMany({
-    where: eq(schema.invoices.organizationId, orgId),
-  });
-
-  const allPayments = await db.query.payments.findMany({
-    where: eq(schema.payments.organizationId, orgId),
-  });
-
-  const allExpenses = await db.query.expenses.findMany({
-    where: eq(schema.expenses.organizationId, orgId),
-  });
-
-  const allRevisions = await db.query.revisions.findMany({
-    where: eq(schema.revisions.organizationId, orgId),
-  });
+export async function getEnrichedProjects(
+  db: any,
+  orgId: string,
+  preloaded?: {
+    projects?: any[];
+    clients?: any[];
+    timeEntries?: any[];
+    invoices?: any[];
+    payments?: any[];
+    expenses?: any[];
+    revisions?: any[];
+  },
+) {
+  const [
+    projectList,
+    clientList,
+    allTime,
+    allInvoices,
+    allPayments,
+    allExpenses,
+    allRevisions,
+  ] = await Promise.all([
+    preloaded?.projects ??
+      db.query.projects.findMany({
+        where: eq(schema.projects.organizationId, orgId),
+        orderBy: [desc(schema.projects.createdAt)],
+      }),
+    preloaded?.clients ??
+      db.query.clients.findMany({
+        where: eq(schema.clients.organizationId, orgId),
+      }),
+    preloaded?.timeEntries ??
+      db.query.timeEntries.findMany({
+        where: eq(schema.timeEntries.organizationId, orgId),
+      }),
+    preloaded?.invoices ??
+      db.query.invoices.findMany({
+        where: eq(schema.invoices.organizationId, orgId),
+      }),
+    preloaded?.payments ??
+      db.query.payments.findMany({
+        where: eq(schema.payments.organizationId, orgId),
+      }),
+    preloaded?.expenses ??
+      db.query.expenses.findMany({
+        where: eq(schema.expenses.organizationId, orgId),
+      }),
+    preloaded?.revisions ??
+      db.query.revisions.findMany({
+        where: eq(schema.revisions.organizationId, orgId),
+      }),
+  ]);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -107,27 +130,26 @@ projectsRouter.get('/:id', async (c) => {
     return c.json({ message: 'Project not found' }, 404);
   }
 
-  const client = await db.query.clients.findFirst({
-    where: eq(schema.clients.id, project.clientId),
-  });
-
-  const projectTasks = await db.query.tasks.findMany({
-    where: and(eq(schema.tasks.projectId, id), eq(schema.tasks.organizationId, orgId)),
-    orderBy: [desc(schema.tasks.createdAt)],
-  });
-
-  const timeEntriesList = await db.query.timeEntries.findMany({
-    where: and(eq(schema.timeEntries.projectId, id), eq(schema.timeEntries.organizationId, orgId)),
-    orderBy: [desc(schema.timeEntries.startTime)],
-  });
-
-  const projectDeliverables = await db.query.deliverables.findMany({
-    where: and(eq(schema.deliverables.projectId, id), eq(schema.deliverables.organizationId, orgId)),
-  });
-
-  const projectInvoices = await db.query.invoices.findMany({
-    where: and(eq(schema.invoices.projectId, id), eq(schema.invoices.organizationId, orgId)),
-  });
+  const [client, projectTasks, timeEntriesList, projectDeliverables, projectInvoices] =
+    await Promise.all([
+      db.query.clients.findFirst({
+        where: eq(schema.clients.id, project.clientId),
+      }),
+      db.query.tasks.findMany({
+        where: and(eq(schema.tasks.projectId, id), eq(schema.tasks.organizationId, orgId)),
+        orderBy: [desc(schema.tasks.createdAt)],
+      }),
+      db.query.timeEntries.findMany({
+        where: and(eq(schema.timeEntries.projectId, id), eq(schema.timeEntries.organizationId, orgId)),
+        orderBy: [desc(schema.timeEntries.startTime)],
+      }),
+      db.query.deliverables.findMany({
+        where: and(eq(schema.deliverables.projectId, id), eq(schema.deliverables.organizationId, orgId)),
+      }),
+      db.query.invoices.findMany({
+        where: and(eq(schema.invoices.projectId, id), eq(schema.invoices.organizationId, orgId)),
+      }),
+    ]);
 
   return c.json({
     ...project,

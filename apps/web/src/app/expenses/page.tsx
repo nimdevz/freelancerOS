@@ -20,7 +20,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
-  const { openQuickCreate } = useAppStore();
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 

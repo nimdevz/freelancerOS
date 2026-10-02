@@ -34,7 +34,7 @@ const STAGES = [
 
 export default function LeadsPage() {
   const queryClient = useQueryClient();
-  const { openQuickCreate } = useAppStore();
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
 
   const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);

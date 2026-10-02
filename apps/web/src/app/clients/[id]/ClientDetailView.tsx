@@ -35,7 +35,7 @@ export default function ClientDetailPage() {
   const params = useParams();
   const id = params?.id as string;
   const queryClient = useQueryClient();
-  const { openQuickCreate } = useAppStore();
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'invoices' | 'contracts' | 'timeline'>('overview');
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any | null>(null);

@@ -111,7 +111,9 @@ const MENU_OPTIONS: MenuOption[] = [
 ];
 
 export function GlobalNewMenu() {
-  const { isNewMenuOpen, setNewMenuOpen, openQuickCreate } = useAppStore();
+  const isNewMenuOpen = useAppStore((s) => s.isNewMenuOpen);
+  const setNewMenuOpen = useAppStore((s) => s.setNewMenuOpen);
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [searchFilter, setSearchFilter] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);

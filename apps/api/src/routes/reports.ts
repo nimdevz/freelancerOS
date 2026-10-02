@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Env, AppVariables } from '../env';
 import { getDb, schema } from '../db';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { getEnrichedProjects } from './projects';
 
 export const reportsRouter = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -10,27 +10,53 @@ reportsRouter.get('/financials', async (c) => {
   const db = getDb(c.env);
   const orgId = c.get('organizationId')!;
 
-  const org = await db.query.organizations.findFirst({
-    where: eq(schema.organizations.id, orgId),
-  });
+  const [
+    org,
+    rawProjectList,
+    clientList,
+    paymentList,
+    expenseList,
+    invoiceList,
+    timeList,
+    revisionList,
+  ] = await Promise.all([
+    db.query.organizations.findFirst({
+      where: eq(schema.organizations.id, orgId),
+    }),
+    db.query.projects.findMany({
+      where: eq(schema.projects.organizationId, orgId),
+      orderBy: [desc(schema.projects.createdAt)],
+    }),
+    db.query.clients.findMany({
+      where: eq(schema.clients.organizationId, orgId),
+    }),
+    db.query.payments.findMany({
+      where: eq(schema.payments.organizationId, orgId),
+    }),
+    db.query.expenses.findMany({
+      where: eq(schema.expenses.organizationId, orgId),
+    }),
+    db.query.invoices.findMany({
+      where: eq(schema.invoices.organizationId, orgId),
+    }),
+    db.query.timeEntries.findMany({
+      where: eq(schema.timeEntries.organizationId, orgId),
+    }),
+    db.query.revisions.findMany({
+      where: eq(schema.revisions.organizationId, orgId),
+    }),
+  ]);
+
   const currency = org?.currency || 'USD';
 
-  const projectList = await getEnrichedProjects(db, orgId);
-
-  const clientList = await db.query.clients.findMany({
-    where: eq(schema.clients.organizationId, orgId),
-  });
-
-  const paymentList = await db.query.payments.findMany({
-    where: eq(schema.payments.organizationId, orgId),
-  });
-
-  const expenseList = await db.query.expenses.findMany({
-    where: eq(schema.expenses.organizationId, orgId),
-  });
-
-  const invoiceList = await db.query.invoices.findMany({
-    where: eq(schema.invoices.organizationId, orgId),
+  const projectList = await getEnrichedProjects(db, orgId, {
+    projects: rawProjectList,
+    clients: clientList,
+    timeEntries: timeList,
+    invoices: invoiceList,
+    payments: paymentList,
+    expenses: expenseList,
+    revisions: revisionList,
   });
 
   const totalRevenueYTD = paymentList.reduce((sum, p) => sum + (p.amount || 0), 0);

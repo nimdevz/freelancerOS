@@ -39,6 +39,7 @@ export const invoices = sqliteTable(
   (table) => [
     index('idx_invoices_org').on(table.organizationId),
     index('idx_invoices_client').on(table.clientId),
+    index('idx_invoices_project').on(table.projectId),
     index('idx_invoices_status').on(table.status),
     index('idx_invoices_due_date').on(table.dueDate),
   ],
@@ -114,6 +115,8 @@ export const expenses = sqliteTable(
   },
   (table) => [
     index('idx_expenses_org').on(table.organizationId),
+    index('idx_expenses_project').on(table.projectId),
+    index('idx_expenses_client').on(table.clientId),
     index('idx_expenses_date').on(table.date),
   ],
 );

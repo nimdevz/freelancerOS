@@ -85,7 +85,12 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const id = params?.id as string;
   const queryClient = useQueryClient();
-  const { startTimer, stopTimer, isTimerRunning, timerProjectId, activeTimeEntryId, openQuickCreate } = useAppStore();
+  const startTimer = useAppStore((s) => s.startTimer);
+  const stopTimer = useAppStore((s) => s.stopTimer);
+  const isTimerRunning = useAppStore((s) => s.isTimerRunning);
+  const timerProjectId = useAppStore((s) => s.timerProjectId);
+  const activeTimeEntryId = useAppStore((s) => s.activeTimeEntryId);
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
 
   const [activeTab, setActiveTab] = useState<
     'overview' | 'tasks' | 'milestones' | 'scope' | 'creative' | 'deliverables' | 'assets' | 'time' | 'invoices' | 'activity' | 'closeout'

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery } from '@tanstack/react-query';
@@ -12,8 +12,9 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { exportClientsToCsv } from '@/lib/csv-export';
 
 export default function ClientsPage() {
-  const { openQuickCreate } = useAppStore();
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearch = useDeferredValue(searchTerm);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
@@ -22,9 +23,9 @@ export default function ClientsPage() {
 
   const filteredClients = clients.filter(
     (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      c.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+      (c.company && c.company.toLowerCase().includes(deferredSearch.toLowerCase())) ||
+      c.email.toLowerCase().includes(deferredSearch.toLowerCase()),
   );
 
   return (

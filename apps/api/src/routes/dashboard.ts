@@ -10,32 +10,62 @@ dashboardRouter.get('/summary', async (c) => {
   const db = getDb(c.env);
   const orgId = c.get('organizationId')!;
 
-  const org = await db.query.organizations.findFirst({
-    where: eq(schema.organizations.id, orgId),
-  });
+  const [
+    org,
+    clientList,
+    invoiceList,
+    proposalList,
+    approvalList,
+    timeList,
+    paymentList,
+    expenseList,
+    revisionList,
+    rawProjectList,
+  ] = await Promise.all([
+    db.query.organizations.findFirst({
+      where: eq(schema.organizations.id, orgId),
+    }),
+    db.query.clients.findMany({
+      where: eq(schema.clients.organizationId, orgId),
+    }),
+    db.query.invoices.findMany({
+      where: eq(schema.invoices.organizationId, orgId),
+      orderBy: [desc(schema.invoices.issueDate)],
+    }),
+    db.query.proposals.findMany({
+      where: eq(schema.proposals.organizationId, orgId),
+    }),
+    db.query.approvals.findMany({
+      where: eq(schema.approvals.organizationId, orgId),
+    }),
+    db.query.timeEntries.findMany({
+      where: eq(schema.timeEntries.organizationId, orgId),
+    }),
+    db.query.payments.findMany({
+      where: eq(schema.payments.organizationId, orgId),
+    }),
+    db.query.expenses.findMany({
+      where: eq(schema.expenses.organizationId, orgId),
+    }),
+    db.query.revisions.findMany({
+      where: eq(schema.revisions.organizationId, orgId),
+    }),
+    db.query.projects.findMany({
+      where: eq(schema.projects.organizationId, orgId),
+      orderBy: [desc(schema.projects.createdAt)],
+    }),
+  ]);
+
   const currency = org?.currency || 'USD';
 
-  const clientList = await db.query.clients.findMany({
-    where: eq(schema.clients.organizationId, orgId),
-  });
-
-  const projectList = await getEnrichedProjects(db, orgId);
-
-  const invoiceList = await db.query.invoices.findMany({
-    where: eq(schema.invoices.organizationId, orgId),
-    orderBy: [desc(schema.invoices.issueDate)],
-  });
-
-  const proposalList = await db.query.proposals.findMany({
-    where: eq(schema.proposals.organizationId, orgId),
-  });
-
-  const approvalList = await db.query.approvals.findMany({
-    where: eq(schema.approvals.organizationId, orgId),
-  });
-
-  const timeList = await db.query.timeEntries.findMany({
-    where: eq(schema.timeEntries.organizationId, orgId),
+  const projectList = await getEnrichedProjects(db, orgId, {
+    projects: rawProjectList,
+    clients: clientList,
+    timeEntries: timeList,
+    invoices: invoiceList,
+    payments: paymentList,
+    expenses: expenseList,
+    revisions: revisionList,
   });
 
   const today = new Date().toISOString().split('T')[0];

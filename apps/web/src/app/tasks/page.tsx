@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useDeferredValue, useMemo } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +19,7 @@ import {
   Sparkles,
   X,
   Link2,
+  Search,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 
@@ -193,6 +194,9 @@ export default function TasksPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(TASK_TEMPLATES[0].id);
   const [templateProjectId, setTemplateProjectId] = useState('');
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearch = useDeferredValue(searchTerm);
+
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', selectedProjectId],
     queryFn: () => api.tasks.list(selectedProjectId || undefined),
@@ -202,6 +206,12 @@ export default function TasksPage() {
     queryKey: ['projects'],
     queryFn: () => api.projects.list(),
   });
+
+  const filteredTasks = useMemo(() => {
+    if (!deferredSearch) return tasks;
+    const term = deferredSearch.toLowerCase();
+    return tasks.filter((t) => t.title.toLowerCase().includes(term));
+  }, [tasks, deferredSearch]);
 
   const createTaskMutation = useMutation({
     mutationFn: ({ title, projectId }: { title: string; projectId: string }) =>
@@ -381,11 +391,21 @@ export default function TasksPage() {
             </button>
           </form>
 
-          <div className="w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-44">
+              <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2.5 top-2" />
+              <input
+                type="text"
+                placeholder="Filter tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+              />
+            </div>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none w-full"
+              className="px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none w-full sm:w-auto"
             >
               <option value="">All Projects</option>
               {projects.map((p) => (
@@ -416,7 +436,7 @@ export default function TasksPage() {
             {viewMode === 'kanban' && (
               <div className="flex md:grid md:grid-cols-5 gap-3 overflow-x-auto pb-4 snap-x snap-mandatory -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
                 {STATUS_COLUMNS.map((col) => {
-                  const colTasks = tasks.filter((t) => t.status === col.id);
+                  const colTasks = filteredTasks.filter((t) => t.status === col.id);
 
                   return (
                     <div
@@ -593,7 +613,7 @@ export default function TasksPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {tasks.map((task) => {
+                      {filteredTasks.map((task) => {
                         const subtasks = task.subtasks || [];
                         const completedCount = subtasks.filter((s: any) => s.completed).length;
                         const isExpanded = expandedSubtaskIds[task.id];

@@ -62,6 +62,7 @@ export const tasks = sqliteTable(
   (table) => [
     index('idx_tasks_project').on(table.projectId),
     index('idx_tasks_org').on(table.organizationId),
+    index('idx_tasks_client').on(table.clientId),
     index('idx_tasks_status').on(table.status),
   ],
 );
@@ -91,5 +92,6 @@ export const timeEntries = sqliteTable(
   (table) => [
     index('idx_time_entries_project').on(table.projectId),
     index('idx_time_entries_org').on(table.organizationId),
+    index('idx_time_entries_running').on(table.isRunning),
   ],
 );

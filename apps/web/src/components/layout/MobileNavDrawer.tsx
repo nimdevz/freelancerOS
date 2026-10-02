@@ -74,15 +74,13 @@ const NAVIGATION_GROUPS = [
 export function MobileNavDrawer() {
   const pathname = usePathname();
   const router = useRouter();
-  const {
-    isMobileDrawerOpen,
-    setMobileDrawerOpen,
-    isDarkMode,
-    toggleDarkMode,
-    user,
-    logout,
-    isDemoMode,
-  } = useAppStore();
+  const isMobileDrawerOpen = useAppStore((s) => s.isMobileDrawerOpen);
+  const setMobileDrawerOpen = useAppStore((s) => s.setMobileDrawerOpen);
+  const isDarkMode = useAppStore((s) => s.isDarkMode);
+  const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+  const user = useAppStore((s) => s.user);
+  const logout = useAppStore((s) => s.logout);
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
 
   const handleLogout = () => {
     api.auth.logout();

@@ -39,30 +39,57 @@ function getBreadcrumb(path: string) {
   return { group: 'FreelancerOS', title: 'Workspace' };
 }
 
+function HeaderLiveStopwatch({ onStop }: { onStop: () => void }) {
+  const isTimerRunning = useAppStore((s) => s.isTimerRunning);
+  const timerElapsedSeconds = useAppStore((s) => s.timerElapsedSeconds);
+  const timerProjectName = useAppStore((s) => s.timerProjectName);
+
+  if (!isTimerRunning) return null;
+
+  const hours = Math.floor(timerElapsedSeconds / 3600);
+  const minutes = Math.floor((timerElapsedSeconds % 3600) / 60);
+  const seconds = timerElapsedSeconds % 60;
+  const formatted = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(
+    seconds,
+  ).padStart(2, '0')}`;
+
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md text-xs font-mono">
+      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+      <span className="font-semibold text-[11px] sm:text-xs">{formatted}</span>
+      <span className="hidden lg:inline text-[10px] opacity-70 truncate max-w-[80px]">
+        {timerProjectName || 'Timer'}
+      </span>
+      <button
+        onClick={onStop}
+        className="p-0.5 hover:bg-white/20 dark:hover:bg-black/20 rounded transition-colors"
+        title="Stop timer"
+      >
+        <Square className="w-2.5 h-2.5 fill-current" />
+      </button>
+    </div>
+  );
+}
+
 export function Header() {
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const {
-    isCommandPaletteOpen,
-    setCommandPaletteOpen,
-    setNewMenuOpen,
-    openQuickCreate,
-    isDarkMode,
-    toggleDarkMode,
-    isTimerRunning,
-    timerElapsedSeconds,
-    timerProjectName,
-    activeTimeEntryId,
-    startTimer,
-    stopTimer,
-    tickTimer,
-    toggleMobileDrawer,
-    user,
-    isDemoMode,
-    setDemoMode,
-    activeCurrency,
-    setActiveCurrency,
-  } = useAppStore();
+  const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
+  const setNewMenuOpen = useAppStore((s) => s.setNewMenuOpen);
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
+  const isDarkMode = useAppStore((s) => s.isDarkMode);
+  const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+  const isTimerRunning = useAppStore((s) => s.isTimerRunning);
+  const activeTimeEntryId = useAppStore((s) => s.activeTimeEntryId);
+  const startTimer = useAppStore((s) => s.startTimer);
+  const stopTimer = useAppStore((s) => s.stopTimer);
+  const tickTimer = useAppStore((s) => s.tickTimer);
+  const toggleMobileDrawer = useAppStore((s) => s.toggleMobileDrawer);
+  const user = useAppStore((s) => s.user);
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
+  const setDemoMode = useAppStore((s) => s.setDemoMode);
+  const activeCurrency = useAppStore((s) => s.activeCurrency);
+  const setActiveCurrency = useAppStore((s) => s.setActiveCurrency);
 
   const [isResettingDemo, setIsResettingDemo] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
@@ -243,22 +270,7 @@ export function Header() {
 
         {/* Live Stopwatch Tracker */}
         {isTimerRunning ? (
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span className="font-semibold text-[11px] sm:text-xs">
-              {formatStopwatch(timerElapsedSeconds)}
-            </span>
-            <span className="hidden lg:inline text-[10px] opacity-70 truncate max-w-[80px]">
-              {timerProjectName || 'Timer'}
-            </span>
-            <button
-              onClick={handleStopActiveTimer}
-              className="p-0.5 hover:bg-white/20 dark:hover:bg-black/20 rounded transition-colors"
-              title="Stop timer"
-            >
-              <Square className="w-2.5 h-2.5 fill-current" />
-            </button>
-          </div>
+          <HeaderLiveStopwatch onStop={handleStopActiveTimer} />
         ) : (
           <button
             onClick={() => openQuickCreate('time')}

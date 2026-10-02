@@ -64,7 +64,11 @@ const NAVIGATION_GROUPS = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, isSidebarCollapsed, toggleSidebarCollapse, isDemoMode } = useAppStore();
+  const user = useAppStore((s) => s.user);
+  const logout = useAppStore((s) => s.logout);
+  const isSidebarCollapsed = useAppStore((s) => s.isSidebarCollapsed);
+  const toggleSidebarCollapse = useAppStore((s) => s.toggleSidebarCollapse);
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
 
   const handleLogout = () => {
     api.auth.logout();

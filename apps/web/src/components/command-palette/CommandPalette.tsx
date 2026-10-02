@@ -34,7 +34,9 @@ interface PaletteItem {
 
 export function CommandPalette() {
   const router = useRouter();
-  const { isCommandPaletteOpen, setCommandPaletteOpen, openQuickCreate } = useAppStore();
+  const isCommandPaletteOpen = useAppStore((s) => s.isCommandPaletteOpen);
+  const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
+  const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{
     clients: any[];
