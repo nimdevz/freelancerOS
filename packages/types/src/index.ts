@@ -571,3 +571,187 @@ export interface FinancialReportsData {
   }[];
   projectProfitability: ProjectProfitabilityReport[];
 }
+
+// ----------------- MILESTONES -----------------
+export type MilestoneStatus = 'pending' | 'in_progress' | 'completed';
+export interface ProjectMilestone {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  name: string;
+  description?: string | null;
+  dueDate: string;
+  status: MilestoneStatus;
+  paymentAmount?: number | null;
+  invoiceId?: string | null;
+  orderIndex: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ----------------- SCOPE & CHANGE ORDERS -----------------
+export interface ProjectScope {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  includedItems: string[];
+  excludedItems: string[];
+  limitations?: string | null;
+  revisionAllowance: number;
+  deliveryAssumptions?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ScopeChangeStatus = 'requested' | 'quoted' | 'approved' | 'rejected' | 'completed';
+export interface ScopeChange {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  title: string;
+  requestDetails: string;
+  requestedBy: string;
+  requestedDate: string;
+  estimatedHours?: number | null;
+  additionalCost: number;
+  currency: CurrencyCode;
+  status: ScopeChangeStatus;
+  approvedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ----------------- ASSET REQUESTS -----------------
+export type AssetRequestStatus = 'requested' | 'partially_received' | 'received' | 'approved';
+export interface AssetRequest {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  projectName?: string;
+  clientId: string;
+  clientName?: string;
+  title: string;
+  description?: string | null;
+  status: AssetRequestStatus;
+  dueDate?: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ----------------- CREATIVE WORKFLOW -----------------
+export interface ProductionCallSheet {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  title: string;
+  shootDate: string;
+  location: string;
+  callTimes?: string | null;
+  crew?: string | null;
+  talent?: string | null;
+  equipment?: string | null;
+  notes?: string | null;
+  emergencyContact?: string | null;
+  createdAt: string;
+}
+
+export type ShotStatus = 'planned' | 'shot' | 'skipped';
+export interface ProductionShot {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  shotNumber: string;
+  description: string;
+  location?: string | null;
+  framing?: string | null;
+  movement?: string | null;
+  lens?: string | null;
+  talent?: string | null;
+  notes?: string | null;
+  status: ShotStatus;
+  createdAt: string;
+}
+
+export type EquipmentStatus = 'needed' | 'packed' | 'on_set' | 'returned';
+export interface EquipmentItem {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  item: string;
+  category: string;
+  quantity: number;
+  status: EquipmentStatus;
+  notes?: string | null;
+  createdAt: string;
+}
+
+// ----------------- BUSINESS CALCULATORS & GOALS -----------------
+export interface RateCalculatorInput {
+  desiredMonthlyIncome: number;
+  workingDaysPerMonth: number;
+  workingHoursPerDay: number;
+  nonBillablePercent: number;
+  monthlyExpenses: number;
+  taxRatePercent: number;
+}
+
+export interface RateCalculatorResult {
+  requiredHourlyRate: number;
+  requiredDailyRate: number;
+  requiredMonthlyRevenue: number;
+  totalMonthlyCost: number;
+  billableHoursPerMonth: number;
+}
+
+export interface RunwayCalculatorInput {
+  currentSavings: number;
+  monthlyExpenses: number;
+  expectedMonthlyIncome: number;
+}
+
+export interface RunwayCalculatorResult {
+  netMonthlyBurn: number;
+  runwayMonths: number;
+  status: 'critical' | 'moderate' | 'healthy';
+}
+
+export interface BusinessGoal {
+  id: string;
+  organizationId: string;
+  period: string;
+  monthlyRevenueTarget: number;
+  targetClients: number;
+  targetHours: number;
+  createdAt: string;
+}
+
+// ----------------- CASE STUDIES & TESTIMONIALS -----------------
+export interface CaseStudy {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  projectName?: string;
+  clientId: string;
+  clientName?: string;
+  title: string;
+  challenge: string;
+  solution: string;
+  result: string;
+  services?: string[];
+  testimonialText?: string | null;
+  testimonialAuthor?: string | null;
+  published: boolean;
+  createdAt: string;
+}
+
+// ----------------- CLIENT PORTAL -----------------
+export interface ClientPortalData {
+  client: Client;
+  projects: Project[];
+  deliverables: Deliverable[];
+  invoices: Invoice[];
+  assetRequests: AssetRequest[];
+  contracts: Contract[];
+}

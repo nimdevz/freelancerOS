@@ -22,6 +22,20 @@ import type {
   FinancialReportsData,
   Organization,
   User,
+  ProjectMilestone,
+  ProjectScope,
+  ScopeChange,
+  AssetRequest,
+  ProductionCallSheet,
+  ProductionShot,
+  EquipmentItem,
+  RateCalculatorInput,
+  RateCalculatorResult,
+  RunwayCalculatorInput,
+  RunwayCalculatorResult,
+  BusinessGoal,
+  CaseStudy,
+  ClientPortalData,
 } from '@freelanceros/types';
 
 const STORAGE_KEY = 'freelanceros_mock_db_v3';
@@ -730,6 +744,414 @@ const INITIAL_EXPENSES: Expense[] = [
   },
 ];
 
+const INITIAL_MILESTONES: ProjectMilestone[] = [
+  {
+    id: 'mil-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Pre-production & Storyboard Approval',
+    description: 'Visual concept deck, moodboards, and location permits cleared.',
+    dueDate: '2026-09-15',
+    status: 'completed',
+    paymentAmount: 2000,
+    orderIndex: 1,
+    createdAt: '2026-09-11T00:00:00Z',
+    updatedAt: '2026-09-15T00:00:00Z',
+  },
+  {
+    id: 'mil-2',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Principal Photography & Rough Assembly',
+    description: 'Mumbai Bandra coastal sunrise shoot and offline assembly review.',
+    dueDate: '2026-09-25',
+    status: 'completed',
+    paymentAmount: 3000,
+    orderIndex: 2,
+    createdAt: '2026-09-16T00:00:00Z',
+    updatedAt: '2026-09-25T00:00:00Z',
+  },
+  {
+    id: 'mil-3',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Color Grade, Sound Design & Client Review',
+    description: 'DaVinci Resolve HDR color master and 5.1 Dolby sound pass.',
+    dueDate: '2026-10-02',
+    status: 'in_progress',
+    paymentAmount: 2000,
+    orderIndex: 3,
+    createdAt: '2026-09-26T00:00:00Z',
+    updatedAt: '2026-09-30T00:00:00Z',
+  },
+  {
+    id: 'mil-4',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Master Deliverables & Social Cuts Delivery',
+    description: 'Final 4K ProRes 422HQ master + 3x 9:16 vertical cuts for Instagram/Shorts.',
+    dueDate: '2026-10-06',
+    status: 'pending',
+    paymentAmount: 1500,
+    orderIndex: 4,
+    createdAt: '2026-09-26T00:00:00Z',
+    updatedAt: '2026-09-26T00:00:00Z',
+  },
+  {
+    id: 'mil-5',
+    organizationId: INITIAL_ORG.id,
+    projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    name: 'Ladakh Footage Ingest & Raw Selects',
+    description: 'RED 8K raw rushes ingested and backed up to RAID storage.',
+    dueDate: '2026-09-10',
+    status: 'completed',
+    paymentAmount: 4000,
+    orderIndex: 1,
+    createdAt: '2026-08-27T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z',
+  },
+  {
+    id: 'mil-6',
+    organizationId: INITIAL_ORG.id,
+    projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    name: 'Director Cut & Narrative Pacing',
+    description: 'Full 3-minute film with scratch voiceover and music temp track.',
+    dueDate: '2026-09-20',
+    status: 'completed',
+    paymentAmount: 3500,
+    orderIndex: 2,
+    createdAt: '2026-09-11T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z',
+  },
+  {
+    id: 'mil-7',
+    organizationId: INITIAL_ORG.id,
+    projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    name: 'Executive Review & Revision Pass 3',
+    description: 'Client leadership review on title typography and ending shot adjustment.',
+    dueDate: '2026-10-01',
+    status: 'in_progress',
+    paymentAmount: 2500,
+    orderIndex: 3,
+    createdAt: '2026-09-21T00:00:00Z',
+    updatedAt: '2026-09-30T00:00:00Z',
+  },
+  {
+    id: 'mil-8',
+    organizationId: INITIAL_ORG.id,
+    projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    name: 'Final UHD Master Export',
+    description: 'Master ProRes archive and digital web packages.',
+    dueDate: '2026-10-03',
+    status: 'pending',
+    paymentAmount: 2000,
+    orderIndex: 4,
+    createdAt: '2026-09-21T00:00:00Z',
+    updatedAt: '2026-09-21T00:00:00Z',
+  },
+];
+
+const INITIAL_SCOPES: ProjectScope[] = [
+  {
+    id: 'scope-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    includedItems: [
+      '60s 4K Hero Commercial Master (16:9)',
+      '3x 15s Vertical Cutdowns (9:16) for Instagram Reels and TikTok',
+      'Professional Color Grading in DaVinci Resolve Studio',
+      'Original Foley & Sound Design with Commercial Music Rights',
+      'Up to 2 rounds of consolidated revisions per cut',
+    ],
+    excludedItems: [
+      'Broadcast TV licensing / clearing fees',
+      'Raw camera footage delivery',
+      'More than 2 revision rounds without a Change Order',
+    ],
+    limitations: 'Shooting was restricted to scheduled exterior daylight hours in Mumbai.',
+    revisionAllowance: 2,
+    deliveryAssumptions: 'Deliverables delivered digitally in Apple ProRes 422HQ and H.264 formats.',
+    createdAt: '2026-09-11T00:00:00Z',
+    updatedAt: '2026-09-11T00:00:00Z',
+  },
+  {
+    id: 'scope-2',
+    organizationId: INITIAL_ORG.id,
+    projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    includedItems: [
+      '3-minute Cinematic Brand Manifesto Film',
+      'Custom Voiceover Talent Recording & Audio Mastering',
+      'Original Ambient & Orchestral Soundtrack Integration',
+      'High-resolution Still Frames for Press Kit',
+    ],
+    excludedItems: [
+      'Cinema DCP print creation',
+      'Translation/subtitling into non-English languages',
+    ],
+    limitations: 'High-altitude footage subject to weather contingency clause.',
+    revisionAllowance: 2,
+    deliveryAssumptions: 'Final assets distributed via cloud streaming portal with ProRes master archive.',
+    createdAt: '2026-08-27T00:00:00Z',
+    updatedAt: '2026-08-27T00:00:00Z',
+  },
+];
+
+const INITIAL_SCOPE_CHANGES: ScopeChange[] = [
+  {
+    id: 'sc-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    title: 'Additional 30s Cinema Aspect Ratio Pre-roll Cut',
+    requestDetails: 'Client requested an additional 30-second cut specifically formatted for cinema 2.39:1 aspect ratio with distinct title cards.',
+    requestedBy: 'Karan Mehra (Creative Director)',
+    requestedDate: '2026-09-28',
+    estimatedHours: 8,
+    additionalCost: 1000,
+    currency: 'USD',
+    status: 'quoted',
+    createdAt: '2026-09-28T00:00:00Z',
+    updatedAt: '2026-09-28T00:00:00Z',
+  },
+  {
+    id: 'sc-2',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    title: 'Flagship Store Dolby Atmos Surround Sound Mix',
+    requestDetails: 'Client requested an immersive 7.1.4 Dolby Atmos mix for the brand new Mumbai flagship store opening.',
+    requestedBy: 'Nike Brand Marketing Team',
+    requestedDate: '2026-09-24',
+    estimatedHours: 6,
+    additionalCost: 750,
+    currency: 'USD',
+    status: 'approved',
+    approvedAt: '2026-09-25T11:00:00Z',
+    createdAt: '2026-09-24T00:00:00Z',
+    updatedAt: '2026-09-25T11:00:00Z',
+  },
+];
+
+const INITIAL_ASSET_REQUESTS: AssetRequest[] = [
+  {
+    id: 'ar-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    projectName: 'Monsoon Running Campaign',
+    clientId: '11111111-1111-1111-1111-111111111111',
+    clientName: 'Nike India',
+    title: 'Official 2026 Vector Logo & Brand Identity Guide',
+    description: 'SVG/EPS vectors of the Nike brandmark and color codes for title overlays.',
+    status: 'received',
+    dueDate: '2026-09-12',
+    fileName: 'Nike_Brand_Guidelines_2026.pdf',
+    createdAt: '2026-09-11T00:00:00Z',
+    updatedAt: '2026-09-12T00:00:00Z',
+  },
+  {
+    id: 'ar-2',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    projectName: 'Monsoon Running Campaign',
+    clientId: '11111111-1111-1111-1111-111111111111',
+    clientName: 'Nike India',
+    title: 'Signed Athlete Talent Releases',
+    description: 'Signed model releases for lead sprinter and fitness trainer.',
+    status: 'approved',
+    dueDate: '2026-09-18',
+    fileName: 'athlete_releases_signed.zip',
+    createdAt: '2026-09-14T00:00:00Z',
+    updatedAt: '2026-09-18T00:00:00Z',
+  },
+  {
+    id: 'ar-3',
+    organizationId: INITIAL_ORG.id,
+    projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    projectName: 'Brand Manifesto Film',
+    clientId: '44444444-4444-4444-4444-444444444444',
+    clientName: 'Northstar Luxury',
+    title: 'Approved Voiceover Script & Pronunciation Guide',
+    description: 'Final ratified voiceover copy with phonetics for Himalayan geography terms.',
+    status: 'requested',
+    dueDate: '2026-10-02',
+    createdAt: '2026-09-28T00:00:00Z',
+    updatedAt: '2026-09-28T00:00:00Z',
+  },
+];
+
+const INITIAL_CALL_SHEETS: ProductionCallSheet[] = [
+  {
+    id: 'cs-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    title: 'Nike Campaign - Day 1 Bandra Coastal Sunrise Shoot',
+    shootDate: '2026-09-18',
+    location: 'Bandra Fort Amphitheatre, Mumbai',
+    callTimes: 'Crew Call: 05:30 AM | Talent Call: 06:15 AM | First Light: 06:22 AM',
+    crew: 'Director: Nimish | DP: Arjun K. | Gaffer: Rohan | Sound: Priya | AC: Vikram',
+    talent: 'Lead Sprinter: Kavya S. | Trainer: Dev R.',
+    equipment: 'RED V-Raptor 8K, Cooke Panchro Prime Set, Steadicam Zephyr, Litepanels Gemini',
+    notes: 'Weather: Clear morning with high humidity. Hydration station on site. Ingest station stationed at Base Camp van.',
+    emergencyContact: '+91 98200 11223 (Production Coordinator)',
+    createdAt: '2026-09-14T00:00:00Z',
+  },
+];
+
+const INITIAL_SHOTS: ProductionShot[] = [
+  {
+    id: 'shot-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    shotNumber: '1A',
+    description: 'Extreme wide sunrise silhouette running along rocky sea coast',
+    location: 'Bandra Fort Point',
+    framing: 'Extreme Wide',
+    movement: 'Steadicam tracking forward',
+    lens: '25mm T2.1',
+    talent: 'Kavya',
+    status: 'shot',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'shot-2',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    shotNumber: '2A',
+    description: 'Macro detail of shoe laces tying and rubber outsole tread gripping rock',
+    location: 'Amphitheatre Steps',
+    framing: 'Macro Close-Up',
+    movement: 'Static with slow rack focus',
+    lens: '65mm Macro',
+    talent: 'Kavya',
+    status: 'shot',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'shot-3',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    shotNumber: '3B',
+    description: 'High-speed sprint pass at 120fps with dynamic whip pan follow',
+    location: 'Sea Promenade',
+    framing: 'Medium Profile',
+    movement: 'Whip Pan 120fps',
+    lens: '35mm T2.1',
+    talent: 'Kavya',
+    status: 'shot',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'shot-4',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    shotNumber: '4A',
+    description: 'Product hero spin on turntable with sweat bead water droplet impact',
+    location: 'Base Camp Studio Insert',
+    framing: 'Close-Up',
+    movement: 'Motorized Turntable',
+    lens: '85mm T2.1',
+    status: 'planned',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+];
+
+const INITIAL_EQUIPMENT: EquipmentItem[] = [
+  {
+    id: 'eq-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    item: 'RED V-Raptor 8K VV Cinema Camera',
+    category: 'Camera',
+    quantity: 1,
+    status: 'packed',
+    notes: 'Equipped with 2TB CFexpress cards and 4x Micro-V batteries',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'eq-2',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    item: 'Cooke Panchro/i Classic Prime Set (25/32/50/75mm)',
+    category: 'Lenses',
+    quantity: 4,
+    status: 'packed',
+    notes: 'Flight case #2',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'eq-3',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    item: 'Steadicam Zephyr Stabilizer Rig with Arm & Vest',
+    category: 'Support',
+    quantity: 1,
+    status: 'packed',
+    notes: 'Calibrated for RED V-Raptor payload',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'eq-4',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    item: 'Aputure 600d Pro LED + Light Dome 150 Diffuser',
+    category: 'Lighting',
+    quantity: 2,
+    status: 'packed',
+    notes: 'With C-stands and sandbags in grip truck',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'eq-5',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    item: 'Tentacle Sync E mkII Timecode Transceivers',
+    category: 'Audio',
+    quantity: 3,
+    status: 'needed',
+    notes: 'Batteries charging overnight at studio',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+  {
+    id: 'eq-6',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    item: 'Teradek Bolt 4K LT Wireless Video Kit',
+    category: 'Monitoring',
+    quantity: 1,
+    status: 'packed',
+    notes: 'Director handheld monitor paired',
+    createdAt: '2026-09-16T00:00:00Z',
+  },
+];
+
+const INITIAL_CASE_STUDIES: CaseStudy[] = [
+  {
+    id: 'cs-study-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    projectName: 'Monsoon Running Campaign',
+    clientId: '11111111-1111-1111-1111-111111111111',
+    clientName: 'Nike India',
+    title: 'Nike Monsoon Motion: Generating 3.4M Organic Views via High-Paced Commercial Storytelling',
+    challenge: 'Nike required an authentic, cinematic commercial showcasing their water-resistant trail running gear during severe monsoon conditions without synthetic studio effects.',
+    solution: 'Engineered a rapid-response dawn production shoot in coastal Mumbai utilizing 8K 120fps cinematography, bespoke organic sound design, and HDR mobile-first color mastering.',
+    result: 'Exceeded brand engagement benchmarks with 3.4M organic views in 72 hours, a 42% share rate on Instagram, and 24% increase in footwear pre-orders.',
+    services: ['Commercial Directing', 'Cinematography', 'Color Grading', 'Sound Design'],
+    testimonialText: 'Nimish and his team delivered unmatched aesthetic quality and handled strict turnaround times with absolute professionalism. The output set a new benchmark for our regional campaigns.',
+    testimonialAuthor: 'Karan Mehra, Creative Director @ Nike',
+    published: true,
+    createdAt: '2026-09-28T00:00:00Z',
+  },
+];
+
+const INITIAL_BUSINESS_GOAL: BusinessGoal = {
+  id: 'goal-1',
+  organizationId: INITIAL_ORG.id,
+  period: '2026-Q4',
+  monthlyRevenueTarget: 15000,
+  targetClients: 5,
+  targetHours: 80,
+  createdAt: '2026-09-01T00:00:00Z',
+};
+
 // Helper for generating client-side unique IDs
 function makeId(prefix = 'item'): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -748,6 +1170,15 @@ class MockStorage {
   private retainers: Retainer[] = INITIAL_RETAINERS;
   private timeEntries: TimeEntry[] = INITIAL_TIME_ENTRIES;
   private expenses: Expense[] = INITIAL_EXPENSES;
+  private milestones: ProjectMilestone[] = INITIAL_MILESTONES;
+  private scopes: ProjectScope[] = INITIAL_SCOPES;
+  private scopeChanges: ScopeChange[] = INITIAL_SCOPE_CHANGES;
+  private assetRequests: AssetRequest[] = INITIAL_ASSET_REQUESTS;
+  private callSheets: ProductionCallSheet[] = INITIAL_CALL_SHEETS;
+  private shots: ProductionShot[] = INITIAL_SHOTS;
+  private equipment: EquipmentItem[] = INITIAL_EQUIPMENT;
+  private caseStudies: CaseStudy[] = INITIAL_CASE_STUDIES;
+  private businessGoals: BusinessGoal[] = [INITIAL_BUSINESS_GOAL];
   private payments: Payment[] = [
     {
       id: 'pay-1',
@@ -800,6 +1231,15 @@ class MockStorage {
         if (data.timeEntries) this.timeEntries = data.timeEntries;
         if (data.expenses) this.expenses = data.expenses;
         if (data.payments) this.payments = data.payments;
+        if (data.milestones) this.milestones = data.milestones;
+        if (data.scopes) this.scopes = data.scopes;
+        if (data.scopeChanges) this.scopeChanges = data.scopeChanges;
+        if (data.assetRequests) this.assetRequests = data.assetRequests;
+        if (data.callSheets) this.callSheets = data.callSheets;
+        if (data.shots) this.shots = data.shots;
+        if (data.equipment) this.equipment = data.equipment;
+        if (data.caseStudies) this.caseStudies = data.caseStudies;
+        if (data.businessGoals) this.businessGoals = data.businessGoals;
       }
     } catch {
       // ignore
@@ -823,6 +1263,15 @@ class MockStorage {
         timeEntries: this.timeEntries,
         expenses: this.expenses,
         payments: this.payments,
+        milestones: this.milestones,
+        scopes: this.scopes,
+        scopeChanges: this.scopeChanges,
+        assetRequests: this.assetRequests,
+        callSheets: this.callSheets,
+        shots: this.shots,
+        equipment: this.equipment,
+        caseStudies: this.caseStudies,
+        businessGoals: this.businessGoals,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
@@ -852,6 +1301,15 @@ class MockStorage {
     this.timeEntries = [];
     this.expenses = [];
     this.payments = [];
+    this.milestones = [];
+    this.scopes = [];
+    this.scopeChanges = [];
+    this.assetRequests = [];
+    this.callSheets = [];
+    this.shots = [];
+    this.equipment = [];
+    this.caseStudies = [];
+    this.businessGoals = [];
     this.activeTimer = null;
     this.org = {
       ...this.org,
@@ -875,6 +1333,15 @@ class MockStorage {
     this.retainers = JSON.parse(JSON.stringify(INITIAL_RETAINERS));
     this.timeEntries = JSON.parse(JSON.stringify(INITIAL_TIME_ENTRIES));
     this.expenses = JSON.parse(JSON.stringify(INITIAL_EXPENSES));
+    this.milestones = JSON.parse(JSON.stringify(INITIAL_MILESTONES));
+    this.scopes = JSON.parse(JSON.stringify(INITIAL_SCOPES));
+    this.scopeChanges = JSON.parse(JSON.stringify(INITIAL_SCOPE_CHANGES));
+    this.assetRequests = JSON.parse(JSON.stringify(INITIAL_ASSET_REQUESTS));
+    this.callSheets = JSON.parse(JSON.stringify(INITIAL_CALL_SHEETS));
+    this.shots = JSON.parse(JSON.stringify(INITIAL_SHOTS));
+    this.equipment = JSON.parse(JSON.stringify(INITIAL_EQUIPMENT));
+    this.caseStudies = JSON.parse(JSON.stringify(INITIAL_CASE_STUDIES));
+    this.businessGoals = [JSON.parse(JSON.stringify(INITIAL_BUSINESS_GOAL))];
     this.payments = [
       {
         id: 'pay-1',
@@ -2247,6 +2714,649 @@ class MockStorage {
       leads: this.leads.filter((l) => l.title.toLowerCase().includes(query) || l.clientName.toLowerCase().includes(query)),
       proposals: matchedProposals,
       deliverables: matchedDeliverables,
+    };
+  }
+
+  // Milestones
+  listMilestones(projectId?: string): ProjectMilestone[] {
+    if (projectId) {
+      return this.milestones.filter((m) => m.projectId === projectId).sort((a, b) => a.orderIndex - b.orderIndex);
+    }
+    return [...this.milestones].sort((a, b) => a.orderIndex - b.orderIndex);
+  }
+
+  createMilestone(data: any): ProjectMilestone {
+    const item: ProjectMilestone = {
+      id: makeId('mil'),
+      organizationId: this.org.id,
+      projectId: data.projectId,
+      name: data.name,
+      description: data.description || null,
+      dueDate: data.dueDate,
+      status: data.status || 'pending',
+      paymentAmount: data.paymentAmount ? Number(data.paymentAmount) : null,
+      invoiceId: data.invoiceId || null,
+      orderIndex: data.orderIndex !== undefined ? Number(data.orderIndex) : this.milestones.length + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.milestones.push(item);
+    this.saveToStorage();
+    return item;
+  }
+
+  updateMilestone(id: string, data: any): ProjectMilestone {
+    const idx = this.milestones.findIndex((m) => m.id === id);
+    if (idx !== -1) {
+      this.milestones[idx] = {
+        ...this.milestones[idx],
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      this.saveToStorage();
+      return this.milestones[idx];
+    }
+    throw new Error('Milestone not found');
+  }
+
+  deleteMilestone(id: string): void {
+    this.milestones = this.milestones.filter((m) => m.id !== id);
+    this.saveToStorage();
+  }
+
+  // Scope & Change Orders
+  getScope(projectId: string): { scope: ProjectScope | null; changes: ScopeChange[] } {
+    const scope = this.scopes.find((s) => s.projectId === projectId) || null;
+    const changes = this.scopeChanges.filter((sc) => sc.projectId === projectId);
+    return { scope, changes };
+  }
+
+  saveScope(data: any): ProjectScope {
+    const projectId = data.projectId;
+    const idx = this.scopes.findIndex((s) => s.projectId === projectId);
+    const item: ProjectScope = {
+      id: idx !== -1 ? this.scopes[idx].id : makeId('scope'),
+      organizationId: this.org.id,
+      projectId,
+      includedItems: data.includedItems || [],
+      excludedItems: data.excludedItems || [],
+      limitations: data.limitations || null,
+      revisionAllowance: data.revisionAllowance !== undefined ? Number(data.revisionAllowance) : 2,
+      deliveryAssumptions: data.deliveryAssumptions || null,
+      createdAt: idx !== -1 ? this.scopes[idx].createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    if (idx !== -1) {
+      this.scopes[idx] = item;
+    } else {
+      this.scopes.push(item);
+    }
+    this.saveToStorage();
+    return item;
+  }
+
+  listScopeChanges(projectId?: string): ScopeChange[] {
+    if (projectId) {
+      return this.scopeChanges.filter((sc) => sc.projectId === projectId);
+    }
+    return this.scopeChanges;
+  }
+
+  createScopeChange(data: any): ScopeChange {
+    const item: ScopeChange = {
+      id: makeId('sc'),
+      organizationId: this.org.id,
+      projectId: data.projectId,
+      title: data.title,
+      requestDetails: data.requestDetails,
+      requestedBy: data.requestedBy || 'Client',
+      requestedDate: data.requestedDate || new Date().toISOString().split('T')[0],
+      estimatedHours: data.estimatedHours ? Number(data.estimatedHours) : null,
+      additionalCost: data.additionalCost ? Number(data.additionalCost) : 0,
+      currency: data.currency || this.org.currency || 'USD',
+      status: data.status || 'requested',
+      approvedAt: data.status === 'approved' ? new Date().toISOString() : null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.scopeChanges.push(item);
+
+    if (item.status === 'approved' && item.additionalCost > 0) {
+      const pIdx = this.projects.findIndex((p) => p.id === item.projectId);
+      if (pIdx !== -1) {
+        this.projects[pIdx].budget += item.additionalCost;
+      }
+    }
+
+    this.saveToStorage();
+    return item;
+  }
+
+  updateScopeChange(id: string, data: any): ScopeChange {
+    const idx = this.scopeChanges.findIndex((sc) => sc.id === id);
+    if (idx !== -1) {
+      const prev = this.scopeChanges[idx];
+      const updated: ScopeChange = {
+        ...prev,
+        ...data,
+        approvedAt: data.status === 'approved' && !prev.approvedAt ? new Date().toISOString() : prev.approvedAt,
+        updatedAt: new Date().toISOString(),
+      };
+      this.scopeChanges[idx] = updated;
+
+      if (prev.status !== 'approved' && updated.status === 'approved' && updated.additionalCost > 0) {
+        const pIdx = this.projects.findIndex((p) => p.id === updated.projectId);
+        if (pIdx !== -1) {
+          this.projects[pIdx].budget += updated.additionalCost;
+        }
+      }
+
+      this.saveToStorage();
+      return updated;
+    }
+    throw new Error('Scope change not found');
+  }
+
+  // Asset Requests
+  listAssetRequests(params?: { projectId?: string; clientId?: string } | string): AssetRequest[] {
+    const projectId = typeof params === 'string' ? params : params?.projectId;
+    const clientId = typeof params === 'object' ? params?.clientId : undefined;
+    let list = this.assetRequests;
+    if (projectId) {
+      list = list.filter((a) => a.projectId === projectId);
+    }
+    if (clientId) {
+      list = list.filter((a) => a.clientId === clientId);
+    }
+    return list.map((a) => {
+      const proj = this.projects.find((p) => p.id === a.projectId);
+      const client = this.clients.find((c) => c.id === a.clientId);
+      return {
+        ...a,
+        projectName: proj?.name || a.projectName,
+        clientName: client?.name || a.clientName,
+      };
+    });
+  }
+
+  createAssetRequest(data: any): AssetRequest {
+    const proj = this.projects.find((p) => p.id === data.projectId);
+    const client = this.clients.find((c) => c.id === data.clientId);
+    const item: AssetRequest = {
+      id: makeId('ar'),
+      organizationId: this.org.id,
+      projectId: data.projectId,
+      clientId: data.clientId || proj?.clientId || '',
+      projectName: proj?.name,
+      clientName: client?.name,
+      title: data.title,
+      description: data.description || null,
+      status: data.status || 'requested',
+      dueDate: data.dueDate || null,
+      fileUrl: data.fileUrl || null,
+      fileName: data.fileName || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.assetRequests.push(item);
+    this.saveToStorage();
+    return item;
+  }
+
+  updateAssetRequest(id: string, data: any): AssetRequest {
+    const idx = this.assetRequests.findIndex((a) => a.id === id);
+    if (idx !== -1) {
+      this.assetRequests[idx] = {
+        ...this.assetRequests[idx],
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      this.saveToStorage();
+      return this.assetRequests[idx];
+    }
+    throw new Error('Asset request not found');
+  }
+
+  deleteAssetRequest(id: string): void {
+    this.assetRequests = this.assetRequests.filter((a) => a.id !== id);
+    this.saveToStorage();
+  }
+
+  // Creative Workflow
+  listCallSheets(projectId?: string): ProductionCallSheet[] {
+    if (projectId) return this.callSheets.filter((c) => c.projectId === projectId);
+    return this.callSheets;
+  }
+
+  createCallSheet(data: any): ProductionCallSheet {
+    const item: ProductionCallSheet = {
+      id: makeId('cs'),
+      organizationId: this.org.id,
+      projectId: data.projectId,
+      title: data.title,
+      shootDate: data.shootDate || new Date().toISOString().split('T')[0],
+      location: data.location || '',
+      callTimes: data.callTimes || null,
+      crew: data.crew || null,
+      talent: data.talent || null,
+      equipment: data.equipment || null,
+      notes: data.notes || null,
+      emergencyContact: data.emergencyContact || null,
+      createdAt: new Date().toISOString(),
+    };
+    this.callSheets.push(item);
+    this.saveToStorage();
+    return item;
+  }
+
+  updateCallSheet(id: string, data: any): ProductionCallSheet {
+    const idx = this.callSheets.findIndex((c) => c.id === id);
+    if (idx !== -1) {
+      this.callSheets[idx] = { ...this.callSheets[idx], ...data };
+      this.saveToStorage();
+      return this.callSheets[idx];
+    }
+    throw new Error('Call sheet not found');
+  }
+
+  deleteCallSheet(id: string): void {
+    this.callSheets = this.callSheets.filter((c) => c.id !== id);
+    this.saveToStorage();
+  }
+
+  listShots(projectId?: string): ProductionShot[] {
+    if (projectId) return this.shots.filter((s) => s.projectId === projectId);
+    return this.shots;
+  }
+
+  createShot(data: any): ProductionShot {
+    const item: ProductionShot = {
+      id: makeId('shot'),
+      organizationId: this.org.id,
+      projectId: data.projectId,
+      shotNumber: data.shotNumber || `${this.shots.length + 1}A`,
+      description: data.description,
+      location: data.location || null,
+      framing: data.framing || null,
+      movement: data.movement || null,
+      lens: data.lens || null,
+      talent: data.talent || null,
+      notes: data.notes || null,
+      status: data.status || 'planned',
+      createdAt: new Date().toISOString(),
+    };
+    this.shots.push(item);
+    this.saveToStorage();
+    return item;
+  }
+
+  updateShot(id: string, data: any): ProductionShot {
+    const idx = this.shots.findIndex((s) => s.id === id);
+    if (idx !== -1) {
+      this.shots[idx] = { ...this.shots[idx], ...data };
+      this.saveToStorage();
+      return this.shots[idx];
+    }
+    throw new Error('Shot not found');
+  }
+
+  deleteShot(id: string): void {
+    this.shots = this.shots.filter((s) => s.id !== id);
+    this.saveToStorage();
+  }
+
+  listEquipment(projectId?: string): EquipmentItem[] {
+    if (projectId) return this.equipment.filter((e) => e.projectId === projectId);
+    return this.equipment;
+  }
+
+  createEquipment(data: any): EquipmentItem {
+    const item: EquipmentItem = {
+      id: makeId('eq'),
+      organizationId: this.org.id,
+      projectId: data.projectId,
+      item: data.item,
+      category: data.category || 'General',
+      quantity: data.quantity ? Number(data.quantity) : 1,
+      status: data.status || 'needed',
+      notes: data.notes || null,
+      createdAt: new Date().toISOString(),
+    };
+    this.equipment.push(item);
+    this.saveToStorage();
+    return item;
+  }
+
+  updateEquipment(id: string, data: any): EquipmentItem {
+    const idx = this.equipment.findIndex((e) => e.id === id);
+    if (idx !== -1) {
+      this.equipment[idx] = { ...this.equipment[idx], ...data };
+      this.saveToStorage();
+      return this.equipment[idx];
+    }
+    throw new Error('Equipment item not found');
+  }
+
+  deleteEquipment(id: string): void {
+    this.equipment = this.equipment.filter((e) => e.id !== id);
+    this.saveToStorage();
+  }
+
+  // Client Portal
+  getPortalData(clientId: string): ClientPortalData {
+    const client = this.clients.find((c) => c.id === clientId) || this.clients[0];
+    const clientProjects = this.projects.filter((p) => p.clientId === client.id);
+    const clientProjectIds = new Set(clientProjects.map((p) => p.id));
+    const deliverables = this.deliverables.filter((d) => clientProjectIds.has(d.projectId));
+    const invoices = this.invoices.filter((i) => i.clientId === client.id);
+    const assetRequests = this.assetRequests.filter((a) => a.clientId === client.id || clientProjectIds.has(a.projectId));
+    const contracts = this.listContracts().filter((c) => c.clientId === client.id);
+
+    return {
+      client,
+      projects: clientProjects,
+      deliverables,
+      invoices,
+      assetRequests,
+      contracts,
+    };
+  }
+
+  submitPortalFeedback(clientId: string, data: any) {
+    const item = {
+      id: makeId('fb'),
+      deliverableId: data.deliverableId,
+      comment: data.comment,
+      authorName: data.authorName || 'Client',
+      timestampSeconds: data.timestampSeconds !== undefined ? Number(data.timestampSeconds) : null,
+      isResolved: false,
+      createdAt: new Date().toISOString(),
+    };
+    return item;
+  }
+
+  // Case Studies
+  listCaseStudies(projectId?: string): CaseStudy[] {
+    if (projectId) return this.caseStudies.filter((c) => c.projectId === projectId);
+    return this.caseStudies;
+  }
+
+  getCaseStudy(id: string): CaseStudy | null {
+    return this.caseStudies.find((c) => c.id === id) || null;
+  }
+
+  createCaseStudy(data: any): CaseStudy {
+    const proj = this.projects.find((p) => p.id === data.projectId);
+    const client = this.clients.find((c) => c.id === data.clientId);
+    const item: CaseStudy = {
+      id: makeId('cs-study'),
+      organizationId: this.org.id,
+      projectId: data.projectId,
+      projectName: proj?.name,
+      clientId: data.clientId || proj?.clientId || '',
+      clientName: client?.name,
+      title: data.title,
+      challenge: data.challenge,
+      solution: data.solution,
+      result: data.result,
+      services: data.services || [],
+      testimonialText: data.testimonialText || null,
+      testimonialAuthor: data.testimonialAuthor || null,
+      published: data.published !== undefined ? Boolean(data.published) : true,
+      createdAt: new Date().toISOString(),
+    };
+    this.caseStudies.push(item);
+    this.saveToStorage();
+    return item;
+  }
+
+  updateCaseStudy(id: string, data: any): CaseStudy {
+    const idx = this.caseStudies.findIndex((c) => c.id === id);
+    if (idx !== -1) {
+      this.caseStudies[idx] = { ...this.caseStudies[idx], ...data };
+      this.saveToStorage();
+      return this.caseStudies[idx];
+    }
+    throw new Error('Case study not found');
+  }
+
+  deleteCaseStudy(id: string): void {
+    this.caseStudies = this.caseStudies.filter((c) => c.id !== id);
+    this.saveToStorage();
+  }
+
+  // Business Calculators & Goals
+  calculateRate(data: RateCalculatorInput): RateCalculatorResult {
+    const totalWorkingHours = data.workingDaysPerMonth * data.workingHoursPerDay;
+    const billableRatio = Math.max(0.05, 1 - data.nonBillablePercent / 100);
+    const billableHoursPerMonth = Math.max(1, Math.round(totalWorkingHours * billableRatio));
+    const grossIncomeNeeded = data.desiredMonthlyIncome / Math.max(0.05, 1 - data.taxRatePercent / 100);
+    const totalMonthlyCost = grossIncomeNeeded + data.monthlyExpenses;
+    const requiredHourlyRate = Math.round(totalMonthlyCost / billableHoursPerMonth);
+    const requiredDailyRate = Math.round(requiredHourlyRate * data.workingHoursPerDay);
+
+    return {
+      requiredHourlyRate,
+      requiredDailyRate,
+      requiredMonthlyRevenue: Math.round(totalMonthlyCost),
+      totalMonthlyCost: Math.round(totalMonthlyCost),
+      billableHoursPerMonth,
+    };
+  }
+
+  calculateRunway(data: RunwayCalculatorInput): RunwayCalculatorResult {
+    const netMonthlyBurn = Math.max(0, data.monthlyExpenses - data.expectedMonthlyIncome);
+    const runwayMonths = netMonthlyBurn > 0 ? Number((data.currentSavings / netMonthlyBurn).toFixed(1)) : 999;
+    const status: 'critical' | 'moderate' | 'healthy' =
+      runwayMonths < 3 ? 'critical' : runwayMonths < 6 ? 'moderate' : 'healthy';
+
+    return {
+      netMonthlyBurn,
+      runwayMonths,
+      status,
+    };
+  }
+
+  getGoal(): BusinessGoal | null {
+    return this.businessGoals[0] || null;
+  }
+
+  listGoals(): BusinessGoal[] {
+    return this.businessGoals;
+  }
+
+  createGoal(data: any): BusinessGoal {
+    return this.setGoal(data);
+  }
+
+  setGoal(data: any): BusinessGoal {
+    const item: BusinessGoal = {
+      id: this.businessGoals[0]?.id || makeId('goal'),
+      organizationId: this.org.id,
+      period: data.period || '2026-Q4',
+      monthlyRevenueTarget: Number(data.monthlyRevenueTarget || 10000),
+      targetClients: Number(data.targetClients || 4),
+      targetHours: Number(data.targetHours || 80),
+      createdAt: this.businessGoals[0]?.createdAt || new Date().toISOString(),
+    };
+    this.businessGoals = [item];
+    this.saveToStorage();
+    return item;
+  }
+
+  // AI Assistants
+  aiSummarizeProject(projectId: string) {
+    const project = this.projects.find((p) => p.id === projectId) || this.projects[0];
+    const client = this.clients.find((c) => c.id === project.clientId);
+    const tasksList = this.tasks.filter((t) => t.projectId === project.id);
+    const deliverablesList = this.deliverables.filter((d) => d.projectId === project.id);
+    const invoicesList = this.invoices.filter((i) => i.projectId === project.id);
+    const today = new Date().toISOString().split('T')[0];
+
+    const overdueTasks = tasksList.filter((t) => t.status !== 'done' && t.dueDate && t.dueDate < today);
+    const completedTasks = tasksList.filter((t) => t.status === 'done');
+    const outstandingInvoices = invoicesList.filter((i) => i.balanceDue > 0);
+
+    const summary = `Project "${project.name}" for ${client?.name || 'Partner'} is currently in **${project.status.toUpperCase()}** status with **${project.health.toUpperCase()}** health.
+    
+• **Progress:** ${project.progressPercent}% completion (${completedTasks.length}/${tasksList.length} tasks finished).
+• **Financials:** ${project.currency} ${project.budget.toLocaleString()} budget. Total invoiced: ${project.currency} ${invoicesList.reduce((s, i) => s + i.totalAmount, 0).toLocaleString()}.
+• **Deliverables:** ${deliverablesList.length} deliverables tracked. ${deliverablesList.filter((d) => d.status === 'client_review').length} currently awaiting client sign-off.
+• **Risks Identified:** ${overdueTasks.length > 0 ? `${overdueTasks.length} overdue tasks.` : 'No critical task bottlenecks.'} ${outstandingInvoices.length > 0 ? `${outstandingInvoices.length} unpaid invoices pending.` : 'All invoices settled.'}`;
+
+    const recommendedActions = [
+      ...(overdueTasks.length > 0 ? [`Follow up on ${overdueTasks.length} overdue task(s): ${overdueTasks.map((t) => t.title).join(', ')}`] : []),
+      ...(deliverablesList.some((d) => d.status === 'client_review') ? ['Send review reminder to client for deliverables awaiting sign-off'] : []),
+      ...(outstandingInvoices.length > 0 ? [`Send payment reminder for invoice ${outstandingInvoices[0].invoiceNumber}`] : []),
+      'Review milestone schedule against remaining time budget',
+    ];
+
+    return {
+      summary,
+      health: project.health,
+      healthReason: project.healthReason || (overdueTasks.length > 0 ? `${overdueTasks.length} overdue tasks` : 'On track'),
+      recommendedActions,
+      metrics: {
+        totalTasks: tasksList.length,
+        completedTasks: completedTasks.length,
+        overdueTasks: overdueTasks.length,
+        deliverablesCount: deliverablesList.length,
+      },
+    };
+  }
+
+  aiExtractTasks(notes: string, _projectId?: string) {
+    if (!notes) return { tasks: [] };
+    const rawLines = notes
+      .split(/\r?\n/)
+      .map((l) => l.replace(/^[-*•\d.)\]\s]+/, '').trim())
+      .filter((l) => l.length > 4);
+
+    const tasks = rawLines.map((line, idx) => {
+      let priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium';
+      let estimatedHours = 2;
+      const lower = line.toLowerCase();
+      if (lower.includes('urgent') || lower.includes('asap') || lower.includes('immediately')) {
+        priority = 'urgent';
+      } else if (lower.includes('important') || lower.includes('critical') || lower.includes('must')) {
+        priority = 'high';
+      }
+
+      if (lower.includes('quick') || lower.includes('minor') || lower.includes('tweak')) {
+        estimatedHours = 0.5;
+      } else if (lower.includes('full') || lower.includes('complete') || lower.includes('redesign')) {
+        estimatedHours = 6;
+      }
+
+      return {
+        title: line,
+        priority,
+        estimatedHours,
+        suggestedDueDate: new Date(Date.now() + (idx + 1) * 86400000).toISOString().split('T')[0],
+      };
+    });
+
+    return { tasks };
+  }
+
+  aiDraftProposal(data: any) {
+    const { clientName, service, budget, currency = 'USD' } = data;
+    const title = `${service || 'Creative Production'} for ${clientName || 'Partner'}`;
+    const executiveSummary = `This proposal outlines the strategy, scope of deliverables, and execution schedule for ${service || 'the project'}. Our objective is to deliver high-impact, polished creative assets tailored to ${clientName || 'your business'} objectives.`;
+
+    const items = [
+      {
+        description: `Phase 1: Discovery, Planning & Pre-Production for ${service || 'Project'}`,
+        quantity: 1,
+        unitPrice: Math.round((budget || 5000) * 0.3),
+        amount: Math.round((budget || 5000) * 0.3),
+      },
+      {
+        description: `Phase 2: Execution, Editing & Asset Development`,
+        quantity: 1,
+        unitPrice: Math.round((budget || 5000) * 0.5),
+        amount: Math.round((budget || 5000) * 0.5),
+      },
+      {
+        description: `Phase 3: Color Grading, Sound Design & Final Master Deliverables`,
+        quantity: 1,
+        unitPrice: Math.round((budget || 5000) * 0.2),
+        amount: Math.round((budget || 5000) * 0.2),
+      },
+    ];
+
+    const terms = `1. 50% deposit upon proposal acceptance, 50% upon final master deliverable handoff.\n2. Includes up to 2 rounds of creative revisions per deliverable.\n3. Turnaround time: 14 business days from kickoff.`;
+
+    return {
+      title,
+      executiveSummary,
+      items,
+      terms,
+      currency,
+      totalAmount: budget || 5000,
+    };
+  }
+
+  aiDraftFollowUp(data: any) {
+    const { type, entityId } = data;
+    let subject = 'Following up on our project';
+    let body = 'Hi there, just wanted to check in regarding our current project.';
+
+    if (type === 'invoice') {
+      const inv = this.invoices.find((i) => i.id === entityId) || this.invoices[0];
+      const client = inv ? this.clients.find((c) => c.id === inv.clientId) : null;
+      if (inv) {
+        subject = `Invoice Reminder: ${inv.invoiceNumber} (${inv.currency} ${inv.balanceDue})`;
+        body = `Hi ${client?.name || 'there'},\n\nHope you're having a productive week. This is a gentle reminder regarding invoice ${inv.invoiceNumber} for ${inv.currency} ${inv.balanceDue}, which was due on ${inv.dueDate}.\n\nPlease let me know if you need another copy of the invoice or wire instructions.\n\nThank you for your partnership!`;
+      }
+    } else if (type === 'approval') {
+      const appr = this.approvals.find((a) => a.id === entityId) || this.approvals[0];
+      const deliv = appr ? this.deliverables.find((d) => d.id === appr.deliverableId) : null;
+      subject = `Review Required: ${deliv?.title || 'Deliverable'} (${appr?.versionNumber || 'V1'})`;
+      body = `Hi there,\n\nJust checking in on the review for "${deliv?.title || 'Deliverable'}" (${appr?.versionNumber || 'V1'}) uploaded on ${appr?.requestedAt ? appr.requestedAt.split('T')[0] : 'recent date'}.\n\nPlease review and let me know if you approve or if any adjustments are needed so we can keep the timeline on track.\n\nBest regards!`;
+    }
+
+    return { subject, body };
+  }
+
+  aiBusinessQuery(query: string) {
+    const q = (query || '').toLowerCase().trim();
+    const today = new Date().toISOString().split('T')[0];
+
+    if (q.includes('overdue') && q.includes('invoice')) {
+      const filtered = this.invoices.filter((i) => (i.status === 'overdue' || (i.dueDate < today && i.balanceDue > 0)) && i.status !== 'cancelled');
+      const totalOverdue = filtered.reduce((s, i) => s + i.balanceDue, 0);
+      return {
+        answer: `You currently have ${filtered.length} overdue invoice(s) totaling **${filtered[0]?.currency || 'USD'} ${totalOverdue.toLocaleString()}**.`,
+        data: filtered,
+        actionUrl: '/invoices',
+      };
+    }
+
+    if (q.includes('collected') || q.includes('revenue')) {
+      const totalCollected = this.payments.reduce((s, p) => s + p.amount, 0);
+      return {
+        answer: `You have collected a total of **USD ${totalCollected.toLocaleString()}** across ${this.payments.length} recorded payments.`,
+        data: this.payments,
+        actionUrl: '/reports',
+      };
+    }
+
+    if (q.includes('project') && (q.includes('risk') || q.includes('blocked') || q.includes('health'))) {
+      const atRisk = this.projects.filter((p) => p.health === 'at_risk' || p.health === 'blocked');
+      return {
+        answer: atRisk.length > 0
+          ? `You have ${atRisk.length} project(s) requiring attention: ${atRisk.map((p) => `${p.name} (${p.healthReason || p.health})`).join(', ')}.`
+          : 'All active projects are currently in healthy standing with zero blocked deadlines.',
+        data: atRisk,
+        actionUrl: '/projects',
+      };
+    }
+
+    return {
+      answer: `Here is a summary based on your live business records: You have ${this.projects.length} active projects, ${this.invoices.length} invoices, and ${this.timeEntries.length} tracked time entries. Try asking "Which invoices are overdue?", "How much revenue was collected?", or "Which projects are at risk?".`,
+      data: [],
+      actionUrl: '/dashboard',
     };
   }
 }

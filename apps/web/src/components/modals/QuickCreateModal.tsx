@@ -295,6 +295,57 @@ export function QuickCreateModal() {
           {quickCreateType === 'project' && (
             <>
               <div>
+                <label className="block text-xs font-medium text-foreground mb-1">Project Template</label>
+                <select
+                  value={formData.template || 'custom'}
+                  onChange={(e) => {
+                    const tmpl = e.target.value;
+                    if (tmpl === 'video') {
+                      setFormData({
+                        ...formData,
+                        template: tmpl,
+                        name: formData.name || 'Commercial Video Production',
+                        budget: 150000,
+                        includedRevisions: 3,
+                      });
+                    } else if (tmpl === 'brand') {
+                      setFormData({
+                        ...formData,
+                        template: tmpl,
+                        name: formData.name || 'Brand Identity & Guidelines',
+                        budget: 85000,
+                        includedRevisions: 2,
+                      });
+                    } else if (tmpl === 'web') {
+                      setFormData({
+                        ...formData,
+                        template: tmpl,
+                        name: formData.name || 'Full-Stack Web MVP',
+                        budget: 125000,
+                        includedRevisions: 2,
+                      });
+                    } else if (tmpl === 'retainer') {
+                      setFormData({
+                        ...formData,
+                        template: tmpl,
+                        name: formData.name || 'Monthly Creative Retainer',
+                        budget: 60000,
+                        includedRevisions: 4,
+                      });
+                    } else {
+                      setFormData({ ...formData, template: 'custom' });
+                    }
+                  }}
+                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                >
+                  <option value="custom">Blank Custom Project</option>
+                  <option value="video">Commercial Video Production (3 Revisions • ₹1.5L)</option>
+                  <option value="brand">Brand Identity & Guidelines (2 Revisions • ₹85k)</option>
+                  <option value="web">Full-Stack Web MVP (2 Revisions • ₹1.25L)</option>
+                  <option value="retainer">Monthly Creative Retainer (4 Revisions • ₹60k)</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-foreground mb-1">Project Name *</label>
                 <input
                   required

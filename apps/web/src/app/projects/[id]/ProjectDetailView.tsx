@@ -27,6 +27,15 @@ import {
   History,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
+  Flag,
+  Layers,
+  Film,
+  Camera,
+  Check,
+  Calendar,
+  Copy,
+  Archive,
 } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -35,11 +44,37 @@ export default function ProjectDetailPage() {
   const queryClient = useQueryClient();
   const { startTimer, stopTimer, isTimerRunning, timerProjectId, activeTimeEntryId, openQuickCreate } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'deliverables' | 'time' | 'invoices' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'tasks' | 'milestones' | 'scope' | 'creative' | 'deliverables' | 'time' | 'invoices' | 'activity' | 'closeout'
+  >('overview');
+  const [creativeSubTab, setCreativeSubTab] = useState<'callSheets' | 'shots' | 'equipment'>('callSheets');
   const [taskFilter, setTaskFilter] = useState<'all' | 'todo' | 'done'>('all');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [newDeliverableTitle, setNewDeliverableTitle] = useState('');
+
+  // AI Summary state
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiSummaryData, setAiSummaryData] = useState<any>(null);
+
+  // New item modal states
+  const [newMilestoneName, setNewMilestoneName] = useState('');
+  const [newMilestoneDue, setNewMilestoneDue] = useState('2026-10-06');
+  const [newMilestoneAmount, setNewMilestoneAmount] = useState(1500);
+
+  const [newChangeOrderTitle, setNewChangeOrderTitle] = useState('');
+  const [newChangeOrderCost, setNewChangeOrderCost] = useState(850);
+  const [newChangeOrderHours, setNewChangeOrderHours] = useState(6);
+  const [newChangeOrderDetails, setNewChangeOrderDetails] = useState('');
+
+  const [newShotNumber, setNewShotNumber] = useState('5A');
+  const [newShotDesc, setNewShotDesc] = useState('');
+  const [newShotFraming, setNewShotFraming] = useState('Medium Close-up');
+  const [newShotLens, setNewShotLens] = useState('50mm');
+
+  const [newEquipmentItem, setNewEquipmentItem] = useState('');
+  const [newEquipmentCategory, setNewEquipmentCategory] = useState('Camera');
+  const [newEquipmentQty, setNewEquipmentQty] = useState(1);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -73,6 +108,37 @@ export default function ProjectDetailPage() {
   const { data: activityLogs = [] } = useQuery({
     queryKey: ['activity'],
     queryFn: () => api.activity.list(20),
+  });
+
+  // Milestones, Scope & Creative queries
+  const { data: milestones = [] } = useQuery({
+    queryKey: ['projectMilestones', id],
+    queryFn: () => api.milestones.list(id),
+    enabled: Boolean(id),
+  });
+
+  const { data: scopeResult } = useQuery({
+    queryKey: ['projectScope', id],
+    queryFn: () => api.scope.get(id),
+    enabled: Boolean(id),
+  });
+
+  const { data: callSheets = [] } = useQuery({
+    queryKey: ['projectCallSheets', id],
+    queryFn: () => api.creative.callSheets.list(id),
+    enabled: Boolean(id),
+  });
+
+  const { data: shots = [] } = useQuery({
+    queryKey: ['projectShots', id],
+    queryFn: () => api.creative.shots.list(id),
+    enabled: Boolean(id),
+  });
+
+  const { data: equipment = [] } = useQuery({
+    queryKey: ['projectEquipment', id],
+    queryFn: () => api.creative.equipment.list(id),
+    enabled: Boolean(id),
   });
 
   // Filter invoices for this project
@@ -125,6 +191,146 @@ export default function ProjectDetailPage() {
       alert('Approval request sent to client successfully.');
       queryClient.invalidateQueries({ queryKey: ['projectDeliverables', id] });
       queryClient.invalidateQueries({ queryKey: ['approvals'] });
+    },
+  });
+
+  const summarizeAiMutation = useMutation({
+    mutationFn: () => api.ai.summarizeProject(id),
+    onSuccess: (data) => {
+      setAiSummaryData(data);
+      setIsAiModalOpen(true);
+    },
+  });
+
+  const createMilestoneMutation = useMutation({
+    mutationFn: () =>
+      api.milestones.create({
+        projectId: id,
+        name: newMilestoneName,
+        dueDate: newMilestoneDue,
+        paymentAmount: newMilestoneAmount,
+        status: 'pending',
+      }),
+    onSuccess: () => {
+      setNewMilestoneName('');
+      queryClient.invalidateQueries({ queryKey: ['projectMilestones', id] });
+    },
+  });
+
+  const toggleMilestoneMutation = useMutation({
+    mutationFn: ({ milestoneId, currentStatus }: { milestoneId: string; currentStatus: string }) =>
+      api.milestones.update(milestoneId, {
+        status: currentStatus === 'completed' ? 'in_progress' : 'completed',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectMilestones', id] });
+    },
+  });
+
+  const createChangeOrderMutation = useMutation({
+    mutationFn: () =>
+      api.scope.requestChange({
+        projectId: id,
+        title: newChangeOrderTitle,
+        additionalCost: newChangeOrderCost,
+        estimatedHours: newChangeOrderHours,
+        requestDetails: newChangeOrderDetails || 'Additional client scope request.',
+        requestedBy: project?.clientName || 'Client',
+        status: 'quoted',
+      }),
+    onSuccess: () => {
+      setNewChangeOrderTitle('');
+      setNewChangeOrderDetails('');
+      queryClient.invalidateQueries({ queryKey: ['projectScope', id] });
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+    },
+  });
+
+  const approveChangeOrderMutation = useMutation({
+    mutationFn: (changeId: string) =>
+      api.scope.updateChange(changeId, {
+        status: 'approved',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectScope', id] });
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+    },
+  });
+
+  const toggleShotMutation = useMutation({
+    mutationFn: ({ shotId, currentStatus }: { shotId: string; currentStatus: string }) =>
+      api.creative.shots.update(shotId, {
+        status: currentStatus === 'shot' ? 'planned' : 'shot',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectShots', id] });
+    },
+  });
+
+  const createShotMutation = useMutation({
+    mutationFn: () =>
+      api.creative.shots.create({
+        projectId: id,
+        shotNumber: newShotNumber,
+        description: newShotDesc,
+        framing: newShotFraming,
+        lens: newShotLens,
+        status: 'planned',
+      }),
+    onSuccess: () => {
+      setNewShotDesc('');
+      queryClient.invalidateQueries({ queryKey: ['projectShots', id] });
+    },
+  });
+
+  const toggleEquipmentMutation = useMutation({
+    mutationFn: ({ eqId, currentStatus }: { eqId: string; currentStatus: string }) =>
+      api.creative.equipment.update(eqId, {
+        status: currentStatus === 'packed' ? 'needed' : 'packed',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectEquipment', id] });
+    },
+  });
+
+  const createEquipmentMutation = useMutation({
+    mutationFn: () =>
+      api.creative.equipment.create({
+        projectId: id,
+        item: newEquipmentItem,
+        category: newEquipmentCategory,
+        quantity: newEquipmentQty,
+        status: 'needed',
+      }),
+    onSuccess: () => {
+      setNewEquipmentItem('');
+      queryClient.invalidateQueries({ queryKey: ['projectEquipment', id] });
+    },
+  });
+
+  const updateProjectStatusMutation = useMutation({
+    mutationFn: (status: 'active' | 'completed' | 'archived') =>
+      api.projects.update(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
+  const duplicateProjectMutation = useMutation({
+    mutationFn: () =>
+      api.projects.create({
+        name: `${project?.name} (Copy)`,
+        clientId: project?.clientId,
+        budget: project?.budget || 0,
+        deadline: project?.deadline,
+        includedRevisions: project?.includedRevisions || 2,
+        currency: project?.currency || 'INR',
+      }),
+    onSuccess: (newProj: any) => {
+      alert(`Project duplicated successfully: ${newProj.name}`);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 
@@ -274,6 +480,15 @@ export default function ProjectDetailPage() {
             {/* Quick Actions Header */}
             <div className="flex flex-wrap items-center gap-2">
               <button
+                onClick={() => summarizeAiMutation.mutate()}
+                disabled={summarizeAiMutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 shadow-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                <span>{summarizeAiMutation.isPending ? 'Analyzing...' : 'AI Summary'}</span>
+              </button>
+
+              <button
                 onClick={handleToggleTimer}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors shadow-xs ${
                   isTimerRunningOnThisProject
@@ -371,7 +586,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Tabs Bar */}
-        <div className="flex border-b border-border gap-5 sm:space-x-6 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
+        <div className="flex border-b border-border gap-4 sm:gap-6 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
           <button
             onClick={() => setActiveTab('overview')}
             className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
@@ -380,7 +595,7 @@ export default function ProjectDetailPage() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            Overview & Scope
+            Overview
           </button>
           <button
             onClick={() => setActiveTab('tasks')}
@@ -393,6 +608,36 @@ export default function ProjectDetailPage() {
             Tasks ({tasks.length})
           </button>
           <button
+            onClick={() => setActiveTab('milestones')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'milestones'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Milestones ({milestones.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('scope')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'scope'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Scope & Changes ({scopeResult?.changes?.length || 0})
+          </button>
+          <button
+            onClick={() => setActiveTab('creative')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'creative'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Creative Workflow ({shots.length + equipment.length})
+          </button>
+          <button
             onClick={() => setActiveTab('deliverables')}
             className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
               activeTab === 'deliverables'
@@ -400,7 +645,7 @@ export default function ProjectDetailPage() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            Deliverables & Revisions ({deliverables.length})
+            Deliverables ({deliverables.length})
           </button>
           <button
             onClick={() => setActiveTab('time')}
@@ -410,7 +655,7 @@ export default function ProjectDetailPage() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            Logged Time ({timeEntries.length})
+            Time ({timeEntries.length})
           </button>
           <button
             onClick={() => setActiveTab('invoices')}
@@ -431,6 +676,16 @@ export default function ProjectDetailPage() {
             }`}
           >
             Activity Feed
+          </button>
+          <button
+            onClick={() => setActiveTab('closeout')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'closeout'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Closeout & Sign-off
           </button>
         </div>
 
@@ -691,6 +946,602 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
+        {/* Tab: Milestones */}
+        {activeTab === 'milestones' && (
+          <div className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newMilestoneName.trim()) createMilestoneMutation.mutate();
+              }}
+              className="p-4 rounded-lg border border-border bg-card space-y-3"
+            >
+              <h3 className="text-xs font-semibold text-foreground">Add Project Milestone</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">Milestone Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Rough Cut Delivery, Sound Lock, Final Color Grade"
+                    value={newMilestoneName}
+                    onChange={(e) => setNewMilestoneName(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">Target Due Date</label>
+                  <input
+                    type="date"
+                    value={newMilestoneDue}
+                    onChange={(e) => setNewMilestoneDue(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">Linked Payment ({project.currency})</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={newMilestoneAmount}
+                      onChange={(e) => setNewMilestoneAmount(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                    />
+                    <button
+                      type="submit"
+                      disabled={createMilestoneMutation.isPending}
+                      className="px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md whitespace-nowrap"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <div className="border border-border rounded-lg bg-card overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground">Project Roadmap & Release Gates</h4>
+                  <p className="text-[11px] text-muted-foreground">Track critical deadlines and tied milestone disbursements.</p>
+                </div>
+                <div className="text-xs font-mono text-muted-foreground">
+                  {milestones.filter((m) => m.status === 'completed').length} of {milestones.length} completed
+                </div>
+              </div>
+              <div className="divide-y divide-border">
+                {milestones.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    No roadmap milestones defined. Add one above to anchor delivery gates.
+                  </div>
+                ) : (
+                  milestones.map((m) => (
+                    <div key={m.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start sm:items-center gap-3">
+                        <button
+                          onClick={() => toggleMilestoneMutation.mutate({ milestoneId: m.id, currentStatus: m.status })}
+                          className={`mt-0.5 sm:mt-0 w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                            m.status === 'completed'
+                              ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900'
+                              : 'border-border'
+                          }`}
+                        >
+                          {m.status === 'completed' && <Check className="w-2.5 h-2.5" />}
+                        </button>
+                        <div>
+                          <span className={`text-xs font-medium block ${m.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                            {m.name}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground font-mono">
+                            Due {formatDate(m.dueDate)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-auto">
+                        {m.paymentAmount ? (
+                          <span className="text-xs font-mono font-medium text-foreground">
+                            {formatCurrency(m.paymentAmount, project.currency)}
+                          </span>
+                        ) : null}
+                        <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(m.status)}`}>
+                          {m.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Scope & Changes */}
+        {activeTab === 'scope' && (
+          <div className="space-y-6">
+            {/* Scope Boundaries Card */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    Included in Scope
+                  </h3>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    Revisions: {project.completedRevisions}/{project.includedRevisions} used
+                  </span>
+                </div>
+                <ul className="space-y-1.5 text-xs text-muted-foreground">
+                  {scopeResult?.scope?.includedItems && scopeResult.scope.includedItems.length > 0 ? (
+                    scopeResult.scope.includedItems.map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <>
+                      <li className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <span>All deliverables agreed in project statement of work</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <span>Up to {project.includedRevisions} comprehensive revision cycles per deliverable</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <span>Final export delivery in high-resolution master formats</span>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+                <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  Explicitly Out of Scope
+                </h3>
+                <ul className="space-y-1.5 text-xs text-muted-foreground">
+                  {scopeResult?.scope?.excludedItems && scopeResult.scope.excludedItems.length > 0 ? (
+                    scopeResult.scope.excludedItems.map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <>
+                      <li className="flex items-start gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <span>Unscheduled shoot days or emergency turnaround (billed at surge rate)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <span>Third-party commercial music/font licensing fees</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <span>Major conceptual pivot after storyboard sign-off</span>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            {/* Scope Changes & Addendums */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Change Orders & Scope Addendums</h3>
+                  <p className="text-[11px] text-muted-foreground">Protect revenue and prevent scope creep by formally quoting adjustments.</p>
+                </div>
+              </div>
+
+              {/* Add Change Order Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newChangeOrderTitle.trim()) createChangeOrderMutation.mutate();
+                }}
+                className="p-4 rounded-lg border border-border bg-card space-y-3"
+              >
+                <h4 className="text-xs font-semibold text-foreground">Record Scope Change Request</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">Change Order Title</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Additional 15s Cutdown, Extra Location Shoot"
+                      value={newChangeOrderTitle}
+                      onChange={(e) => setNewChangeOrderTitle(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">Additional Cost ({project.currency})</label>
+                    <input
+                      type="number"
+                      value={newChangeOrderCost}
+                      onChange={(e) => setNewChangeOrderCost(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">Est. Hours</label>
+                    <input
+                      type="number"
+                      value={newChangeOrderHours}
+                      onChange={(e) => setNewChangeOrderHours(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">Scope Rationale & Deliverable Details</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Client requested extra horizontal formats after vertical approval..."
+                      value={newChangeOrderDetails}
+                      onChange={(e) => setNewChangeOrderDetails(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                    />
+                    <button
+                      type="submit"
+                      disabled={createChangeOrderMutation.isPending}
+                      className="px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md whitespace-nowrap"
+                    >
+                      Issue Addendum
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* Scope Changes List */}
+              <div className="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
+                {!scopeResult?.changes || scopeResult.changes.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    No change orders logged for this project. Scope is strictly aligned to the original agreement.
+                  </div>
+                ) : (
+                  scopeResult.changes.map((co) => (
+                    <div key={co.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/30 transition-colors">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-foreground">{co.title}</span>
+                          <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(co.status)}`}>
+                            {co.status}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">{co.requestDetails}</p>
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
+                          <span>Requested by: {co.requestedBy}</span>
+                          <span>•</span>
+                          <span>{co.estimatedHours} hours</span>
+                          <span>•</span>
+                          <span>{formatDate(co.requestedDate)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <span className="text-xs font-mono font-medium text-foreground">
+                          +{formatCurrency(co.additionalCost, co.currency)}
+                        </span>
+                        {co.status === 'quoted' && (
+                          <button
+                            onClick={() => approveChangeOrderMutation.mutate(co.id)}
+                            disabled={approveChangeOrderMutation.isPending}
+                            className="px-2.5 py-1 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors"
+                          >
+                            Approve Order
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Creative Workflow */}
+        {activeTab === 'creative' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <button
+                onClick={() => setCreativeSubTab('callSheets')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  creativeSubTab === 'callSheets'
+                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                    : 'text-muted-foreground hover:text-foreground bg-muted/50'
+                }`}
+              >
+                Call Sheets ({callSheets.length})
+              </button>
+              <button
+                onClick={() => setCreativeSubTab('shots')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  creativeSubTab === 'shots'
+                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                    : 'text-muted-foreground hover:text-foreground bg-muted/50'
+                }`}
+              >
+                Shot List ({shots.length})
+              </button>
+              <button
+                onClick={() => setCreativeSubTab('equipment')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  creativeSubTab === 'equipment'
+                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                    : 'text-muted-foreground hover:text-foreground bg-muted/50'
+                }`}
+              >
+                Gear & Equipment ({equipment.length})
+              </button>
+            </div>
+
+            {/* Sub-tab 1: Call Sheets */}
+            {creativeSubTab === 'callSheets' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {callSheets.length === 0 ? (
+                    <div className="col-span-2 py-8 text-center text-xs text-muted-foreground border border-border rounded-lg bg-card">
+                      No production call sheets scheduled for this project.
+                    </div>
+                  ) : (
+                    callSheets.map((cs) => (
+                      <div key={cs.id} className="p-4 rounded-lg border border-border bg-card space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-xs font-semibold text-foreground">{cs.title}</h4>
+                            <span className="text-[11px] text-muted-foreground font-mono">
+                              Shoot Date: {formatDate(cs.shootDate)}
+                            </span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-muted text-foreground border border-border">
+                            {cs.callTimes || 'Call: 08:00 AM'}
+                          </span>
+                        </div>
+                        <div className="text-xs space-y-1.5 text-muted-foreground">
+                          <div><span className="font-medium text-foreground">Location:</span> {cs.location}</div>
+                          {cs.crew && <div><span className="font-medium text-foreground">Crew:</span> {cs.crew}</div>}
+                          {cs.notes && <div><span className="font-medium text-foreground">Notes:</span> {cs.notes}</div>}
+                          {cs.emergencyContact && (
+                            <div className="font-mono text-[11px]"><span className="font-medium text-foreground">Emergency:</span> {cs.emergencyContact}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab 2: Shot List */}
+            {creativeSubTab === 'shots' && (
+              <div className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (newShotDesc.trim()) createShotMutation.mutate();
+                  }}
+                  className="p-4 rounded-lg border border-border bg-card space-y-3"
+                >
+                  <h4 className="text-xs font-semibold text-foreground">Add Shot to Production Slate</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Shot #</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 5A"
+                        value={newShotNumber}
+                        onChange={(e) => setNewShotNumber(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Framing</label>
+                      <input
+                        type="text"
+                        placeholder="Wide / Medium / ECU"
+                        value={newShotFraming}
+                        onChange={(e) => setNewShotFraming(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Lens</label>
+                      <input
+                        type="text"
+                        placeholder="24mm / 50mm / 85mm"
+                        value={newShotLens}
+                        onChange={(e) => setNewShotLens(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Action</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Actor opens door..."
+                          value={newShotDesc}
+                          onChange={(e) => setNewShotDesc(e.target.value)}
+                          className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                          required
+                        />
+                        <button
+                          type="submit"
+                          disabled={createShotMutation.isPending}
+                          className="px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md whitespace-nowrap"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+
+                <div className="border border-border rounded-lg bg-card overflow-hidden">
+                  <div className="p-3 border-b border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
+                    <span>{shots.filter((s) => s.status === 'shot').length} of {shots.length} shots completed</span>
+                    <span>Slate Progress: {shots.length ? Math.round((shots.filter((s) => s.status === 'shot').length / shots.length) * 100) : 0}%</span>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {shots.length === 0 ? (
+                      <div className="py-8 text-center text-xs text-muted-foreground">
+                        No shots queued in slate. Add your first setup above.
+                      </div>
+                    ) : (
+                      shots.map((shot) => (
+                        <div key={shot.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => toggleShotMutation.mutate({ shotId: shot.id, currentStatus: shot.status })}
+                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                shot.status === 'shot'
+                                  ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900'
+                                  : 'border-border'
+                              }`}
+                            >
+                              {shot.status === 'shot' && <Check className="w-2.5 h-2.5" />}
+                            </button>
+                            <span className="font-mono text-xs font-bold text-foreground w-8">{shot.shotNumber}</span>
+                            <div>
+                              <span className={`text-xs ${shot.status === 'shot' ? 'line-through text-muted-foreground' : 'text-foreground font-medium'}`}>
+                                {shot.description}
+                              </span>
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
+                                {shot.framing && <span>{shot.framing}</span>}
+                                {shot.lens && <span>• {shot.lens}</span>}
+                                {shot.location && <span>• {shot.location}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono capitalize border ${getStatusBadgeClass(shot.status)}`}>
+                            {shot.status}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab 3: Gear Checklist */}
+            {creativeSubTab === 'equipment' && (
+              <div className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (newEquipmentItem.trim()) createEquipmentMutation.mutate();
+                  }}
+                  className="p-4 rounded-lg border border-border bg-card space-y-3"
+                >
+                  <h4 className="text-xs font-semibold text-foreground">Add Production Equipment to Pack List</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Equipment Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Sony FX6, Aputure 600d, Wireless Lavalier Kit"
+                        value={newEquipmentItem}
+                        onChange={(e) => setNewEquipmentItem(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Category</label>
+                      <select
+                        value={newEquipmentCategory}
+                        onChange={(e) => setNewEquipmentCategory(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                      >
+                        <option value="Camera">Camera</option>
+                        <option value="Lighting">Lighting</option>
+                        <option value="Audio">Audio</option>
+                        <option value="Grip">Grip</option>
+                        <option value="DIT">DIT / Storage</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-muted-foreground mb-1">Quantity</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          value={newEquipmentQty}
+                          min={1}
+                          onChange={(e) => setNewEquipmentQty(Number(e.target.value))}
+                          className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                        />
+                        <button
+                          type="submit"
+                          disabled={createEquipmentMutation.isPending}
+                          className="px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md whitespace-nowrap"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+
+                <div className="border border-border rounded-lg bg-card overflow-hidden">
+                  <div className="p-3 border-b border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
+                    <span>{equipment.filter((eq) => eq.status === 'packed').length} of {equipment.length} items packed</span>
+                    <span>Pack Status: {equipment.length ? Math.round((equipment.filter((eq) => eq.status === 'packed').length / equipment.length) * 100) : 0}%</span>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {equipment.length === 0 ? (
+                      <div className="py-8 text-center text-xs text-muted-foreground">
+                        No equipment entries. Add equipment to track packing list.
+                      </div>
+                    ) : (
+                      equipment.map((eq) => (
+                        <div key={eq.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => toggleEquipmentMutation.mutate({ eqId: eq.id, currentStatus: eq.status })}
+                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                eq.status === 'packed'
+                                  ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900'
+                                  : 'border-border'
+                              }`}
+                            >
+                              {eq.status === 'packed' && <Check className="w-2.5 h-2.5" />}
+                            </button>
+                            <span className="font-mono text-xs text-muted-foreground w-6">×{eq.quantity}</span>
+                            <div>
+                              <span className={`text-xs ${eq.status === 'packed' ? 'line-through text-muted-foreground' : 'text-foreground font-medium'}`}>
+                                {eq.item}
+                              </span>
+                              <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                                {eq.category}
+                              </span>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono capitalize border ${getStatusBadgeClass(eq.status)}`}>
+                            {eq.status}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tab 3: Deliverables */}
         {activeTab === 'deliverables' && (
           <div className="space-y-4">
@@ -918,7 +1769,270 @@ export default function ProjectDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Tab 7: Closeout & Sign-off Workflow */}
+        {activeTab === 'closeout' && (
+          <div className="space-y-6">
+            {/* Status & Quick Actions Banner */}
+            <div className="p-5 rounded-lg border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-foreground">Project Lifecycle Status</h3>
+                  <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border capitalize ${getStatusBadgeClass(project.status)}`}>
+                    {project.status}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Execute project sign-off, verify zero outstanding receivables, and archive project assets.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => duplicateProjectMutation.mutate()}
+                  disabled={duplicateProjectMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Duplicate Project</span>
+                </button>
+
+                {project.status !== 'archived' ? (
+                  <button
+                    onClick={() => updateProjectStatusMutation.mutate('archived')}
+                    disabled={updateProjectStatusMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted rounded-md transition-colors border border-border"
+                  >
+                    <Archive className="w-3.5 h-3.5" />
+                    <span>Archive Project</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => updateProjectStatusMutation.mutate('active')}
+                    disabled={updateProjectStatusMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-md transition-colors border border-blue-500/20"
+                  >
+                    <span>Restore to Active</span>
+                  </button>
+                )}
+
+                {project.status !== 'completed' ? (
+                  <button
+                    onClick={() => updateProjectStatusMutation.mutate('completed')}
+                    disabled={updateProjectStatusMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors shadow-xs"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Complete & Close Project</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => updateProjectStatusMutation.mutate('active')}
+                    disabled={updateProjectStatusMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-md transition-colors border border-amber-500/20"
+                  >
+                    <span>Re-open Project</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 4-Gate Closeout Checklist */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Gate 1: Deliverables */}
+              <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <PackageCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Gate 1: Deliverables Approval</span>
+                  </h4>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {deliverables.filter((d) => d.status === 'approved').length}/{deliverables.length} Approved
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Confirm all creative masters, video exports, and deliverables have received formal sign-off.
+                </p>
+                <div className="space-y-1.5 text-xs">
+                  {deliverables.length === 0 ? (
+                    <span className="text-muted-foreground">No deliverables registered.</span>
+                  ) : (
+                    deliverables.map((deliv) => (
+                      <div key={deliv.id} className="flex items-center justify-between py-1 border-b border-border/50 text-[11px]">
+                        <span className="text-foreground">{deliv.title}</span>
+                        <span className={`px-1.5 py-0.2 rounded font-mono text-[9px] capitalize border ${getStatusBadgeClass(deliv.status)}`}>
+                          {deliv.status}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Gate 2: Invoices & Receivables */}
+              <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Gate 2: Invoices & Payment</span>
+                  </h4>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {projectInvoices.filter((i) => i.balanceDue === 0).length}/{projectInvoices.length} Paid
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Reconcile all milestones and ensure no unpaid invoices remain outstanding.
+                </p>
+                <div className="space-y-1.5 text-xs">
+                  {projectInvoices.length === 0 ? (
+                    <span className="text-muted-foreground">No invoices generated yet for this project.</span>
+                  ) : (
+                    projectInvoices.map((inv) => (
+                      <div key={inv.id} className="flex items-center justify-between py-1 border-b border-border/50 text-[11px]">
+                        <span className="text-foreground font-mono">{inv.invoiceNumber} - {inv.title}</span>
+                        <span className="font-mono font-medium">
+                          {inv.balanceDue > 0 ? (
+                            <span className="text-amber-600 dark:text-amber-400">Due {formatCurrency(inv.balanceDue, inv.currency)}</span>
+                          ) : (
+                            <span className="text-emerald-600 dark:text-emerald-400">Settled</span>
+                          )}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Gate 3: Scope & Revision Accounting */}
+              <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Gate 3: Scope & Revision Lock</span>
+                  </h4>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {project.completedRevisions}/{project.includedRevisions} Revisions Used
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Lock scope addendums and confirm revision allowance was honored without unbilled creep.
+                </p>
+                <div className="p-2.5 bg-muted/30 rounded border border-border text-xs space-y-1 text-muted-foreground">
+                  <div className="flex justify-between">
+                    <span>Approved Change Orders:</span>
+                    <span className="font-mono text-foreground font-medium">{scopeResult?.changes?.filter((c) => c.status === 'approved').length || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Billable Hours Tracked:</span>
+                    <span className="font-mono text-foreground font-medium">{project.totalHoursTracked}h</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gate 4: IP Release & Portfolio */}
+              <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <FileCheck2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Gate 4: Rights Release & Archive</span>
+                  </h4>
+                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                    Ready
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Archive raw shoot media, release intellectual property to the client, and document studio learnings.
+                </p>
+                <div className="p-2.5 bg-muted/30 rounded border border-border text-xs space-y-2">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Production masters archived</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Client rights transferred</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* AI Project Executive Summary Modal */}
+      {isAiModalOpen && aiSummaryData && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">AI Project Executive Summary</h3>
+                  <p className="text-[11px] text-muted-foreground font-mono">{project.name} • {project.code}</p>
+                </div>
+              </div>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(aiSummaryData.health)}`}>
+                {aiSummaryData.health}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-xs text-foreground leading-relaxed whitespace-pre-line bg-muted/30 p-3.5 rounded-lg border border-border">
+                {aiSummaryData.summary}
+              </div>
+
+              {aiSummaryData.recommendedActions && aiSummaryData.recommendedActions.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    Recommended Actions
+                  </h4>
+                  <ul className="space-y-1.5 text-xs text-muted-foreground">
+                    {aiSummaryData.recommendedActions.map((action: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 bg-card p-2 rounded border border-border">
+                        <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{idx + 1}.</span>
+                        <span>{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {aiSummaryData.metrics && (
+                <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border text-center">
+                  <div className="p-2 bg-muted/40 rounded border border-border">
+                    <div className="text-sm font-bold font-mono text-foreground">{aiSummaryData.metrics.totalTasks}</div>
+                    <div className="text-[10px] text-muted-foreground">Tasks</div>
+                  </div>
+                  <div className="p-2 bg-muted/40 rounded border border-border">
+                    <div className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400">{aiSummaryData.metrics.completedTasks}</div>
+                    <div className="text-[10px] text-muted-foreground">Done</div>
+                  </div>
+                  <div className="p-2 bg-muted/40 rounded border border-border">
+                    <div className="text-sm font-bold font-mono text-rose-600 dark:text-rose-400">{aiSummaryData.metrics.overdueTasks}</div>
+                    <div className="text-[10px] text-muted-foreground">Overdue</div>
+                  </div>
+                  <div className="p-2 bg-muted/40 rounded border border-border">
+                    <div className="text-sm font-bold font-mono text-foreground">{aiSummaryData.metrics.deliverablesCount}</div>
+                    <div className="text-[10px] text-muted-foreground">Deliverables</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              <button
+                onClick={() => setIsAiModalOpen(false)}
+                className="px-4 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

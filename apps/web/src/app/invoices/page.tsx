@@ -9,6 +9,7 @@ import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatDate } from '@freelanceros/ui';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 import { Invoice } from '@freelanceros/types';
+import { exportInvoicesToCsv } from '@/lib/csv-export';
 import {
   CreditCard,
   Plus,
@@ -85,6 +86,13 @@ export default function InvoicesPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportInvoicesToCsv(invoices)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
             <button
               onClick={() => openQuickCreate('invoice')}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"

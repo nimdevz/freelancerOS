@@ -17,7 +17,9 @@ import {
   DollarSign,
   TrendingUp,
   FolderKanban,
+  Download,
 } from 'lucide-react';
+import { exportTimeEntriesToCsv } from '@/lib/csv-export';
 
 export default function TimePage() {
   const queryClient = useQueryClient();
@@ -147,13 +149,22 @@ export default function TimePage() {
               Accurately log hours, calculate effective hourly rate, and convert billable time to invoices.
             </p>
           </div>
-          <button
-            onClick={() => setIsManualModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Log Time Manually</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportTimeEntriesToCsv(timeEntries)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => setIsManualModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Log Time Manually</span>
+            </button>
+          </div>
         </div>
 
         {/* Live Stopwatch Tracker Widget */}

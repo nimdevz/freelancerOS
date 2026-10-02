@@ -29,6 +29,14 @@ import { notificationsRouter } from './routes/notifications';
 import { activityRouter } from './routes/activity';
 import { filesRouter } from './routes/files';
 import { seedRouter } from './routes/seed';
+import { milestonesRouter } from './routes/milestones';
+import { scopeRouter } from './routes/scope';
+import { assetRequestsRouter } from './routes/asset-requests';
+import { creativeRouter } from './routes/creative';
+import { portalRouter } from './routes/portal';
+import { caseStudiesRouter } from './routes/case-studies';
+import { calculatorsRouter } from './routes/calculators';
+import { aiRouter } from './routes/ai';
 
 // Scheduled & Queue handlers
 import { handleScheduled } from './scheduled/cron';
@@ -53,7 +61,7 @@ app.get('/', (c) => c.json({ service: 'FreelancerOS Serverless API', status: 'he
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
-// Apply Auth Middleware to all API routes
+// Apply Auth Middleware to all API routes (except public portal and health)
 app.use('/api/*', authMiddleware);
 
 // Mount Routers under /api
@@ -82,6 +90,14 @@ app.route('/api/notifications', notificationsRouter);
 app.route('/api/activity', activityRouter);
 app.route('/api/files', filesRouter);
 app.route('/api/seed', seedRouter);
+app.route('/api/milestones', milestonesRouter);
+app.route('/api/scope', scopeRouter);
+app.route('/api/asset-requests', assetRequestsRouter);
+app.route('/api/creative', creativeRouter);
+app.route('/api/portal', portalRouter);
+app.route('/api/case-studies', caseStudiesRouter);
+app.route('/api/calculators', calculatorsRouter);
+app.route('/api/ai', aiRouter);
 
 // Export Cloudflare Worker entrypoint with fetch, scheduled, and queue handlers
 export default {

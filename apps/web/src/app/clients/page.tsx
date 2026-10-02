@@ -7,8 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatRelativeTime } from '@freelanceros/ui';
-import { Users, Plus, Search, Mail, Phone, ArrowUpRight } from 'lucide-react';
+import { Users, Plus, Search, Mail, Phone, ArrowUpRight, Download } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
+import { exportClientsToCsv } from '@/lib/csv-export';
 
 export default function ClientsPage() {
   const { openQuickCreate } = useAppStore();
@@ -37,13 +38,22 @@ export default function ClientsPage() {
               Manage client relationships, financials, projects, and contracts.
             </p>
           </div>
-          <button
-            onClick={() => openQuickCreate('client')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Client</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportClientsToCsv(clients)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => openQuickCreate('client')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Client</span>
+            </button>
+          </div>
         </div>
 
         {/* Search Bar */}

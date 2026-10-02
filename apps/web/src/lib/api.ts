@@ -240,4 +240,83 @@ export const api = {
     exitDemo: () => mockStorage.exitDemo(),
     getDemoStatus: () => mockStorage.getDemoStatus(),
   },
+
+  milestones: {
+    list: (projectId?: string) => tryWithFallback(() => rawClient.milestones.list(projectId), () => mockStorage.listMilestones(projectId)),
+    create: (data: any) => tryWithFallback(() => rawClient.milestones.create(data), () => mockStorage.createMilestone(data)),
+    update: (id: string, data: any) => tryWithFallback(() => rawClient.milestones.update(id, data), () => mockStorage.updateMilestone(id, data)),
+    delete: (id: string) => tryWithFallback(() => rawClient.milestones.delete(id), () => mockStorage.deleteMilestone(id)),
+  },
+
+  scope: {
+    get: (projectId: string) => tryWithFallback(() => rawClient.scope.get(projectId), () => mockStorage.getScope(projectId)),
+    save: (data: any) => tryWithFallback(() => rawClient.scope.save(data), () => mockStorage.saveScope(data)),
+    listChanges: (projectId?: string) =>
+      tryWithFallback(
+        () => rawClient.scope.get(projectId || '').then((r) => r.changes || []),
+        () => mockStorage.listScopeChanges(projectId)
+      ),
+    requestChange: (data: any) => tryWithFallback(() => rawClient.scope.requestChange(data), () => mockStorage.createScopeChange(data)),
+    updateChange: (id: string, data: any) => tryWithFallback(() => rawClient.scope.updateChange(id, data), () => mockStorage.updateScopeChange(id, data)),
+  },
+
+  assetRequests: {
+    list: (params?: { projectId?: string; clientId?: string } | string) =>
+      tryWithFallback(
+        () => rawClient.assetRequests.list(typeof params === 'string' ? { projectId: params } : params),
+        () => mockStorage.listAssetRequests(params)
+      ),
+    create: (data: any) => tryWithFallback(() => rawClient.assetRequests.create(data), () => mockStorage.createAssetRequest(data)),
+    update: (id: string, data: any) => tryWithFallback(() => rawClient.assetRequests.update(id, data), () => mockStorage.updateAssetRequest(id, data)),
+    delete: (id: string) => tryWithFallback(() => rawClient.assetRequests.delete(id), () => mockStorage.deleteAssetRequest(id)),
+  },
+
+  creative: {
+    callSheets: {
+      list: (projectId?: string) => tryWithFallback(() => rawClient.creative.listCallSheets(projectId), () => mockStorage.listCallSheets(projectId)),
+      create: (data: any) => tryWithFallback(() => rawClient.creative.createCallSheet(data), () => mockStorage.createCallSheet(data)),
+      update: (id: string, data: any) => tryWithFallback(async () => mockStorage.updateCallSheet(id, data), () => mockStorage.updateCallSheet(id, data)),
+      delete: (id: string) => tryWithFallback(async () => {}, () => mockStorage.deleteCallSheet(id)),
+    },
+    shots: {
+      list: (projectId?: string) => tryWithFallback(() => rawClient.creative.listShots(projectId), () => mockStorage.listShots(projectId)),
+      create: (data: any) => tryWithFallback(() => rawClient.creative.createShot(data), () => mockStorage.createShot(data)),
+      update: (id: string, data: any) => tryWithFallback(() => rawClient.creative.updateShot(id, data), () => mockStorage.updateShot(id, data)),
+      delete: (id: string) => tryWithFallback(async () => {}, () => mockStorage.deleteShot(id)),
+    },
+    equipment: {
+      list: (projectId?: string) => tryWithFallback(() => rawClient.creative.listEquipment(projectId), () => mockStorage.listEquipment(projectId)),
+      create: (data: any) => tryWithFallback(() => rawClient.creative.createEquipment(data), () => mockStorage.createEquipment(data)),
+      update: (id: string, data: any) => tryWithFallback(() => rawClient.creative.updateEquipment(id, data), () => mockStorage.updateEquipment(id, data)),
+      delete: (id: string) => tryWithFallback(async () => {}, () => mockStorage.deleteEquipment(id)),
+    },
+  },
+
+  portal: {
+    get: (clientId: string) => tryWithFallback(() => rawClient.portal.get(clientId), () => mockStorage.getPortalData(clientId)),
+    submitFeedback: (clientId: string, data: any) => tryWithFallback(() => rawClient.portal.submitFeedback(clientId, data), () => mockStorage.submitPortalFeedback(clientId, data)),
+  },
+
+  caseStudies: {
+    list: (projectId?: string) => tryWithFallback(() => rawClient.caseStudies.list(), () => mockStorage.listCaseStudies(projectId)),
+    get: (id: string) => tryWithFallback(async () => mockStorage.getCaseStudy(id), () => mockStorage.getCaseStudy(id)),
+    create: (data: any) => tryWithFallback(() => rawClient.caseStudies.create(data), () => mockStorage.createCaseStudy(data)),
+    update: (id: string, data: any) => tryWithFallback(() => rawClient.caseStudies.update(id, data), () => mockStorage.updateCaseStudy(id, data)),
+    delete: (id: string) => tryWithFallback(async () => {}, () => mockStorage.deleteCaseStudy(id)),
+  },
+
+  calculators: {
+    calculateRate: (data: any) => tryWithFallback(() => rawClient.calculators.calculateRate(data), () => mockStorage.calculateRate(data)),
+    calculateRunway: (data: any) => tryWithFallback(() => rawClient.calculators.calculateRunway(data), () => mockStorage.calculateRunway(data)),
+    getGoal: () => tryWithFallback(() => rawClient.calculators.listGoals().then((g) => g[0] || null), () => mockStorage.getGoal()),
+    setGoal: (data: any) => tryWithFallback(() => rawClient.calculators.createGoal(data), () => mockStorage.setGoal(data)),
+  },
+
+  ai: {
+    summarizeProject: (projectId: string) => tryWithFallback(() => rawClient.ai.projectSummary(projectId), () => mockStorage.aiSummarizeProject(projectId)),
+    extractTasks: (text: string, projectId?: string) => tryWithFallback(() => rawClient.ai.taskExtraction(text), () => mockStorage.aiExtractTasks(text, projectId)),
+    draftProposal: (data: any) => tryWithFallback(() => rawClient.ai.proposalDraft(data), () => mockStorage.aiDraftProposal(data)),
+    draftFollowUp: (type: string, entityId: string) => tryWithFallback(() => rawClient.ai.followUpDraft(type, entityId), () => mockStorage.aiDraftFollowUp({ type, entityId })),
+    businessQuery: (query: string) => tryWithFallback(() => rawClient.ai.businessQuery(query), () => mockStorage.aiBusinessQuery(query)),
+  },
 };

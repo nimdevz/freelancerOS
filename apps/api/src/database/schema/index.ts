@@ -6,3 +6,6 @@ export * from './proposals';
 export * from './deliverables';
 export * from './finance';
 export * from './activity';
+export * from './milestones';
+export * from './scope';
+export * from './creative';

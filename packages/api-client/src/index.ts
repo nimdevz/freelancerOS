@@ -283,4 +283,67 @@ export class FreelancerOsClient {
   seed = {
     resetDemo: () => this.request<{ message: string; workspace: string }>('/seed/demo', { method: 'POST' }),
   };
+
+  milestones = {
+    list: (projectId?: string) => this.request<any[]>(projectId ? `/milestones?projectId=${projectId}` : '/milestones'),
+    create: (data: any) => this.request<any>('/milestones', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => this.request<any>(`/milestones/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => this.request<void>(`/milestones/${id}`, { method: 'DELETE' }),
+  };
+
+  scope = {
+    get: (projectId: string) => this.request<{ scope: any; changes: any[] }>(`/scope/${projectId}`),
+    save: (data: any) => this.request<any>('/scope', { method: 'POST', body: JSON.stringify(data) }),
+    requestChange: (data: any) => this.request<any>('/scope/changes', { method: 'POST', body: JSON.stringify(data) }),
+    updateChange: (id: string, data: any) => this.request<any>(`/scope/changes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  };
+
+  assetRequests = {
+    list: (params?: { projectId?: string; clientId?: string }) => {
+      const q = new URLSearchParams();
+      if (params?.projectId) q.set('projectId', params.projectId);
+      if (params?.clientId) q.set('clientId', params.clientId);
+      return this.request<any[]>(`/asset-requests?${q.toString()}`);
+    },
+    create: (data: any) => this.request<any>('/asset-requests', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => this.request<any>(`/asset-requests/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => this.request<void>(`/asset-requests/${id}`, { method: 'DELETE' }),
+  };
+
+  creative = {
+    listCallSheets: (projectId?: string) => this.request<any[]>(projectId ? `/creative/call-sheets?projectId=${projectId}` : '/creative/call-sheets'),
+    createCallSheet: (data: any) => this.request<any>('/creative/call-sheets', { method: 'POST', body: JSON.stringify(data) }),
+    listShots: (projectId?: string) => this.request<any[]>(projectId ? `/creative/shots?projectId=${projectId}` : '/creative/shots'),
+    createShot: (data: any) => this.request<any>('/creative/shots', { method: 'POST', body: JSON.stringify(data) }),
+    updateShot: (id: string, data: any) => this.request<any>(`/creative/shots/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    listEquipment: (projectId?: string) => this.request<any[]>(projectId ? `/creative/equipment?projectId=${projectId}` : '/creative/equipment'),
+    createEquipment: (data: any) => this.request<any>('/creative/equipment', { method: 'POST', body: JSON.stringify(data) }),
+    updateEquipment: (id: string, data: any) => this.request<any>(`/creative/equipment/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  };
+
+  portal = {
+    get: (clientId: string) => this.request<any>(`/portal/${clientId}`),
+    submitFeedback: (clientId: string, data: any) => this.request<any>(`/portal/${clientId}/feedback`, { method: 'POST', body: JSON.stringify(data) }),
+  };
+
+  caseStudies = {
+    list: () => this.request<any[]>('/case-studies'),
+    create: (data: any) => this.request<any>('/case-studies', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => this.request<any>(`/case-studies/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  };
+
+  calculators = {
+    calculateRate: (data: any) => this.request<any>('/calculators/rate', { method: 'POST', body: JSON.stringify(data) }),
+    calculateRunway: (data: any) => this.request<any>('/calculators/runway', { method: 'POST', body: JSON.stringify(data) }),
+    listGoals: () => this.request<any[]>('/calculators/goals'),
+    createGoal: (data: any) => this.request<any>('/calculators/goals', { method: 'POST', body: JSON.stringify(data) }),
+  };
+
+  ai = {
+    projectSummary: (projectId: string) => this.request<any>('/ai/project-summary', { method: 'POST', body: JSON.stringify({ projectId }) }),
+    taskExtraction: (notes: string) => this.request<{ tasks: any[] }>('/ai/task-extraction', { method: 'POST', body: JSON.stringify({ notes }) }),
+    proposalDraft: (data: any) => this.request<any>('/ai/proposal-draft', { method: 'POST', body: JSON.stringify(data) }),
+    followUpDraft: (type: string, entityId: string) => this.request<{ subject: string; body: string }>('/ai/follow-up-draft', { method: 'POST', body: JSON.stringify({ type, entityId }) }),
+    businessQuery: (query: string) => this.request<{ answer: string; data: any[]; actionUrl?: string }>('/ai/business-query', { method: 'POST', body: JSON.stringify({ query }) }),
+  };
 }

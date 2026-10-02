@@ -7,8 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatDate, getStatusBadgeClass } from '@freelanceros/ui';
-import { FolderKanban, Plus, Search, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { FolderKanban, Plus, Search, ChevronRight, ArrowUpRight, Download } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
+import { exportProjectsToCsv } from '@/lib/csv-export';
 
 export default function ProjectsPage() {
   const { openQuickCreate } = useAppStore();
@@ -44,13 +45,22 @@ export default function ProjectsPage() {
               Track deliverables, client reviews, revision limits, and profitability.
             </p>
           </div>
-          <button
-            onClick={() => openQuickCreate('project')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Project</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportProjectsToCsv(projects)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => openQuickCreate('project')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Project</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter and Search Bar */}

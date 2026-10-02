@@ -15,6 +15,8 @@ import {
   FileText,
   Timer,
   BarChart3,
+  Calendar,
+  Calculator,
   Settings,
   LogOut,
   ChevronRight,
@@ -31,6 +33,7 @@ const NAVIGATION_GROUPS = [
       { name: 'Projects', href: '/projects', icon: FolderKanban },
       { name: 'Tasks', href: '/tasks', icon: CheckSquare },
       { name: 'Deliverables', href: '/deliverables', icon: PackageCheck },
+      { name: 'Calendar', href: '/calendar', icon: Calendar },
     ],
   },
   {
@@ -53,6 +56,7 @@ const NAVIGATION_GROUPS = [
       { name: 'Proposals', href: '/proposals', icon: FileText },
       { name: 'Time', href: '/time', icon: Timer },
       { name: 'Reports', href: '/reports', icon: BarChart3 },
+      { name: 'Calculators', href: '/calculators', icon: Calculator },
     ],
   },
 ];
