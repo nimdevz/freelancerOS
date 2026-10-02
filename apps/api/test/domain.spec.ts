@@ -117,4 +117,29 @@ describe('FreelancerOS Core Domain Logic & Calculations', () => {
     expect(filterForOrgA).toHaveLength(1);
     expect(filterForOrgA[0].title).toBe('Client A');
   });
+
+  it('correctly resolves studio tier for launch partners and locks new users to free tier', () => {
+    const { resolveUserTier, getTierLimits } = require('@freelanceros/config');
+
+    // Studio tier accounts
+    expect(resolveUserTier('nimishvwork@gmail.com')).toBe('studio');
+    expect(resolveUserTier('nimdevzzz@gmail.com')).toBe('studio');
+    expect(resolveUserTier('NIMISHVWORK@GMAIL.COM ')).toBe('studio');
+    expect(resolveUserTier('  nimdevzzz@gmail.com ')).toBe('studio');
+
+    // Other users are locked to free tier
+    expect(resolveUserTier('newuser@gmail.com')).toBe('free');
+    expect(resolveUserTier('alex@designstudio.com')).toBe('free');
+    expect(resolveUserTier('')).toBe('free');
+    expect(resolveUserTier(null)).toBe('free');
+
+    // Limits
+    const studioLimits = getTierLimits('studio');
+    expect(studioLimits.activeClients).toBe(Infinity);
+    expect(studioLimits.activeProjects).toBe(Infinity);
+
+    const freeLimits = getTierLimits('free');
+    expect(freeLimits.activeClients).toBe(3);
+    expect(freeLimits.activeProjects).toBe(3);
+  });
 });

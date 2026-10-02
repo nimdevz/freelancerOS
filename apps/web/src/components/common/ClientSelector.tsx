@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { LIFETIME_STUDIO_EMAILS, getTierLimits } from '@freelanceros/config';
+import { resolveUserTier, getTierLimits } from '@freelanceros/config';
 import {
   UserPlus,
   Plus,
@@ -70,13 +70,14 @@ export function ClientSelector({
   });
 
   const userEmail = meData?.user?.email;
-  const isLifetimeStudio = Boolean(
-    userEmail && LIFETIME_STUDIO_EMAILS.includes(userEmail.toLowerCase().trim() as any)
-  );
-  const userPlan = isLifetimeStudio ? 'studio' : 'free';
+  const userPlan =
+    meData?.organization?.plan === 'studio' || resolveUserTier(userEmail) === 'studio'
+      ? 'studio'
+      : 'free';
+  const isStudioTier = userPlan === 'studio';
   const limits = getTierLimits(userPlan);
   const clientLimit = limits.activeClients;
-  const isAtLimit = !isLifetimeStudio && clients.length >= clientLimit;
+  const isAtLimit = !isStudioTier && clients.length >= clientLimit;
 
   const handleOpenAddClient = () => {
     if (isAtLimit) {
@@ -233,11 +234,11 @@ export function ClientSelector({
               <div className="pt-2 border-t border-border/60 text-[11px] text-foreground font-medium flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 <span>
-                  Online tier upgrading is temporarily locked while Stripe payment checkout is being finalized.
+                  Self-service subscription upgrades are temporarily locked while payment checkout is undergoing final testing.
                 </span>
               </div>
               <p className="text-[11px]">
-                Lifetime Studio access is currently granted to early launch accounts (<code>nimishvwork@gmail.com</code> and <code>nimdevzzz@gmail.com</code>).
+                You will receive a notification as soon as online credit card billing and tier switching go live.
               </p>
             </div>
 

@@ -37,7 +37,7 @@ export async function seedDemoData(db: any) {
     timezone: 'Asia/Kolkata',
     defaultPaymentTermsDays: 14,
     taxRatePercent: 18,
-    plan: 'pro',
+    plan: 'free',
     freelancerType: 'video_editor',
     hourlyRate: 150,
     createdAt: pastDate(60),

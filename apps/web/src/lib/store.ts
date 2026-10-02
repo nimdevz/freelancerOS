@@ -83,7 +83,7 @@ export const useAppStore = create<AppState>((set, get) => {
       initialSidebarCollapsed = localStorage.getItem('freelanceros_sidebar_collapsed') === 'true';
       const storedCurrency = localStorage.getItem('freelanceros_active_currency') as CurrencyCode | null;
       if (storedCurrency) initialCurrency = storedCurrency;
-      const mockDb = localStorage.getItem('freelanceros_mock_db_v2');
+      const mockDb = localStorage.getItem('freelanceros_mock_db_v3') || localStorage.getItem('freelanceros_mock_db_v2');
       if (mockDb) {
         const parsed = JSON.parse(mockDb);
         if (parsed.isDemoMode !== undefined) initialDemoMode = parsed.isDemoMode;
@@ -109,6 +109,7 @@ export const useAppStore = create<AppState>((set, get) => {
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem('freelanceros_current_user');
+          localStorage.removeItem('freelanceros_token');
           localStorage.removeItem('freelanceros_auth_token');
         } catch {}
       }

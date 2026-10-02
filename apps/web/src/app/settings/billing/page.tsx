@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { AppShell } from '@/components/layout/AppShell';
 import { api } from '@/lib/api';
-import { PRICING_PLANS, LIFETIME_STUDIO_EMAILS, getTierLimits } from '@freelanceros/config';
+import { PRICING_PLANS, resolveUserTier, getTierLimits } from '@freelanceros/config';
 import { formatCurrency } from '@freelanceros/ui';
 import {
   CreditCard,
@@ -31,9 +31,8 @@ export default function BillingPage() {
   const org = meData?.organization;
   const userEmail = user?.email || '';
 
-  const isLifetimeStudio = Boolean(
-    userEmail && LIFETIME_STUDIO_EMAILS.includes(userEmail.toLowerCase().trim() as any)
-  );
+  const isLifetimeStudio =
+    org?.plan === 'studio' || resolveUserTier(userEmail) === 'studio';
   const currentPlanId = isLifetimeStudio ? 'studio' : 'free';
   const tierLimits = getTierLimits(currentPlanId);
 
@@ -97,7 +96,7 @@ export default function BillingPage() {
             <p className="text-xs text-muted-foreground">
               {isLifetimeStudio ? (
                 <span>
-                  Permanent founding license assigned to <strong className="text-foreground">{userEmail}</strong>. Unlimited clients, unlimited projects, and team seats.
+                  Studio tier active for <strong className="text-foreground">{userEmail}</strong>. Unlimited clients, unlimited projects, and team seats.
                 </span>
               ) : (
                 <span>
@@ -240,9 +239,9 @@ export default function BillingPage() {
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
                   <span>
-                    <strong>Lifetime Studio tier:</strong> Reserved for launch partner accounts (<code>nimishvwork@gmail.com</code> and <code>nimdevzzz@gmail.com</code>).
+                    <strong>Payment processing:</strong> Stripe checkout and automated tier switching are currently undergoing maintenance.
                   </span>
                 </div>
               </div>

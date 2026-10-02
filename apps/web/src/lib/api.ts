@@ -31,7 +31,11 @@ const rawClient = new FreelancerOsClient({
   getToken: () => {
     if (typeof window !== 'undefined') {
       try {
-        return localStorage.getItem('freelanceros_token') || 'demo-token';
+        return (
+          localStorage.getItem('freelanceros_token') ||
+          localStorage.getItem('freelanceros_auth_token') ||
+          'demo-token'
+        );
       } catch {
         return 'demo-token';
       }
@@ -69,20 +73,65 @@ export const api = {
     getMe: () => tryWithFallback(() => rawClient.auth.getMe(), () => mockStorage.getMe()),
     login: (data: { email: string; password?: string }) =>
       tryWithFallback(
-        () => rawClient.auth.login(data),
+        async () => {
+          const res = await rawClient.auth.login(data);
+          if (typeof window !== 'undefined' && res) {
+            if (res.token) {
+              localStorage.setItem('freelanceros_token', res.token);
+              localStorage.setItem('freelanceros_auth_token', res.token);
+            }
+            if (res.user) {
+              localStorage.setItem('freelanceros_current_user', JSON.stringify(res.user));
+            }
+          }
+          return res;
+        },
         () => mockStorage.login(data.email, data.password)
       ),
     signup: (data: { email: string; password?: string; fullName?: string; studioName?: string; freelancerType?: string }) =>
       tryWithFallback(
-        () => rawClient.auth.signup(data),
+        async () => {
+          const res = await rawClient.auth.signup(data);
+          if (typeof window !== 'undefined' && res) {
+            if (res.token) {
+              localStorage.setItem('freelanceros_token', res.token);
+              localStorage.setItem('freelanceros_auth_token', res.token);
+            }
+            if (res.user) {
+              localStorage.setItem('freelanceros_current_user', JSON.stringify(res.user));
+            }
+          }
+          return res;
+        },
         () => mockStorage.signup(data)
       ),
     google: (data: { credential?: string; email?: string; name?: string; picture?: string }) =>
       tryWithFallback(
-        () => rawClient.auth.google(data),
+        async () => {
+          const res = await rawClient.auth.google(data);
+          if (typeof window !== 'undefined' && res) {
+            if (res.token) {
+              localStorage.setItem('freelanceros_token', res.token);
+              localStorage.setItem('freelanceros_auth_token', res.token);
+            }
+            if (res.user) {
+              localStorage.setItem('freelanceros_current_user', JSON.stringify(res.user));
+            }
+          }
+          return res;
+        },
         () => mockStorage.loginWithGoogle(data)
       ),
-    logout: () => mockStorage.logout(),
+    logout: () => {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('freelanceros_token');
+          localStorage.removeItem('freelanceros_auth_token');
+          localStorage.removeItem('freelanceros_current_user');
+        } catch {}
+      }
+      return mockStorage.logout();
+    },
   },
 
   organizations: {

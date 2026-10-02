@@ -17,6 +17,32 @@ export const GOOGLE_CLIENT_ID =
   process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
   '362907268046-lvln83c11jc8ljqope283kgh9juj944u.apps.googleusercontent.com';
 
+function decodeGoogleJwt(token: string): { email?: string; name?: string; picture?: string } | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const binaryStr = atob(base64);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
+    const jsonStr = new TextDecoder().decode(bytes);
+    const payload = JSON.parse(jsonStr);
+    return {
+      email: payload.email ? String(payload.email).toLowerCase().trim() : undefined,
+      name: payload.name ? String(payload.name).trim() : undefined,
+      picture: payload.picture || undefined,
+    };
+  } catch (err) {
+    console.warn('Failed to decode Google JWT:', err);
+    return null;
+  }
+}
+
 export function GoogleSignInButton({
   label = 'Continue with Google',
   redirectTo = '/dashboard',
@@ -30,7 +56,6 @@ export function GoogleSignInButton({
   const [showSimulatedModal, setShowSimulatedModal] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
-  const [selectedPreset, setSelectedPreset] = useState<'user' | 'custom'>('user');
   const [currentOrigin, setCurrentOrigin] = useState('http://localhost:3000');
 
   const tokenClientRef = useRef<any>(null);
@@ -80,11 +105,21 @@ export function GoogleSignInButton({
                     headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
                   });
                   const profile = await userInfoRes.json();
+                  const cleanEmail = profile.email ? String(profile.email).toLowerCase().trim() : undefined;
                   const authRes = await api.auth.google({
-                    email: profile.email,
+                    email: cleanEmail,
                     name: profile.name,
                     picture: profile.picture,
                   });
+
+                  if (typeof window !== 'undefined' && authRes.token) {
+                    localStorage.setItem('freelanceros_token', authRes.token);
+                    localStorage.setItem('freelanceros_auth_token', authRes.token);
+                    if (authRes.user) {
+                      localStorage.setItem('freelanceros_current_user', JSON.stringify(authRes.user));
+                    }
+                  }
+
                   setUser(authRes.user);
                   if (onSuccess) onSuccess();
                   router.push(redirectTo);
@@ -119,7 +154,32 @@ export function GoogleSignInButton({
   const handleRealGoogleCredential = async (response: any) => {
     setIsLoading(true);
     try {
-      const authRes = await api.auth.google({ credential: response.credential });
+      let email: string | undefined;
+      let name: string | undefined;
+      let picture: string | undefined;
+
+      if (response?.credential) {
+        const decoded = decodeGoogleJwt(response.credential);
+        if (decoded?.email) email = decoded.email;
+        if (decoded?.name) name = decoded.name;
+        if (decoded?.picture) picture = decoded.picture;
+      }
+
+      const authRes = await api.auth.google({
+        credential: response.credential,
+        email,
+        name,
+        picture,
+      });
+
+      if (typeof window !== 'undefined' && authRes.token) {
+        localStorage.setItem('freelanceros_token', authRes.token);
+        localStorage.setItem('freelanceros_auth_token', authRes.token);
+        if (authRes.user) {
+          localStorage.setItem('freelanceros_current_user', JSON.stringify(authRes.user));
+        }
+      }
+
       setUser(authRes.user);
       if (onSuccess) onSuccess();
       router.push(redirectTo);
@@ -164,14 +224,24 @@ export function GoogleSignInButton({
   const handleCompleteGoogleAuth = async () => {
     setIsLoading(true);
     try {
-      const email = selectedPreset === 'user' ? 'alex.rivera@designstudio.com' : (customEmail || 'creator@gmail.com');
-      const name = selectedPreset === 'user' ? 'Alex Rivera' : (customName || 'Creative Director');
+      const email = (customEmail || 'creator@gmail.com').toLowerCase().trim();
+      const parts = email.split('@')[0].split(/[._-]/);
+      const defaultName = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      const name = customName.trim() || defaultName || 'Google Creator';
 
       const authRes = await api.auth.google({
         email,
         name,
         picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       });
+
+      if (typeof window !== 'undefined' && authRes.token) {
+        localStorage.setItem('freelanceros_token', authRes.token);
+        localStorage.setItem('freelanceros_auth_token', authRes.token);
+        if (authRes.user) {
+          localStorage.setItem('freelanceros_current_user', JSON.stringify(authRes.user));
+        }
+      }
 
       setUser(authRes.user);
       setShowSimulatedModal(false);
@@ -241,73 +311,46 @@ export function GoogleSignInButton({
               </div>
             </div>
 
-            {/* Account Selection */}
-            <div className="space-y-2.5">
-              {/* Option 1: Workspace Account */}
-              <div
-                onClick={() => setSelectedPreset('user')}
-                className={`p-3 rounded-lg border text-left cursor-pointer transition-all flex items-center justify-between ${
-                  selectedPreset === 'user'
-                    ? 'border-neutral-900 bg-neutral-100/70 dark:border-white dark:bg-neutral-800/80 shadow-xs'
-                    : 'border-border hover:border-neutral-300 dark:hover:border-neutral-700'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center font-semibold text-xs shrink-0">
-                    AR
+            {/* Account Input */}
+            <div className="space-y-3">
+              <div className="p-3.5 rounded-lg border border-border bg-card space-y-3">
+                <div className="flex items-center gap-2.5 text-xs font-medium text-foreground">
+                  <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <UserIcon className="w-4 h-4 text-foreground" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-foreground">Alex Rivera</span>
-                    <span className="text-[11px] text-muted-foreground">alex.rivera@designstudio.com</span>
+                  <div>
+                    <div className="font-semibold">Sign in with Google Account</div>
+                    <div className="text-[11px] text-muted-foreground">Enter your Google email to connect your workspace</div>
                   </div>
                 </div>
-                {selectedPreset === 'user' && (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                )}
-              </div>
 
-              {/* Option 2: Custom / Other Google Account */}
-              <div
-                onClick={() => setSelectedPreset('custom')}
-                className={`p-3 rounded-lg border text-left cursor-pointer transition-all space-y-2.5 ${
-                  selectedPreset === 'custom'
-                    ? 'border-neutral-900 bg-neutral-100/70 dark:border-white dark:bg-neutral-800/80 shadow-xs'
-                    : 'border-border hover:border-neutral-300 dark:hover:border-neutral-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-neutral-200 dark:bg-neutral-700 text-muted-foreground flex items-center justify-center text-xs shrink-0">
-                      <UserIcon className="w-4 h-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-foreground">Use another Google account</span>
-                      <span className="text-[11px] text-muted-foreground">Enter custom credentials</span>
-                    </div>
-                  </div>
-                  {selectedPreset === 'custom' && (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  )}
-                </div>
-
-                {selectedPreset === 'custom' && (
-                  <div className="pt-2 border-t border-border/60 space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Full Name (e.g. Jordan Hayes)"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-md border border-border bg-background text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-neutral-400"
-                    />
+                <div className="space-y-2 pt-1 border-t border-border/60">
+                  <div>
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                      Google Email Address
+                    </label>
                     <input
                       type="email"
-                      placeholder="Google Email (e.g. jordan@hayescreative.com)"
+                      required
+                      placeholder="yourname@gmail.com"
                       value={customEmail}
                       onChange={(e) => setCustomEmail(e.target.value)}
                       className="w-full px-3 py-1.5 rounded-md border border-border bg-background text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-neutral-400"
                     />
                   </div>
-                )}
+                  <div>
+                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                      Full Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Your Full Name"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-md border border-border bg-background text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-neutral-400"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

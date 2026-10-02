@@ -52,6 +52,15 @@ function LoginForm() {
     setIsLoading(true);
     try {
       const res = await api.auth.login({ email, password });
+      if (typeof window !== 'undefined' && res) {
+        if (res.token) {
+          localStorage.setItem('freelanceros_token', res.token);
+          localStorage.setItem('freelanceros_auth_token', res.token);
+        }
+        if (res.user) {
+          localStorage.setItem('freelanceros_current_user', JSON.stringify(res.user));
+        }
+      }
       setUser(res.user);
       router.push(redirectTo);
     } catch (err: any) {
@@ -69,6 +78,15 @@ function LoginForm() {
         email: 'nimish@freelanceros.com',
         password: 'password123',
       });
+      if (typeof window !== 'undefined' && res) {
+        if (res.token) {
+          localStorage.setItem('freelanceros_token', res.token);
+          localStorage.setItem('freelanceros_auth_token', res.token);
+        }
+        if (res.user) {
+          localStorage.setItem('freelanceros_current_user', JSON.stringify(res.user));
+        }
+      }
       setUser(res.user);
       router.push('/dashboard');
     } catch (err: any) {

@@ -1402,6 +1402,7 @@ class MockStorage {
       if (saved) {
         const data = JSON.parse(saved);
         if (data.isDemoMode !== undefined) this.isDemoMode = data.isDemoMode;
+        if (data.user) this.user = data.user;
         if (data.org) this.org = data.org;
         if (data.clients) this.clients = data.clients;
         if (data.clientContacts) this.clientContacts = data.clientContacts;
@@ -1426,6 +1427,24 @@ class MockStorage {
         if (data.caseStudies) this.caseStudies = data.caseStudies;
         if (data.businessGoals) this.businessGoals = data.businessGoals;
       }
+
+      // Check freelanceros_current_user if available
+      const storedUser = localStorage.getItem('freelanceros_current_user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser && parsedUser.email) {
+            this.user = {
+              ...this.user,
+              ...parsedUser,
+            };
+          }
+        } catch {}
+      }
+
+      if (this.user?.email) {
+        this.org.plan = resolveUserTier(this.user.email);
+      }
     } catch {
       // ignore
     }
@@ -1436,6 +1455,7 @@ class MockStorage {
     try {
       const data = {
         isDemoMode: this.isDemoMode,
+        user: this.user,
         org: this.org,
         clients: this.clients,
         clientContacts: this.clientContacts,
@@ -1601,6 +1621,7 @@ class MockStorage {
     const token = `bearer-token-${this.user.id}`;
     if (typeof window !== 'undefined') {
       try {
+        localStorage.setItem('freelanceros_token', token);
         localStorage.setItem('freelanceros_auth_token', token);
         localStorage.setItem('freelanceros_current_user', JSON.stringify(this.user));
       } catch {}
@@ -1655,6 +1676,7 @@ class MockStorage {
     const token = `bearer-token-${this.user.id}`;
     if (typeof window !== 'undefined') {
       try {
+        localStorage.setItem('freelanceros_token', token);
         localStorage.setItem('freelanceros_auth_token', token);
         localStorage.setItem('freelanceros_current_user', JSON.stringify(this.user));
       } catch {}
@@ -1663,22 +1685,41 @@ class MockStorage {
   }
 
   loginWithGoogle(data: { credential?: string; email?: string; name?: string; picture?: string }) {
-    let email = data.email || 'nimish.prabhu@gmail.com';
-    let name = data.name || 'Nimish Prabhu';
+    let email = (data.email || '').toLowerCase().trim();
+    let name = (data.name || '').trim();
     let picture = data.picture || null;
 
-    if (data.credential) {
+    if (data.credential && !email) {
       try {
         const parts = data.credential.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))));
-          if (payload.email) email = payload.email;
-          if (payload.name) name = payload.name;
-          if (payload.picture) picture = payload.picture;
+        if (parts.length >= 2) {
+          let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          const binaryStr = atob(base64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const jsonStr = new TextDecoder().decode(bytes);
+          const payload = JSON.parse(jsonStr);
+          if (payload.email) email = payload.email.toLowerCase().trim();
+          if (payload.name && !name) name = payload.name;
+          if (payload.picture && !picture) picture = payload.picture;
         }
       } catch {
         // fallback to provided values
       }
+    }
+
+    if (!email) {
+      email = 'creator@gmail.com';
+    }
+
+    if (!name) {
+      const parts = email.split('@')[0].split(/[._-]/);
+      name = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
     }
 
     const nameParts = name.trim().split(/\s+/);
@@ -1703,9 +1744,10 @@ class MockStorage {
     };
 
     this.saveToStorage();
-    const token = `google-token-${this.user.id}`;
+    const token = `bearer-token-${this.user.id}`;
     if (typeof window !== 'undefined') {
       try {
+        localStorage.setItem('freelanceros_token', token);
         localStorage.setItem('freelanceros_auth_token', token);
         localStorage.setItem('freelanceros_current_user', JSON.stringify(this.user));
       } catch {}
@@ -1716,6 +1758,7 @@ class MockStorage {
   logout() {
     if (typeof window !== 'undefined') {
       try {
+        localStorage.removeItem('freelanceros_token');
         localStorage.removeItem('freelanceros_auth_token');
         localStorage.removeItem('freelanceros_current_user');
       } catch {}

@@ -1,8 +1,39 @@
 import { Hono } from 'hono';
 import { Env, AppVariables } from '../env';
 import { getDb, schema } from '../db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { resolveUserTier } from '@freelanceros/config';
+
+function decodeGoogleJwt(token: string): { email?: string; name?: string; picture?: string } | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    let jsonStr = '';
+    if (typeof atob === 'function') {
+      const binaryStr = atob(base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      jsonStr = new TextDecoder().decode(bytes);
+    } else if (typeof Buffer !== 'undefined') {
+      jsonStr = Buffer.from(base64, 'base64').toString('utf-8');
+    }
+    const payload = JSON.parse(jsonStr);
+    return {
+      email: payload.email ? String(payload.email).toLowerCase().trim() : undefined,
+      name: payload.name ? String(payload.name).trim() : undefined,
+      picture: payload.picture || undefined,
+    };
+  } catch (err) {
+    console.warn('Failed to decode Google JWT on API:', err);
+    return null;
+  }
+}
 
 export const authRouter = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -19,11 +50,23 @@ authRouter.get('/me', async (c) => {
     user = await db.query.users.findFirst();
   }
 
-  let org = orgId
-    ? await db.query.organizations.findFirst({
-        where: eq(schema.organizations.id, orgId),
-      })
-    : null;
+  let org: any = null;
+  if (user) {
+    const member = await db.query.organizationMembers.findFirst({
+      where: eq(schema.organizationMembers.userId, user.id),
+    });
+    if (member) {
+      org = await db.query.organizations.findFirst({
+        where: eq(schema.organizations.id, member.organizationId),
+      });
+    }
+  }
+
+  if (!org && orgId) {
+    org = await db.query.organizations.findFirst({
+      where: eq(schema.organizations.id, orgId),
+    });
+  }
 
   if (!org) {
     org = await db.query.organizations.findFirst();
@@ -170,25 +213,38 @@ authRouter.post('/signup', async (c) => {
 authRouter.post('/google', async (c) => {
   const db = getDb(c.env);
   const data = await c.req.json().catch(() => ({}));
-  const email = (data.email || 'google.user@freelanceros.com').toLowerCase().trim();
+  let email = (data.email || '').toLowerCase().trim();
+  let name = (data.name || '').trim();
+  let picture = data.picture || null;
+
+  if (data.credential && !email) {
+    const decoded = decodeGoogleJwt(data.credential);
+    if (decoded?.email) email = decoded.email;
+    if (decoded?.name && !name) name = decoded.name;
+    if (decoded?.picture && !picture) picture = decoded.picture;
+  }
+
+  if (!email) {
+    email = 'google.user@freelanceros.com';
+  }
 
   let user = await db.query.users.findFirst({
     where: eq(schema.users.email, email),
   });
 
-  const nameParts = (data.name || 'Google Creator').trim().split(/\s+/);
-  const firstName = nameParts[0] || 'Google';
-  const lastName = nameParts.slice(1).join(' ') || 'Creator';
-
   const now = new Date().toISOString();
   if (!user) {
+    const nameParts = (name || 'Google Creator').trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Google';
+    const lastName = nameParts.slice(1).join(' ') || 'Creator';
+
     const id = crypto.randomUUID();
     await db.insert(schema.users).values({
       id,
       email,
       firstName,
       lastName,
-      avatarUrl: data.picture || null,
+      avatarUrl: picture,
       role: 'owner',
       createdAt: now,
       updatedAt: now,
@@ -198,22 +254,47 @@ authRouter.post('/google', async (c) => {
     });
   }
 
-  let org = await db.query.organizations.findFirst();
+  // Find organization by member relation first
+  let member = user
+    ? await db.query.organizationMembers.findFirst({
+        where: eq(schema.organizationMembers.userId, user.id),
+      })
+    : null;
+
+  let org = member
+    ? await db.query.organizations.findFirst({
+        where: eq(schema.organizations.id, member.organizationId),
+      })
+    : null;
+
   if (!org && user) {
-    const orgId = crypto.randomUUID();
-    await db.insert(schema.organizations).values({
-      id: orgId,
-      name: `${user.firstName}'s Studio`,
-      slug: `studio-${Date.now().toString(36)}`,
-      currency: 'USD',
-      plan: resolveUserTier(user.email),
-      hourlyRate: 125,
-      createdAt: now,
-      updatedAt: now,
-    });
-    org = await db.query.organizations.findFirst({
-      where: eq(schema.organizations.id, orgId),
-    });
+    org = await db.query.organizations.findFirst();
+    if (!org) {
+      const orgId = crypto.randomUUID();
+      await db.insert(schema.organizations).values({
+        id: orgId,
+        name: `${user.firstName}'s Studio`,
+        slug: `studio-${Date.now().toString(36)}`,
+        currency: 'USD',
+        plan: resolveUserTier(user.email),
+        hourlyRate: 125,
+        createdAt: now,
+        updatedAt: now,
+      });
+      org = await db.query.organizations.findFirst({
+        where: eq(schema.organizations.id, orgId),
+      });
+    }
+
+    if (org) {
+      await db.insert(schema.organizationMembers).values({
+        id: crypto.randomUUID(),
+        organizationId: org.id,
+        userId: user.id,
+        role: 'owner',
+        createdAt: now,
+      }).onConflictDoNothing();
+    }
   }
 
   if (org && user) {

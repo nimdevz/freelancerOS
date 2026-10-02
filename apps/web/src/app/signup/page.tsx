@@ -79,6 +79,15 @@ function SignupForm() {
         studioName: studioName || `${fullName.split(' ')[0]}'s Studio`,
         freelancerType: selectedCategory.toLowerCase(),
       });
+      if (typeof window !== 'undefined' && res) {
+        if (res.token) {
+          localStorage.setItem('freelanceros_token', res.token);
+          localStorage.setItem('freelanceros_auth_token', res.token);
+        }
+        if (res.user) {
+          localStorage.setItem('freelanceros_current_user', JSON.stringify(res.user));
+        }
+      }
       setUser(res.user);
       router.push('/dashboard');
     } catch (err: any) {
