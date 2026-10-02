@@ -5,6 +5,12 @@ import { useAppStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Loader2 } from 'lucide-react';
+import { ClientSelector } from '@/components/common/ClientSelector';
+import {
+  CustomDetailsSection,
+  CustomFieldItem,
+  formatCustomDetailsSummary,
+} from '@/components/common/CustomDetailsSection';
 
 export function QuickCreateModal() {
   const queryClient = useQueryClient();
@@ -13,6 +19,8 @@ export function QuickCreateModal() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [customFields, setCustomFields] = useState<CustomFieldItem[]>([]);
+  const [customNotes, setCustomNotes] = useState('');
 
   // Query clients and projects for selector dropdowns
   const { data: clients = [] } = useQuery({
@@ -29,11 +37,20 @@ export function QuickCreateModal() {
 
   if (!quickCreateType) return null;
 
+  const handleClose = () => {
+    setFormData({});
+    setCustomFields([]);
+    setCustomNotes('');
+    closeQuickCreate();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      const compiledDetails = formatCustomDetailsSummary(customFields, customNotes);
+
       if (quickCreateType === 'client') {
         await api.clients.create({
           name: formData.name,
@@ -41,6 +58,7 @@ export function QuickCreateModal() {
           company: formData.company,
           phone: formData.phone,
           currency: 'INR',
+          notes: compiledDetails || undefined,
         });
         queryClient.invalidateQueries({ queryKey: ['clients'] });
       } else if (quickCreateType === 'lead') {
@@ -51,6 +69,7 @@ export function QuickCreateModal() {
           value: Number(formData.value || 0),
           expectedCloseDate: formData.expectedCloseDate,
           currency: 'INR',
+          notes: compiledDetails || undefined,
         });
         queryClient.invalidateQueries({ queryKey: ['leads'] });
       } else if (quickCreateType === 'project') {
@@ -61,6 +80,10 @@ export function QuickCreateModal() {
           deadline: formData.deadline,
           includedRevisions: Number(formData.includedRevisions || 2),
           currency: 'INR',
+          description: formData.description
+            ? `${formData.description}\n\n${compiledDetails}`
+            : compiledDetails || undefined,
+          notes: compiledDetails || undefined,
         });
         queryClient.invalidateQueries({ queryKey: ['projects'] });
       } else if (quickCreateType === 'proposal') {
@@ -69,6 +92,7 @@ export function QuickCreateModal() {
           clientId: formData.clientId || (clients[0] ? clients[0].id : ''),
           validUntil: formData.validUntil || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
           currency: 'INR',
+          notes: compiledDetails || undefined,
           items: [
             {
               description: formData.itemDescription || 'Creative Project Scope',
@@ -85,6 +109,7 @@ export function QuickCreateModal() {
           projectId: formData.projectId || null,
           dueDate: formData.dueDate || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
           currency: 'INR',
+          notes: compiledDetails || undefined,
           items: [
             {
               description: formData.itemDescription || 'Deliverables & Services',
@@ -102,6 +127,7 @@ export function QuickCreateModal() {
           projectId: formData.projectId || null,
           currency: 'INR',
           date: formData.date || new Date().toISOString().split('T')[0],
+          notes: compiledDetails || undefined,
         });
         queryClient.invalidateQueries({ queryKey: ['expenses'] });
       } else if (quickCreateType === 'task') {
@@ -112,6 +138,7 @@ export function QuickCreateModal() {
           priority: formData.priority || 'medium',
           dueDate: formData.dueDate,
           status: 'todo',
+          description: compiledDetails || undefined,
         });
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
         queryClient.invalidateQueries({ queryKey: ['projectTasks'] });
@@ -122,6 +149,7 @@ export function QuickCreateModal() {
           projectId: formData.projectId || null,
           validUntil: formData.validUntil || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
           currency: 'INR',
+          notes: compiledDetails || undefined,
           items: [
             {
               description: formData.itemDescription || 'Scope deliverables & licenses',
@@ -136,17 +164,24 @@ export function QuickCreateModal() {
         await api.deliverables.create({
           projectId: targetProjectId,
           title: formData.title || 'Master Video Asset',
-          description: formData.description || 'Master cut for client review',
+          description: formData.description
+            ? `${formData.description}\n\n${compiledDetails}`
+            : compiledDetails || 'Master cut for client review',
           includedRevisions: Number(formData.includedRevisions || 2),
         });
         queryClient.invalidateQueries({ queryKey: ['deliverables'] });
         queryClient.invalidateQueries({ queryKey: ['projectDeliverables'] });
       } else if (quickCreateType === 'time') {
         const targetProjectId = formData.projectId || (projects[0] ? projects[0].id : '');
-        const durationMinutes = Number(formData.durationMinutes || (formData.durationHours ? Number(formData.durationHours) * 60 : 60));
+        const durationMinutes = Number(
+          formData.durationMinutes ||
+            (formData.durationHours ? Number(formData.durationHours) * 60 : 60)
+        );
         await api.time.create({
           projectId: targetProjectId,
-          description: formData.description || 'Focus production session',
+          description: compiledDetails
+            ? `${formData.description || 'Focus production session'} — ${compiledDetails}`
+            : formData.description || 'Focus production session',
           durationMinutes,
           date: formData.date || new Date().toISOString().split('T')[0],
           billable: true,
@@ -155,8 +190,7 @@ export function QuickCreateModal() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      setFormData({});
-      closeQuickCreate();
+      handleClose();
     } catch (err: any) {
       alert(err.message || 'Error creating entity');
     } finally {
@@ -180,7 +214,7 @@ export function QuickCreateModal() {
   return (
     <div
       onClick={(e) => {
-        if (e.target === e.currentTarget) closeQuickCreate();
+        if (e.target === e.currentTarget) handleClose();
       }}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-100"
     >
@@ -189,7 +223,7 @@ export function QuickCreateModal() {
         <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border shrink-0">
           <h2 className="text-sm font-semibold text-foreground">{titles[quickCreateType]}</h2>
           <button
-            onClick={closeQuickCreate}
+            onClick={handleClose}
             className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
           >
             <X className="w-4 h-4" />
@@ -242,6 +276,14 @@ export function QuickCreateModal() {
                   className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Note"
+                notesPlaceholder="Add special terms, NDA status, or communication notes..."
+              />
             </>
           )}
 
@@ -290,6 +332,13 @@ export function QuickCreateModal() {
                   />
                 </div>
               </div>
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Spec"
+              />
             </>
           )}
 
@@ -357,22 +406,15 @@ export function QuickCreateModal() {
                   className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1">Client *</label>
-                <select
-                  required
-                  value={formData.clientId || ''}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                >
-                  <option value="">Select client...</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.company ? `(${c.company})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+              {/* Universal Client Selector with inline "+ New Client" */}
+              <ClientSelector
+                value={formData.clientId || ''}
+                onChange={(id) => setFormData({ ...formData, clientId: id })}
+                label="Target Client"
+                required
+              />
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-foreground mb-1">Budget (₹)</label>
@@ -398,12 +440,19 @@ export function QuickCreateModal() {
                 <label className="block text-xs font-medium text-foreground mb-1">Included Revisions</label>
                 <input
                   type="number"
-                  defaultValue={2}
                   value={formData.includedRevisions || 2}
                   onChange={(e) => setFormData({ ...formData, includedRevisions: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Spec"
+              />
             </>
           )}
 
@@ -420,22 +469,15 @@ export function QuickCreateModal() {
                   className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1">Client *</label>
-                <select
-                  required
-                  value={formData.clientId || ''}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                >
-                  <option value="">Select client...</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+              {/* Universal Client Selector */}
+              <ClientSelector
+                value={formData.clientId || ''}
+                onChange={(id) => setFormData({ ...formData, clientId: id })}
+                label="Target Client"
+                required
+              />
+
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1">Amount (₹) *</label>
                 <input
@@ -447,6 +489,14 @@ export function QuickCreateModal() {
                   className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Scope Note"
+              />
             </>
           )}
 
@@ -463,22 +513,15 @@ export function QuickCreateModal() {
                   className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1">Client *</label>
-                <select
-                  required
-                  value={formData.clientId || ''}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                >
-                  <option value="">Select client...</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+              {/* Universal Client Selector */}
+              <ClientSelector
+                value={formData.clientId || ''}
+                onChange={(id) => setFormData({ ...formData, clientId: id })}
+                label="Target Client"
+                required
+              />
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-foreground mb-1">Amount (₹) *</label>
@@ -501,6 +544,14 @@ export function QuickCreateModal() {
                   />
                 </div>
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Payment Note"
+              />
             </>
           )}
 
@@ -561,6 +612,14 @@ export function QuickCreateModal() {
                   ))}
                 </select>
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Receipt Note"
+              />
             </>
           )}
 
@@ -617,6 +676,14 @@ export function QuickCreateModal() {
                   />
                 </div>
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Spec"
+              />
             </>
           )}
 
@@ -633,22 +700,15 @@ export function QuickCreateModal() {
                   className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1">Client *</label>
-                <select
-                  required
-                  value={formData.clientId || ''}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                >
-                  <option value="">Select client...</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+              {/* Universal Client Selector */}
+              <ClientSelector
+                value={formData.clientId || ''}
+                onChange={(id) => setFormData({ ...formData, clientId: id })}
+                label="Target Client"
+                required
+              />
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-foreground mb-1">Estimated Amount (₹) *</label>
@@ -671,6 +731,14 @@ export function QuickCreateModal() {
                   />
                 </div>
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Terms"
+              />
             </>
           )}
 
@@ -708,7 +776,6 @@ export function QuickCreateModal() {
                   <label className="block text-xs font-medium text-foreground mb-1">Included Revisions</label>
                   <input
                     type="number"
-                    defaultValue={2}
                     value={formData.includedRevisions || 2}
                     onChange={(e) => setFormData({ ...formData, includedRevisions: e.target.value })}
                     className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
@@ -725,6 +792,14 @@ export function QuickCreateModal() {
                   />
                 </div>
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Spec"
+              />
             </>
           )}
 
@@ -780,6 +855,14 @@ export function QuickCreateModal() {
                   />
                 </div>
               </div>
+
+              <CustomDetailsSection
+                fields={customFields}
+                onChange={setCustomFields}
+                notes={customNotes}
+                onNotesChange={setCustomNotes}
+                buttonLabel="+ Add Custom Detail / Note"
+              />
             </>
           )}
 
@@ -787,7 +870,7 @@ export function QuickCreateModal() {
           <div className="pt-3 border-t border-border flex items-center justify-end gap-2.5">
             <button
               type="button"
-              onClick={closeQuickCreate}
+              onClick={handleClose}
               className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Cancel

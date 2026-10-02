@@ -29,6 +29,12 @@ import {
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { exportProjectsToCsv } from '@/lib/csv-export';
+import { ClientSelector } from '@/components/common/ClientSelector';
+import {
+  CustomDetailsSection,
+  CustomFieldItem,
+  formatCustomDetailsSummary,
+} from '@/components/common/CustomDetailsSection';
 
 interface ProjectTemplatePreset {
   id: string;
@@ -321,6 +327,8 @@ export default function ProjectsPage() {
   const [customBudget, setCustomBudget] = useState<number | ''>('');
   const [customDeadline, setCustomDeadline] = useState('');
   const [customCurrency, setCustomCurrency] = useState<'INR' | 'USD'>('INR');
+  const [customFields, setCustomFields] = useState<CustomFieldItem[]>([]);
+  const [customNotes, setCustomNotes] = useState('');
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
@@ -345,6 +353,8 @@ export default function ProjectsPage() {
     setCustomCurrency(tmpl.currency);
     const defaultDueDate = new Date(Date.now() + tmpl.durationDays * 86400000).toISOString().split('T')[0];
     setCustomDeadline(defaultDueDate);
+    setCustomFields([]);
+    setCustomNotes('');
     setIsTemplateModalOpen(true);
   };
 
@@ -356,6 +366,10 @@ export default function ProjectsPage() {
       const finalName = customProjectName.trim() || `${targetClient?.name || 'Client'} — ${tmpl.name}`;
       const finalBudget = typeof customBudget === 'number' ? customBudget : tmpl.budget;
       const finalDeadline = customDeadline || new Date(Date.now() + tmpl.durationDays * 86400000).toISOString().split('T')[0];
+      const customDetails = formatCustomDetailsSummary(customFields, customNotes);
+      const finalDescription = customDetails
+        ? `${tmpl.description}\n\n${customDetails}`
+        : tmpl.description;
 
       // 1. Create Base Project
       const newProject = await api.projects.create({
@@ -365,7 +379,8 @@ export default function ProjectsPage() {
         currency: customCurrency,
         deadline: finalDeadline,
         includedRevisions: tmpl.includedRevisions,
-        description: tmpl.description,
+        description: finalDescription,
+        notes: customDetails || undefined,
       });
 
       // 2. Create Milestones
@@ -668,27 +683,17 @@ export default function ProjectsPage() {
               {/* Right Column: Configuration & Preview */}
               <div className="md:col-span-7 p-4 sm:p-5 space-y-4 overflow-y-auto max-h-[70vh]">
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-foreground mb-1">Target Client *</label>
-                    <select
-                      value={selectedClientId}
-                      onChange={(e) => {
-                        const newClientId = e.target.value;
-                        setSelectedClientId(newClientId);
-                        const c = clients.find((cl) => cl.id === newClientId);
-                        if (c) {
-                          setCustomProjectName(`${c.name} — ${selectedTemplate.name}`);
-                        }
-                      }}
-                      className="w-full px-3 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                    >
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} {c.company ? `(${c.company})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <ClientSelector
+                    value={selectedClientId}
+                    onChange={(newClientId, c) => {
+                      setSelectedClientId(newClientId);
+                      if (c) {
+                        setCustomProjectName(`${c.name} — ${selectedTemplate.name}`);
+                      }
+                    }}
+                    label="Target Client"
+                    required
+                  />
 
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1">Project Name *</label>
@@ -732,6 +737,16 @@ export default function ProjectsPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Custom Details & Specifications */}
+                  <CustomDetailsSection
+                    fields={customFields}
+                    onChange={setCustomFields}
+                    notes={customNotes}
+                    onNotesChange={setCustomNotes}
+                    title="Custom Project Details & Specifications"
+                    buttonLabel="+ Add Custom Detail / Spec"
+                  />
                 </div>
 
                 {/* Pre-packaged Milestones & Tasks Preview */}

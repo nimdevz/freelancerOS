@@ -15,6 +15,12 @@ import {
   CheckCircle2,
   TrendingUp,
 } from 'lucide-react';
+import { ClientSelector } from '@/components/common/ClientSelector';
+import {
+  CustomDetailsSection,
+  CustomFieldItem,
+  formatCustomDetailsSummary,
+} from '@/components/common/CustomDetailsSection';
 
 export default function RetainersPage() {
   const queryClient = useQueryClient();
@@ -26,6 +32,8 @@ export default function RetainersPage() {
   const [monthlyRate, setMonthlyRate] = useState('50000');
   const [includedHours, setIncludedHours] = useState('20');
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [customFields, setCustomFields] = useState<CustomFieldItem[]>([]);
+  const [customNotes, setCustomNotes] = useState('');
 
   // Fetch clients
   const { data: clients = [] } = useQuery({
@@ -46,12 +54,16 @@ export default function RetainersPage() {
       queryClient.invalidateQueries({ queryKey: ['retainers'] });
       setIsCreateModalOpen(false);
       setTitle('');
+      setCustomFields([]);
+      setCustomNotes('');
     },
   });
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientId || !title) return;
+
+    const customDetails = formatCustomDetailsSummary(customFields, customNotes);
 
     createMutation.mutate({
       clientId,
@@ -60,6 +72,7 @@ export default function RetainersPage() {
       includedHours: Number(includedHours),
       billingCycle,
       status: 'active',
+      notes: customDetails || undefined,
       startDate: new Date().toISOString(),
     });
   };
@@ -214,24 +227,12 @@ export default function RetainersPage() {
               </div>
 
               <form onSubmit={handleCreateSubmit} className="space-y-3.5">
-                <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                    Client *
-                  </label>
-                  <select
-                    value={clientId}
-                    onChange={(e) => setClientId(e.target.value)}
-                    required
-                    className="w-full px-2.5 py-1.5 text-base sm:text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                  >
-                    <option value="">Select Client...</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.company ? `(${c.company})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <ClientSelector
+                  value={clientId}
+                  onChange={(id) => setClientId(id)}
+                  label="Client"
+                  required
+                />
 
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground mb-1">
@@ -276,6 +277,16 @@ export default function RetainersPage() {
                     />
                   </div>
                 </div>
+
+                <CustomDetailsSection
+                  fields={customFields}
+                  onChange={setCustomFields}
+                  notes={customNotes}
+                  onNotesChange={setCustomNotes}
+                  title="Custom Retainer SLA & Terms"
+                  buttonLabel="+ Add Custom Detail / SLA"
+                  notesPlaceholder="e.g. Rollover hour policy, guaranteed turnaround window (24h/48h)..."
+                />
 
                 <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                   <button

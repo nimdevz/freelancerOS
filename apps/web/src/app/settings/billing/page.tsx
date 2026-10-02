@@ -2,32 +2,44 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { AppShell } from '@/components/layout/AppShell';
-import { PRICING_PLANS } from '@freelanceros/config';
+import { api } from '@/lib/api';
+import { PRICING_PLANS, LIFETIME_STUDIO_EMAILS, getTierLimits } from '@freelanceros/config';
 import { formatCurrency } from '@freelanceros/ui';
 import {
   CreditCard,
   CheckCircle2,
-  Zap,
-  Shield,
-  ArrowUpRight,
+  Lock,
+  X,
+  AlertCircle,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function BillingPage() {
-  const [currentPlanId, setCurrentPlanId] = useState('pro');
-  const [isUpgrading, setIsUpgrading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
+  const [isTierLockedModalOpen, setIsTierLockedModalOpen] = useState(false);
+  const [selectedPlanAttempt, setSelectedPlanAttempt] = useState<string | null>(null);
 
-  const handlePlanSelect = (planId: string) => {
-    if (planId === currentPlanId) return;
-    setIsUpgrading(true);
-    setTimeout(() => {
-      setCurrentPlanId(planId);
-      setIsUpgrading(false);
-      setSuccessMsg(`Workspace subscription switched to ${planId.toUpperCase()} tier.`);
-      setTimeout(() => setSuccessMsg(''), 4000);
-    }, 600);
+  // Fetch current user and organization
+  const { data: meData } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => api.auth.getMe(),
+  });
+
+  const user = meData?.user;
+  const org = meData?.organization;
+  const userEmail = user?.email || '';
+
+  const isLifetimeStudio = Boolean(
+    userEmail && LIFETIME_STUDIO_EMAILS.includes(userEmail.toLowerCase().trim() as any)
+  );
+  const currentPlanId = isLifetimeStudio ? 'studio' : 'free';
+  const tierLimits = getTierLimits(currentPlanId);
+
+  const handlePlanClick = (planId: string) => {
+    setSelectedPlanAttempt(planId);
+    setIsTierLockedModalOpen(true);
   };
 
   return (
@@ -37,7 +49,7 @@ export default function BillingPage() {
         <div className="pb-2 border-b border-border">
           <h1 className="text-xl font-semibold tracking-tight text-foreground">Subscription & Billing</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage your FreelancerOS tier, card details, and commercial SaaS limits.
+            Manage your FreelancerOS tier, client limits, and subscription access.
           </p>
         </div>
 
@@ -57,44 +69,67 @@ export default function BillingPage() {
           </Link>
         </div>
 
-        {successMsg && (
-          <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
         {/* Current Plan Overview */}
         <div className="p-5 rounded-lg border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="text-xs uppercase font-mono tracking-wider text-muted-foreground">Active Plan</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                PRO ACTIVE
-              </span>
+              {isLifetimeStudio ? (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  LIFETIME STUDIO ACTIVE
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 border border-border">
+                  FREE STARTER ACTIVE
+                </span>
+              )}
             </div>
+
             <div className="text-lg font-semibold text-foreground">
-              Nimish Studio • Unlimited Clients & Projects
+              {isLifetimeStudio ? (
+                <span>{org?.name || 'Studio'} • Lifetime Studio Subscription</span>
+              ) : (
+                <span>{org?.name || 'Workspace'} • Free Starter Plan (3 Clients Limit)</span>
+              )}
             </div>
+
             <p className="text-xs text-muted-foreground">
-              Billed monthly via Stripe. Next renewal on 1st November.
+              {isLifetimeStudio ? (
+                <span>
+                  Permanent founding license assigned to <strong className="text-foreground">{userEmail}</strong>. Unlimited clients, unlimited projects, and team seats.
+                </span>
+              ) : (
+                <span>
+                  Free tier active for <strong className="text-foreground">{userEmail}</strong>. Includes up to 3 active clients and 3 active projects.
+                </span>
+              )}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => alert('Redirecting to Stripe Customer Portal...')}
-              className="px-3.5 py-1.5 text-xs font-medium border border-border rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1.5"
+              type="button"
+              onClick={() => {
+                setSelectedPlanAttempt('stripe_portal');
+                setIsTierLockedModalOpen(true);
+              }}
+              className="px-3.5 py-1.5 text-xs font-medium border border-border rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1.5 text-foreground shadow-2xs"
             >
               <CreditCard className="w-3.5 h-3.5" />
-              <span>Stripe Customer Portal</span>
+              <span>Payment Details</span>
             </button>
           </div>
         </div>
 
         {/* Plan Cards Grid */}
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Available Tiers</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">Available Tiers</h2>
+            <span className="text-xs text-muted-foreground font-mono">
+              Current limits: {tierLimits.activeClients === Infinity ? 'Unlimited' : `${tierLimits.activeClients} clients`}
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {PRICING_PLANS.map((plan) => {
@@ -114,6 +149,11 @@ export default function BillingPage() {
                       {plan.popular && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900">
                           POPULAR
+                        </span>
+                      )}
+                      {isCurrent && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          CURRENT
                         </span>
                       )}
                     </div>
@@ -137,15 +177,16 @@ export default function BillingPage() {
 
                   <div className="pt-3 border-t border-border">
                     <button
-                      onClick={() => handlePlanSelect(plan.id)}
-                      disabled={isCurrent || isUpgrading}
+                      type="button"
+                      onClick={() => handlePlanClick(plan.id)}
+                      disabled={isCurrent}
                       className={`w-full py-1.5 text-xs font-medium rounded-md transition-colors ${
                         isCurrent
                           ? 'bg-neutral-100 dark:bg-neutral-800 text-muted-foreground cursor-default'
-                          : 'bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 text-white shadow-sm'
+                          : 'bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 text-white shadow-xs'
                       }`}
                     >
-                      {isCurrent ? 'Current Plan' : isUpgrading ? 'Updating...' : `Switch to ${plan.name}`}
+                      {isCurrent ? 'Current Plan' : `Switch to ${plan.name}`}
                     </button>
                   </div>
                 </div>
@@ -154,6 +195,74 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
+
+      {/* TIER LOCK POPUP MODAL */}
+      {isTierLockedModalOpen && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsTierLockedModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-100"
+        >
+          <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-2xl p-5 space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2.5 text-foreground">
+                <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-border">
+                  <Lock className="w-5 h-5 text-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Tier Changes Currently Disabled
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground font-mono">
+                    Online Checkout in Final Testing
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTierLockedModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground space-y-2.5 leading-relaxed">
+              <p>
+                Self-service subscription upgrades and card checkout are currently locked while our Stripe billing infrastructure is undergoing final deployment.
+              </p>
+              <div className="space-y-1.5 pt-1 text-[11px] text-foreground">
+                <div className="flex items-start gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>New accounts:</strong> Assigned to the <strong>Starter Free tier</strong> (3 active clients, 3 projects).
+                  </span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Lifetime Studio tier:</strong> Reserved for launch partner accounts (<code>nimishvwork@gmail.com</code> and <code>nimdevzzz@gmail.com</code>).
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] pt-1">
+                You will receive an in-app prompt as soon as paid tier upgrading and Stripe customer billing are live.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsTierLockedModalOpen(false)}
+                className="px-4 py-1.5 text-xs font-medium rounded-md bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 text-white transition-colors"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

@@ -37,6 +37,32 @@ export default function ClientPortalView() {
   const [authorName, setAuthorName] = useState('Karan Mehra');
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
+  const handleDownloadInvoicePdf = (inv: any) => {
+    const text = `INVOICE RECEIPT\n---------------------------------\nInvoice Number: ${inv.invoiceNumber}\nTitle: ${inv.title}\nDue Date: ${inv.dueDate}\nStatus: ${inv.status.toUpperCase()}\nAmount: ${inv.totalAmount || inv.total || 0} ${inv.currency || 'USD'}\nBalance Due: ${inv.balanceDue || 0} ${inv.currency || 'USD'}\n\nThank you for your business!\nFreelancerOS Commercial System\n`;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${inv.invoiceNumber}-Receipt.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadContract = (c: any) => {
+    const text = `COUNTERSIGNED AGREEMENT\n---------------------------------\nAgreement Title: ${c.title}\nStatus: ${c.status.toUpperCase()}\nSigned By: ${c.signerName || 'Client'}\nEffective Date: ${c.startDate || 'Immediate'}\nRenewal / End Date: ${c.endDate || 'Standard'}\n\nTERMS & CONDITIONS:\n${c.content || 'Standard Master Production Agreement governing deliverable handover upon settlement.'}\n\nCountersigned and archived via FreelancerOS.\n`;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Signed-${c.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Fetch portal data
   const { data: portalData, isLoading } = useQuery({
     queryKey: ['clientPortal', clientId],
@@ -418,7 +444,7 @@ export default function ClientPortalView() {
                       </div>
 
                       <button
-                        onClick={() => alert(`Invoice ${inv.invoiceNumber} receipt downloaded.`)}
+                        onClick={() => handleDownloadInvoicePdf(inv)}
                         className="px-3 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-medium flex items-center gap-1 transition-colors"
                       >
                         <Download className="w-3.5 h-3.5" /> PDF
@@ -544,7 +570,7 @@ export default function ClientPortalView() {
                         <ShieldCheck className="w-4 h-4 text-emerald-500" /> Legally countersigned and archived
                       </span>
                       <button
-                        onClick={() => alert('Contract copy downloaded.')}
+                        onClick={() => handleDownloadContract(c)}
                         className="px-3 py-1.5 rounded-lg border border-border hover:bg-muted font-medium flex items-center gap-1 transition-colors"
                       >
                         <Download className="w-3.5 h-3.5" /> Download Countersigned Copy

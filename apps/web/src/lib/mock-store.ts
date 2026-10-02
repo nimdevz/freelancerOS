@@ -39,6 +39,7 @@ import type {
   ClientPortalData,
   ProjectFile,
 } from '@freelanceros/types';
+import { resolveUserTier } from '@freelanceros/config';
 
 const STORAGE_KEY = 'freelanceros_mock_db_v3';
 
@@ -61,7 +62,7 @@ const INITIAL_ORG: Organization = {
   timezone: 'America/New_York',
   defaultPaymentTermsDays: 14,
   taxRatePercent: 0,
-  plan: 'pro',
+  plan: resolveUserTier(INITIAL_USER.email),
   freelancerType: 'video_editor',
   hourlyRate: 125,
   defaultHourlyRate: 125,
@@ -1569,6 +1570,7 @@ class MockStorage {
 
   // Auth & Org
   getMe() {
+    this.org.plan = resolveUserTier(this.user.email);
     return { user: this.user, organization: this.org };
   }
 
@@ -1589,9 +1591,12 @@ class MockStorage {
       this.org = {
         ...this.org,
         name: `${firstName}'s Studio`,
+        plan: resolveUserTier(cleanEmail),
         updatedAt: new Date().toISOString(),
       };
       this.saveToStorage();
+    } else {
+      this.org.plan = resolveUserTier(cleanEmail);
     }
     const token = `bearer-token-${this.user.id}`;
     if (typeof window !== 'undefined') {
@@ -1626,6 +1631,7 @@ class MockStorage {
       id: makeId('org'),
       name: studioName,
       slug: studioName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(Math.random() * 899 + 100),
+      plan: resolveUserTier(cleanEmail),
       freelancerType: data.freelancerType || 'creative',
       updatedAt: new Date().toISOString(),
     };
@@ -1692,6 +1698,7 @@ class MockStorage {
     this.org = {
       ...this.org,
       name: `${firstName}'s Creative Studio`,
+      plan: resolveUserTier(email),
       updatedAt: new Date().toISOString(),
     };
 
@@ -1717,11 +1724,19 @@ class MockStorage {
   }
 
   getCurrentOrg() {
+    this.org.plan = resolveUserTier(this.user.email);
     return this.org;
   }
 
   updateOrg(data: Partial<Organization>) {
-    this.org = { ...this.org, ...data, updatedAt: new Date().toISOString() };
+    const safeData = { ...data };
+    delete (safeData as any).plan;
+    this.org = {
+      ...this.org,
+      ...safeData,
+      plan: resolveUserTier(this.user.email),
+      updatedAt: new Date().toISOString(),
+    };
     this.saveToStorage();
     return this.org;
   }
@@ -2184,6 +2199,13 @@ class MockStorage {
   }
 
   createClient(data: any) {
+    const currentTier = resolveUserTier(this.user.email);
+    if (currentTier === 'free' && this.clients.length >= 3) {
+      throw new Error(
+        'Starter tier limit reached (maximum 3 active clients). Upgrading to Studio is required for unlimited clients. Changing tier is currently locked as payment processing is coming soon.'
+      );
+    }
+
     const newClient: Client = {
       id: makeId('client'),
       organizationId: this.org.id,

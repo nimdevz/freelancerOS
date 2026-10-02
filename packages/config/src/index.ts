@@ -17,6 +17,34 @@ export const APP_CONFIG = {
   ] as const,
 };
 
+export const LIFETIME_STUDIO_EMAILS = [
+  'nimishvwork@gmail.com',
+  'nimdevzzz@gmail.com',
+] as const;
+
+export function resolveUserTier(email?: string | null): 'studio' | 'free' {
+  if (!email) return 'free';
+  const clean = email.toLowerCase().trim();
+  return LIFETIME_STUDIO_EMAILS.includes(clean as any) ? 'studio' : 'free';
+}
+
+export function getTierLimits(plan?: string | null) {
+  if (plan === 'studio') {
+    return {
+      activeClients: Infinity,
+      activeProjects: Infinity,
+      teamMembers: 10,
+      name: 'Studio (Lifetime)',
+    };
+  }
+  return {
+    activeClients: 3,
+    activeProjects: 3,
+    teamMembers: 1,
+    name: 'Starter (Free)',
+  };
+}
+
 export const PRICING_PLANS = [
   {
     id: 'free',

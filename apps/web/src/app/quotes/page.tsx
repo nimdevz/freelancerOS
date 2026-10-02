@@ -16,6 +16,12 @@ import {
   Briefcase,
   FileCheck,
 } from 'lucide-react';
+import { ClientSelector } from '@/components/common/ClientSelector';
+import {
+  CustomDetailsSection,
+  CustomFieldItem,
+  formatCustomDetailsSummary,
+} from '@/components/common/CustomDetailsSection';
 
 export default function QuotesPage() {
   const queryClient = useQueryClient();
@@ -26,6 +32,7 @@ export default function QuotesPage() {
   const [clientId, setClientId] = useState('');
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
+  const [customFields, setCustomFields] = useState<CustomFieldItem[]>([]);
   const [validUntil, setValidUntil] = useState('');
   const [items, setItems] = useState<Array<{ description: string; quantity: number; unitPrice: number }>>([
     { description: 'Motion Graphics Animation (60s)', quantity: 1, unitPrice: 45000 },
@@ -52,6 +59,7 @@ export default function QuotesPage() {
       setIsCreateModalOpen(false);
       setTitle('');
       setNotes('');
+      setCustomFields([]);
     },
   });
 
@@ -86,10 +94,12 @@ export default function QuotesPage() {
     e.preventDefault();
     if (!clientId || !title) return;
 
+    const compiledDetails = formatCustomDetailsSummary(customFields, notes);
+
     createMutation.mutate({
       clientId,
       title,
-      notes,
+      notes: compiledDetails || undefined,
       validUntil: validUntil || new Date(Date.now() + 14 * 86400000).toISOString(),
       items: items.map((it) => ({
         description: it.description,
@@ -221,24 +231,12 @@ export default function QuotesPage() {
 
               <form onSubmit={handleCreateSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Client *
-                    </label>
-                    <select
-                      value={clientId}
-                      onChange={(e) => setClientId(e.target.value)}
-                      required
-                      className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                    >
-                      <option value="">Select Client...</option>
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} {c.company ? `(${c.company})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <ClientSelector
+                    value={clientId}
+                    onChange={(id) => setClientId(id)}
+                    label="Client"
+                    required
+                  />
 
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
@@ -255,18 +253,15 @@ export default function QuotesPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                    Payment Terms & Notes
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="e.g. 50% upfront deposit upon approval, 50% upon final delivery."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
-                  />
-                </div>
+                <CustomDetailsSection
+                  fields={customFields}
+                  onChange={setCustomFields}
+                  notes={notes}
+                  onNotesChange={setNotes}
+                  title="Payment Terms & Custom Notes"
+                  buttonLabel="+ Add Custom Detail / Spec"
+                  notesPlaceholder="e.g. 50% upfront deposit upon approval, 50% upon final delivery..."
+                />
 
                 {/* Line Items */}
                 <div className="space-y-2">

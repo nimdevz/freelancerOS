@@ -86,6 +86,23 @@ clientsRouter.post('/', async (c) => {
   const db = getDb(c.env);
   const orgId = c.get('organizationId')!;
   const data = await c.req.json();
+
+  // Tier limit enforcement: Free tier allows up to 3 clients, Studio allows unlimited
+  const org = await db.query.organizations.findFirst({
+    where: eq(schema.organizations.id, orgId),
+  });
+  if (org && org.plan === 'free') {
+    const existingClients = await db.query.clients.findMany({
+      where: eq(schema.clients.organizationId, orgId),
+    });
+    if (existingClients.length >= 3) {
+      return c.json({
+        message: 'Starter tier limit reached (maximum 3 active clients). Upgrading to Studio is required for unlimited clients. Changing tier is currently locked as payment processing is coming soon.',
+        tierLimit: true,
+      }, 403);
+    }
+  }
+
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
 

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { Env, AppVariables } from '../env';
 import { getDb, schema } from '../db';
 import { eq } from 'drizzle-orm';
+import { resolveUserTier } from '@freelanceros/config';
 
 export const authRouter = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
@@ -26,6 +27,16 @@ authRouter.get('/me', async (c) => {
 
   if (!org) {
     org = await db.query.organizations.findFirst();
+  }
+
+  if (org && user) {
+    const plan = resolveUserTier(user.email);
+    if (org.plan !== plan) {
+      await db.update(schema.organizations)
+        .set({ plan })
+        .where(eq(schema.organizations.id, org.id));
+      org.plan = plan;
+    }
   }
 
   return c.json({ user, organization: org });
@@ -70,6 +81,7 @@ authRouter.post('/login', async (c) => {
       name: `${user.firstName}'s Studio`,
       slug: `studio-${Date.now().toString(36)}`,
       currency: 'USD',
+      plan: resolveUserTier(user.email),
       hourlyRate: 125,
       createdAt: now,
       updatedAt: now,
@@ -77,6 +89,14 @@ authRouter.post('/login', async (c) => {
     org = await db.query.organizations.findFirst({
       where: eq(schema.organizations.id, orgId),
     });
+  }
+
+  if (org && user) {
+    const plan = resolveUserTier(user.email);
+    if (org.plan !== plan) {
+      await db.update(schema.organizations).set({ plan }).where(eq(schema.organizations.id, org.id));
+      org.plan = plan;
+    }
   }
 
   const token = `bearer-token-${user?.id}`;
@@ -122,6 +142,7 @@ authRouter.post('/signup', async (c) => {
     name: studioName,
     slug,
     currency: 'USD',
+    plan: resolveUserTier(user?.email || email),
     freelancerType: data.freelancerType || 'creative',
     hourlyRate: 125,
     createdAt: now,
@@ -185,6 +206,7 @@ authRouter.post('/google', async (c) => {
       name: `${user.firstName}'s Studio`,
       slug: `studio-${Date.now().toString(36)}`,
       currency: 'USD',
+      plan: resolveUserTier(user.email),
       hourlyRate: 125,
       createdAt: now,
       updatedAt: now,
@@ -192,6 +214,14 @@ authRouter.post('/google', async (c) => {
     org = await db.query.organizations.findFirst({
       where: eq(schema.organizations.id, orgId),
     });
+  }
+
+  if (org && user) {
+    const plan = resolveUserTier(user.email);
+    if (org.plan !== plan) {
+      await db.update(schema.organizations).set({ plan }).where(eq(schema.organizations.id, org.id));
+      org.plan = plan;
+    }
   }
 
   const token = `bearer-token-${user?.id}`;

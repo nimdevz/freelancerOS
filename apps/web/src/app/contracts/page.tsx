@@ -17,6 +17,12 @@ import {
   ShieldCheck,
   FileText,
 } from 'lucide-react';
+import { ClientSelector } from '@/components/common/ClientSelector';
+import {
+  CustomDetailsSection,
+  CustomFieldItem,
+  formatCustomDetailsSummary,
+} from '@/components/common/CustomDetailsSection';
 
 export default function ContractsPage() {
   const queryClient = useQueryClient();
@@ -31,6 +37,7 @@ export default function ContractsPage() {
   const [projectId, setProjectId] = useState('');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [customFields, setCustomFields] = useState<CustomFieldItem[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -59,6 +66,7 @@ export default function ContractsPage() {
       setIsCreateModalOpen(false);
       setTitle('');
       setContent('');
+      setCustomFields([]);
     },
   });
 
@@ -75,13 +83,15 @@ export default function ContractsPage() {
     e.preventDefault();
     if (!clientId || !title) return;
 
+    const customDetails = formatCustomDetailsSummary(customFields);
+    const baseContent = content || 'Standard Master Services Agreement covering intellectual property transfer upon receipt of final payment, revision policies (max 2 included), and cancellation terms.';
+    const finalContent = customDetails ? `${baseContent}\n\n${customDetails}` : baseContent;
+
     createMutation.mutate({
       clientId,
       projectId: projectId || undefined,
       title,
-      content:
-        content ||
-        'Standard Master Services Agreement covering intellectual property transfer upon receipt of final payment, revision policies (max 2 included), and cancellation terms.',
+      content: finalContent,
       startDate: startDate || new Date().toISOString(),
       endDate: endDate || new Date(Date.now() + 90 * 86400000).toISOString(),
     });
@@ -214,25 +224,13 @@ export default function ContractsPage() {
               </div>
 
               <form onSubmit={handleCreateSubmit} className="space-y-3.5">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Client *
-                    </label>
-                    <select
-                      value={clientId}
-                      onChange={(e) => setClientId(e.target.value)}
-                      required
-                      className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                    >
-                      <option value="">Select Client...</option>
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <ClientSelector
+                    value={clientId}
+                    onChange={(id) => setClientId(id)}
+                    label="Client"
+                    required
+                  />
 
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
@@ -279,6 +277,13 @@ export default function ContractsPage() {
                     className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
                   />
                 </div>
+
+                <CustomDetailsSection
+                  fields={customFields}
+                  onChange={setCustomFields}
+                  title="Custom Clauses & Agreement Specs"
+                  buttonLabel="+ Add Custom Detail / Clause"
+                />
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>

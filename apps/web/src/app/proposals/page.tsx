@@ -27,6 +27,12 @@ import {
   X,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
+import { ClientSelector } from '@/components/common/ClientSelector';
+import {
+  CustomDetailsSection,
+  CustomFieldItem,
+  formatCustomDetailsSummary,
+} from '@/components/common/CustomDetailsSection';
 
 const PROPOSAL_TEMPLATES = [
   {
@@ -84,6 +90,8 @@ export default function ProposalsPage() {
   const [validUntil, setValidUntil] = useState('');
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldItem[]>([]);
+  const [customNotes, setCustomNotes] = useState('');
   const [paymentMilestones, setPaymentMilestones] = useState({
     deposit: 50,
     interim: 25,
@@ -123,6 +131,8 @@ export default function ProposalsPage() {
       setContent('');
       setDiscountPercent(0);
       setSelectedAddons([]);
+      setCustomFields([]);
+      setCustomNotes('');
     },
   });
 
@@ -238,6 +248,8 @@ export default function ProposalsPage() {
       }),
     ];
 
+    const customDetails = formatCustomDetailsSummary(customFields, customNotes);
+
     createMutation.mutate({
       clientId,
       title,
@@ -249,6 +261,7 @@ export default function ProposalsPage() {
       discountAmount,
       tax: calculatedTax,
       total: calculatedTotal,
+      notes: customDetails || undefined,
       terms: `Payment schedule: ${paymentMilestones.deposit}% upon signing, ${paymentMilestones.interim}% upon interim milestone, ${paymentMilestones.final}% upon final delivery sign-off.`,
     });
   };
@@ -541,24 +554,12 @@ export default function ProposalsPage() {
 
               <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                      Target Client *
-                    </label>
-                    <select
-                      required
-                      value={clientId}
-                      onChange={(e) => setClientId(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-                    >
-                      <option value="">Select a client...</option>
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} {c.company ? `(${c.company})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <ClientSelector
+                    value={clientId}
+                    onChange={(id) => setClientId(id)}
+                    label="Target Client"
+                    required
+                  />
 
                   <div>
                     <label className="block text-[11px] font-medium text-muted-foreground mb-1">
@@ -718,6 +719,17 @@ export default function ProposalsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Custom Details & Specifications */}
+                <CustomDetailsSection
+                  fields={customFields}
+                  onChange={setCustomFields}
+                  notes={customNotes}
+                  onNotesChange={setCustomNotes}
+                  title="Custom Proposal Details & Specifications"
+                  buttonLabel="+ Add Custom Detail / Scope Spec"
+                  notesPlaceholder="Add custom client requirements, special deliverables, or billing clauses..."
+                />
 
                 {/* Calculations Summary */}
                 <div className="p-3 bg-neutral-50 dark:bg-neutral-900 rounded-lg space-y-1.5 text-xs font-mono">

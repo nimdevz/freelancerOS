@@ -35,6 +35,10 @@ organizationsRouter.patch('/current', async (c) => {
     return c.json({ message: 'Organization required' }, 400);
   }
 
+  if (data.plan !== undefined) {
+    return c.json({ message: 'Changing tier is not allowed as of now.' }, 403);
+  }
+
   const updateData: any = {
     updatedAt: new Date().toISOString(),
   };

@@ -17,6 +17,11 @@ import {
   Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
+import {
+  CustomDetailsSection,
+  CustomFieldItem,
+  formatCustomDetailsSummary,
+} from '@/components/common/CustomDetailsSection';
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
@@ -29,6 +34,8 @@ export default function ExpensesPage() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('software');
   const [projectId, setProjectId] = useState('');
+  const [customFields, setCustomFields] = useState<CustomFieldItem[]>([]);
+  const [customNotes, setCustomNotes] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [taxDeductible, setTaxDeductible] = useState(true);
 
@@ -54,6 +61,8 @@ export default function ExpensesPage() {
       setIsCreateModalOpen(false);
       setDescription('');
       setAmount('');
+      setCustomFields([]);
+      setCustomNotes('');
     },
   });
 
@@ -70,6 +79,8 @@ export default function ExpensesPage() {
     e.preventDefault();
     if (!description || !amount) return;
 
+    const customDetails = formatCustomDetailsSummary(customFields, customNotes);
+
     createMutation.mutate({
       description,
       amount: Number(amount),
@@ -77,6 +88,7 @@ export default function ExpensesPage() {
       projectId: projectId || undefined,
       expenseDate: date,
       taxDeductible,
+      notes: customDetails || undefined,
     });
   };
 
@@ -370,6 +382,16 @@ export default function ExpensesPage() {
                     <span>Tax deductible business expense</span>
                   </label>
                 </div>
+
+                <CustomDetailsSection
+                  fields={customFields}
+                  onChange={setCustomFields}
+                  notes={customNotes}
+                  onNotesChange={setCustomNotes}
+                  title="Custom Expense Details & Notes"
+                  buttonLabel="+ Add Custom Detail / Receipt Spec"
+                  notesPlaceholder="Add receipt reference numbers, vendor contacts, or tax filing notes..."
+                />
 
                 <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                   <button
