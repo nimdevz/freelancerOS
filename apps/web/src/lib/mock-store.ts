@@ -1,5 +1,6 @@
 import type {
   Client,
+  ClientContact,
   Lead,
   Project,
   Task,
@@ -36,6 +37,7 @@ import type {
   BusinessGoal,
   CaseStudy,
   ClientPortalData,
+  ProjectFile,
 } from '@freelanceros/types';
 
 const STORAGE_KEY = 'freelanceros_mock_db_v3';
@@ -152,6 +154,79 @@ const INITIAL_CLIENTS: Client[] = [
     outstandingBalance: 1900,
     createdAt: '2026-08-15T00:00:00Z',
     updatedAt: '2026-09-30T00:00:00Z',
+  },
+];
+
+const INITIAL_CLIENT_CONTACTS: ClientContact[] = [
+  {
+    id: 'ct-nike-1',
+    clientId: '11111111-1111-1111-1111-111111111111',
+    name: 'Vikram Malhotra',
+    email: 'campaigns@nike.com',
+    phone: '+1 (503) 671-6453',
+    role: 'Global Marketing Director',
+    isPrimary: true,
+    createdAt: '2026-08-10T00:00:00Z',
+  },
+  {
+    id: 'ct-nike-2',
+    clientId: '11111111-1111-1111-1111-111111111111',
+    name: 'Pooja Sen',
+    email: 'ap-creative@nike.com',
+    phone: '+1 (503) 671-8821',
+    role: 'Finance & Accounts Payable',
+    isPrimary: false,
+    createdAt: '2026-08-12T00:00:00Z',
+  },
+  {
+    id: 'ct-northstar-1',
+    clientId: '44444444-4444-4444-4444-444444444444',
+    name: 'Elena Rostova',
+    email: 'creative@northstar.co',
+    phone: '+1 (212) 555-0144',
+    role: 'Creative VP & Brand Lead',
+    isPrimary: true,
+    createdAt: '2026-09-01T00:00:00Z',
+  },
+  {
+    id: 'ct-northstar-2',
+    clientId: '44444444-4444-4444-4444-444444444444',
+    name: 'Marcus Vance',
+    email: 'marcus@northstar.co',
+    phone: '+1 (212) 555-0188',
+    role: 'Head of Production & Media',
+    isPrimary: false,
+    createdAt: '2026-09-02T00:00:00Z',
+  },
+  {
+    id: 'ct-acme-1',
+    clientId: '33333333-3333-3333-3333-333333333333',
+    name: 'Sarah Connor',
+    email: 'product@acmecorp.io',
+    phone: '+1 (415) 555-0199',
+    role: 'Head of Product Marketing',
+    isPrimary: true,
+    createdAt: '2026-08-20T00:00:00Z',
+  },
+  {
+    id: 'ct-acme-2',
+    clientId: '33333333-3333-3333-3333-333333333333',
+    name: 'David Brent',
+    email: 'billing@acmecorp.io',
+    phone: '+1 (415) 555-0190',
+    role: 'Controller & Procurement',
+    isPrimary: false,
+    createdAt: '2026-08-22T00:00:00Z',
+  },
+  {
+    id: 'ct-atlas-1',
+    clientId: '66666666-6666-6666-6666-666666666666',
+    name: 'Chloe Danvers',
+    email: 'editorial@atlasmedia.tv',
+    phone: '+1 (206) 555-0177',
+    role: 'Executive Producer',
+    isPrimary: true,
+    createdAt: '2026-08-15T00:00:00Z',
   },
 ];
 
@@ -506,11 +581,16 @@ const INITIAL_TASKS: Task[] = [
     id: 'task-1',
     organizationId: INITIAL_ORG.id,
     projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    projectName: 'Summer Campaign Film',
     title: 'Review sound mix with sound engineer',
     status: 'done',
     priority: 'high',
     dueDate: '2026-09-25',
     clientVisible: true,
+    subtasks: [
+      { id: 'st-1-1', title: 'Dolby 5.1 multichannel surround pass', completed: true },
+      { id: 'st-1-2', title: 'Vocal EQ notch filter & dialogue clarity', completed: true },
+    ],
     createdAt: '2026-09-20T00:00:00Z',
     updatedAt: '2026-09-25T00:00:00Z',
   },
@@ -518,11 +598,19 @@ const INITIAL_TASKS: Task[] = [
     id: 'task-2',
     organizationId: INITIAL_ORG.id,
     projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    projectName: 'Summer Campaign Film',
     title: 'Export 9:16 vertical cuts for Instagram & YouTube Shorts',
     status: 'in_progress',
     priority: 'urgent',
     dueDate: '2026-10-02',
     clientVisible: true,
+    dependsOnTaskId: 'task-1',
+    dependsOnTaskTitle: 'Review sound mix with sound engineer',
+    subtasks: [
+      { id: 'st-2-1', title: 'Reframe action safe-zones for vertical 9:16', completed: true },
+      { id: 'st-2-2', title: 'Render auto-captions and kinetic typography', completed: false },
+      { id: 'st-2-3', title: 'Color match output & render ProRes 422 HQ', completed: false },
+    ],
     createdAt: '2026-09-26T00:00:00Z',
     updatedAt: '2026-09-30T00:00:00Z',
   },
@@ -530,11 +618,17 @@ const INITIAL_TASKS: Task[] = [
     id: 'task-3',
     organizationId: INITIAL_ORG.id,
     projectId: '2cb11493-e7a2-4a70-9fc6-44a16807c1f7',
+    projectName: 'Brand Manifesto Video',
     title: 'Color grade scene 4 in DaVinci Resolve',
     status: 'in_progress',
     priority: 'high',
     dueDate: '2026-10-01',
     clientVisible: true,
+    subtasks: [
+      { id: 'st-3-1', title: 'Color space transform ARRI LogC3 to Rec.709', completed: true },
+      { id: 'st-3-2', title: 'Skin tone isolation & highlight roll-off', completed: false },
+      { id: 'st-3-3', title: 'Film grain emulation pass (Kodak 2383)', completed: false },
+    ],
     createdAt: '2026-09-28T00:00:00Z',
     updatedAt: '2026-09-30T00:00:00Z',
   },
@@ -542,11 +636,16 @@ const INITIAL_TASKS: Task[] = [
     id: 'task-4',
     organizationId: INITIAL_ORG.id,
     projectId: '2afd62bc-89ee-4e7e-a59b-ae571ca9a311',
+    projectName: 'Website Redesign & Product Visuals',
     title: 'Complete responsive motion interactions in Figma',
     status: 'todo',
     priority: 'medium',
     dueDate: '2026-10-05',
     clientVisible: false,
+    subtasks: [
+      { id: 'st-4-1', title: 'Prototype spring curve navigation drawer', completed: false },
+      { id: 'st-4-2', title: 'Deliver interaction specs to frontend engineer', completed: false },
+    ],
     createdAt: '2026-09-29T00:00:00Z',
     updatedAt: '2026-09-29T00:00:00Z',
   },
@@ -977,6 +1076,87 @@ const INITIAL_ASSET_REQUESTS: AssetRequest[] = [
   },
 ];
 
+const INITIAL_PROJECT_FILES: ProjectFile[] = [
+  {
+    id: 'pf-1',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Nike_Monsoon_Commercial_V1_ProRes422HQ.mov',
+    folder: 'Deliverables & Exports',
+    sizeBytes: 1980000000,
+    mimeType: 'video/quicktime',
+    r2Key: 'projects/027c41fa/Nike_Monsoon_Commercial_V1_ProRes422HQ.mov',
+    publicUrl: '/api/files/download/projects/027c41fa/Nike_Monsoon_Commercial_V1_ProRes422HQ.mov',
+    uploadedAt: '2026-09-24T14:30:00Z',
+    uploadedBy: 'Nimish Prabhu',
+  },
+  {
+    id: 'pf-2',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Nike_India_Vector_Brandmark_2026.svg',
+    folder: 'Brand Assets & Vector Logos',
+    sizeBytes: 245000,
+    mimeType: 'image/svg+xml',
+    r2Key: 'projects/027c41fa/Nike_India_Vector_Brandmark_2026.svg',
+    publicUrl: '/api/files/download/projects/027c41fa/Nike_India_Vector_Brandmark_2026.svg',
+    uploadedAt: '2026-09-12T10:15:00Z',
+    uploadedBy: 'Nike Brand Team',
+  },
+  {
+    id: 'pf-3',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Bandra_Shoot_RAW_Footage_Reel_01.braw',
+    folder: 'Media & Raw Footage',
+    sizeBytes: 4290000000,
+    mimeType: 'video/x-braw',
+    r2Key: 'projects/027c41fa/Bandra_Shoot_RAW_Footage_Reel_01.braw',
+    publicUrl: '/api/files/download/projects/027c41fa/Bandra_Shoot_RAW_Footage_Reel_01.braw',
+    uploadedAt: '2026-09-18T18:00:00Z',
+    uploadedBy: 'Arjun K. (DP)',
+  },
+  {
+    id: 'pf-4',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Sound_Design_Stems_Multichannel_5.1.wav',
+    folder: 'Media & Raw Footage',
+    sizeBytes: 388000000,
+    mimeType: 'audio/wav',
+    r2Key: 'projects/027c41fa/Sound_Design_Stems_Multichannel_5.1.wav',
+    publicUrl: '/api/files/download/projects/027c41fa/Sound_Design_Stems_Multichannel_5.1.wav',
+    uploadedAt: '2026-09-22T11:20:00Z',
+    uploadedBy: 'Priya (Sound)',
+  },
+  {
+    id: 'pf-5',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Signed_Talent_Release_Kavya_Sprinter.pdf',
+    folder: 'Legal & Contracts',
+    sizeBytes: 1240000,
+    mimeType: 'application/pdf',
+    r2Key: 'projects/027c41fa/Signed_Talent_Release_Kavya_Sprinter.pdf',
+    publicUrl: '/api/files/download/projects/027c41fa/Signed_Talent_Release_Kavya_Sprinter.pdf',
+    uploadedAt: '2026-09-18T08:30:00Z',
+    uploadedBy: 'Production Coordinator',
+  },
+  {
+    id: 'pf-6',
+    organizationId: INITIAL_ORG.id,
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    name: 'Official_Campaign_Master_Agreement_Executed.pdf',
+    folder: 'Legal & Contracts',
+    sizeBytes: 860000,
+    mimeType: 'application/pdf',
+    r2Key: 'projects/027c41fa/Official_Campaign_Master_Agreement_Executed.pdf',
+    publicUrl: '/api/files/download/projects/027c41fa/Official_Campaign_Master_Agreement_Executed.pdf',
+    uploadedAt: '2026-09-10T16:45:00Z',
+    uploadedBy: 'Legal Team',
+  },
+];
+
 const INITIAL_CALL_SHEETS: ProductionCallSheet[] = [
   {
     id: 'cs-1',
@@ -1174,6 +1354,7 @@ class MockStorage {
   private scopes: ProjectScope[] = INITIAL_SCOPES;
   private scopeChanges: ScopeChange[] = INITIAL_SCOPE_CHANGES;
   private assetRequests: AssetRequest[] = INITIAL_ASSET_REQUESTS;
+  private projectFiles: ProjectFile[] = INITIAL_PROJECT_FILES;
   private callSheets: ProductionCallSheet[] = INITIAL_CALL_SHEETS;
   private shots: ProductionShot[] = INITIAL_SHOTS;
   private equipment: EquipmentItem[] = INITIAL_EQUIPMENT;
@@ -1205,6 +1386,7 @@ class MockStorage {
       createdAt: '2026-09-28T00:00:00Z',
     },
   ];
+  private clientContacts: ClientContact[] = [...INITIAL_CLIENT_CONTACTS];
   private activeTimer: TimeEntry | null = null;
   private isDemoMode: boolean = true;
 
@@ -1221,6 +1403,7 @@ class MockStorage {
         if (data.isDemoMode !== undefined) this.isDemoMode = data.isDemoMode;
         if (data.org) this.org = data.org;
         if (data.clients) this.clients = data.clients;
+        if (data.clientContacts) this.clientContacts = data.clientContacts;
         if (data.projects) this.projects = data.projects;
         if (data.leads) this.leads = data.leads;
         if (data.invoices) this.invoices = data.invoices;
@@ -1235,6 +1418,7 @@ class MockStorage {
         if (data.scopes) this.scopes = data.scopes;
         if (data.scopeChanges) this.scopeChanges = data.scopeChanges;
         if (data.assetRequests) this.assetRequests = data.assetRequests;
+        if (data.projectFiles) this.projectFiles = data.projectFiles;
         if (data.callSheets) this.callSheets = data.callSheets;
         if (data.shots) this.shots = data.shots;
         if (data.equipment) this.equipment = data.equipment;
@@ -1253,6 +1437,7 @@ class MockStorage {
         isDemoMode: this.isDemoMode,
         org: this.org,
         clients: this.clients,
+        clientContacts: this.clientContacts,
         projects: this.projects,
         leads: this.leads,
         invoices: this.invoices,
@@ -1267,6 +1452,7 @@ class MockStorage {
         scopes: this.scopes,
         scopeChanges: this.scopeChanges,
         assetRequests: this.assetRequests,
+        projectFiles: this.projectFiles,
         callSheets: this.callSheets,
         shots: this.shots,
         equipment: this.equipment,
@@ -1291,6 +1477,7 @@ class MockStorage {
   public exitDemo() {
     this.isDemoMode = false;
     this.clients = [];
+    this.clientContacts = [];
     this.projects = [];
     this.leads = [];
     this.invoices = [];
@@ -1305,6 +1492,7 @@ class MockStorage {
     this.scopes = [];
     this.scopeChanges = [];
     this.assetRequests = [];
+    this.projectFiles = [];
     this.callSheets = [];
     this.shots = [];
     this.equipment = [];
@@ -1324,6 +1512,7 @@ class MockStorage {
     this.user = INITIAL_USER;
     this.org = INITIAL_ORG;
     this.clients = JSON.parse(JSON.stringify(INITIAL_CLIENTS));
+    this.clientContacts = JSON.parse(JSON.stringify(INITIAL_CLIENT_CONTACTS));
     this.projects = JSON.parse(JSON.stringify(INITIAL_PROJECTS));
     this.leads = JSON.parse(JSON.stringify(INITIAL_LEADS));
     this.invoices = JSON.parse(JSON.stringify(INITIAL_INVOICES));
@@ -1337,6 +1526,7 @@ class MockStorage {
     this.scopes = JSON.parse(JSON.stringify(INITIAL_SCOPES));
     this.scopeChanges = JSON.parse(JSON.stringify(INITIAL_SCOPE_CHANGES));
     this.assetRequests = JSON.parse(JSON.stringify(INITIAL_ASSET_REQUESTS));
+    this.projectFiles = JSON.parse(JSON.stringify(INITIAL_PROJECT_FILES));
     this.callSheets = JSON.parse(JSON.stringify(INITIAL_CALL_SHEETS));
     this.shots = JSON.parse(JSON.stringify(INITIAL_SHOTS));
     this.equipment = JSON.parse(JSON.stringify(INITIAL_EQUIPMENT));
@@ -1712,6 +1902,77 @@ class MockStorage {
         });
       });
 
+    // 7. Overdue Tasks
+    this.tasks
+      .filter((t) => t.status !== 'done' && t.dueDate && t.dueDate < today)
+      .slice(0, 3)
+      .forEach((t) => {
+        attentionItems.push({
+          id: `att-task-${t.id}`,
+          title: `Overdue task: ${t.title}`,
+          description: `Due on ${t.dueDate}. Requires immediate attention.`,
+          severity: 'warning',
+          urgency: 'high',
+          category: 'task',
+          actionUrl: `/tasks`,
+          actionText: 'View Task',
+          dueDate: t.dueDate,
+        });
+      });
+
+    // 8. Missing Client Assets
+    this.assetRequests
+      .filter((ar) => ar.status === 'requested')
+      .slice(0, 3)
+      .forEach((ar) => {
+        attentionItems.push({
+          id: `att-asset-${ar.id}`,
+          title: `Missing client asset: ${ar.title}`,
+          description: `Awaiting media upload from client to proceed with production.`,
+          severity: 'warning',
+          urgency: 'medium',
+          category: 'asset',
+          actionUrl: `/projects/${ar.projectId}`,
+          actionText: 'Check Asset',
+          dueDate: ar.dueDate || today,
+        });
+      });
+
+    // 9. Retainer Usage Cap
+    this.retainers
+      .filter((r) => r.status === 'active' && r.usedHours >= r.includedHours)
+      .forEach((r) => {
+        attentionItems.push({
+          id: `att-ret-${r.id}`,
+          title: `Retainer limit reached: ${r.title || 'Client Retainer'}`,
+          description: `${r.clientName} reached ${r.usedHours}/${r.includedHours} included hours. Extra hours billable at surge rate.`,
+          severity: 'warning',
+          urgency: 'medium',
+          category: 'retainer',
+          actionUrl: `/retainers`,
+          actionText: 'Review Retainer',
+          dueDate: today,
+        });
+      });
+
+    // 10. Unbilled Work Detection
+    const unbilledEntries = this.timeEntries.filter((t) => t.isBillable && !t.isInvoiced);
+    const unbilledMinutes = unbilledEntries.reduce((s, t) => s + (t.durationMinutes || 0), 0);
+    const unbilledHours = Math.round((unbilledMinutes / 60) * 10) / 10;
+    if (unbilledHours >= 5) {
+      attentionItems.push({
+        id: `att-unbilled-time`,
+        title: `Unbilled work detected (${unbilledHours} hrs)`,
+        description: `${unbilledEntries.length} logged sessions ready to be invoiced across active projects.`,
+        severity: 'info',
+        urgency: 'medium',
+        category: 'time',
+        actionUrl: `/time`,
+        actionText: 'Invoice Hours',
+        dueDate: today,
+      });
+    }
+
     // Sort by urgency: high (critical) -> medium (warning) -> low (info)
     const priorityWeight: Record<string, number> = { high: 3, medium: 2, low: 1 };
     attentionItems.sort((a, b) => (priorityWeight[b.urgency] || 0) - (priorityWeight[a.urgency] || 0));
@@ -1866,12 +2127,60 @@ class MockStorage {
     const clientPayments = this.payments.filter((p) =>
       clientInvoices.some((inv) => inv.id === p.invoiceId)
     );
+    let contacts = this.clientContacts.filter((ct) => ct.clientId === client.id);
+    if (contacts.length === 0) {
+      contacts = [
+        {
+          id: `ct-${client.id}-1`,
+          clientId: client.id,
+          name: client.name,
+          email: client.email,
+          phone: client.phone || '+1 (555) 019-2831',
+          role: 'Primary Contact / Decision Maker',
+          isPrimary: true,
+          createdAt: client.createdAt,
+        },
+      ];
+    }
     return {
       ...client,
+      contacts,
       projects: clientProjects,
       invoices: clientInvoices,
       payments: clientPayments,
     };
+  }
+
+  listClientContacts(clientId: string) {
+    return this.clientContacts.filter((ct) => ct.clientId === clientId);
+  }
+
+  addClientContact(clientId: string, data: any): ClientContact {
+    const newContact: ClientContact = {
+      id: makeId('ct'),
+      clientId,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || null,
+      role: data.role || 'Contact',
+      isPrimary: Boolean(data.isPrimary),
+      createdAt: new Date().toISOString(),
+    };
+    if (newContact.isPrimary) {
+      this.clientContacts = this.clientContacts.map((ct) =>
+        ct.clientId === clientId ? { ...ct, isPrimary: false } : ct
+      );
+    }
+    this.clientContacts.push(newContact);
+    this.saveToStorage();
+    return newContact;
+  }
+
+  deleteClientContact(clientId: string, contactId: string): void {
+    this.clientContacts = this.clientContacts.filter(
+      (ct) => !(ct.clientId === clientId && ct.id === contactId)
+    );
+    this.saveToStorage();
   }
 
   createClient(data: any) {
@@ -2920,6 +3229,48 @@ class MockStorage {
   deleteAssetRequest(id: string): void {
     this.assetRequests = this.assetRequests.filter((a) => a.id !== id);
     this.saveToStorage();
+  }
+
+  // Project Files & R2 File Manager
+  listProjectFiles(projectId?: string): ProjectFile[] {
+    if (projectId) {
+      return this.projectFiles.filter((f) => f.projectId === projectId);
+    }
+    return this.projectFiles;
+  }
+
+  uploadProjectFile(data: Partial<ProjectFile>): ProjectFile {
+    const file: ProjectFile = {
+      id: makeId('pf'),
+      organizationId: this.org.id,
+      projectId: data.projectId || '',
+      name: data.name || 'unnamed_file.bin',
+      folder: (data.folder as any) || 'General',
+      sizeBytes: data.sizeBytes || Math.floor(Math.random() * 5000000 + 500000),
+      mimeType: data.mimeType || 'application/octet-stream',
+      r2Key: data.r2Key || `projects/${data.projectId || 'gen'}/${Date.now()}-${data.name || 'file.bin'}`,
+      publicUrl: data.publicUrl || `/api/files/download/projects/${data.projectId || 'gen'}/${data.name || 'file.bin'}`,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: data.uploadedBy || `${this.user.firstName || 'Creator'} ${this.user.lastName || ''}`.trim(),
+    };
+    this.projectFiles.unshift(file);
+    this.saveToStorage();
+    return file;
+  }
+
+  deleteProjectFile(id: string): void {
+    this.projectFiles = this.projectFiles.filter((f) => f.id !== id);
+    this.saveToStorage();
+  }
+
+  generateShareLink(fileId: string, hours = 24): { shareUrl: string; expiresAt: string } {
+    const file = this.projectFiles.find((f) => f.id === fileId);
+    if (!file) throw new Error('File not found');
+    const expiresAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
+    const token = typeof window !== 'undefined' ? btoa(`${file.id}:${expiresAt}`).replace(/=/g, '') : 'mock-token';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://freelanceros.app';
+    const shareUrl = `${baseUrl}/api/files/download/${encodeURIComponent(file.r2Key)}?token=${token}&exp=${Math.floor(Date.now() / 1000) + hours * 3600}`;
+    return { shareUrl, expiresAt };
   }
 
   // Creative Workflow

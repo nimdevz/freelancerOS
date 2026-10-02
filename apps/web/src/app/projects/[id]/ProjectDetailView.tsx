@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatDate, formatRelativeTime, getStatusBadgeClass } from '@freelanceros/ui';
+import type { ProjectFile, ProjectFileFolder } from '@freelanceros/types';
 import {
   ArrowLeft,
   Plus,
@@ -36,7 +37,49 @@ import {
   Calendar,
   Copy,
   Archive,
+  Folder,
+  HardDrive,
+  Download,
+  Share2,
+  Trash2,
+  Eye,
+  File,
+  Music,
+  Image as ImageIcon,
+  ExternalLink,
+  RefreshCw,
+  Edit3,
+  Save,
+  Link2,
 } from 'lucide-react';
+
+function formatFileSize(bytes: number): string {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function getFileIcon(fileName: string, mimeType?: string) {
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith('.mov') || lower.endsWith('.mp4') || lower.endsWith('.braw') || lower.endsWith('.mkv') || mimeType?.startsWith('video/')) {
+    return <Film className="w-4 h-4 text-purple-500" />;
+  }
+  if (lower.endsWith('.wav') || lower.endsWith('.mp3') || lower.endsWith('.aac') || lower.endsWith('.flac') || mimeType?.startsWith('audio/')) {
+    return <Music className="w-4 h-4 text-emerald-500" />;
+  }
+  if (lower.endsWith('.svg') || lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.psd') || mimeType?.startsWith('image/')) {
+    return <ImageIcon className="w-4 h-4 text-blue-500" />;
+  }
+  if (lower.endsWith('.pdf')) {
+    return <FileText className="w-4 h-4 text-rose-500" />;
+  }
+  if (lower.endsWith('.zip') || lower.endsWith('.tar') || lower.endsWith('.gz') || lower.endsWith('.rar')) {
+    return <Archive className="w-4 h-4 text-amber-500" />;
+  }
+  return <File className="w-4 h-4 text-muted-foreground" />;
+}
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -45,13 +88,36 @@ export default function ProjectDetailPage() {
   const { startTimer, stopTimer, isTimerRunning, timerProjectId, activeTimeEntryId, openQuickCreate } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'tasks' | 'milestones' | 'scope' | 'creative' | 'deliverables' | 'time' | 'invoices' | 'activity' | 'closeout'
+    'overview' | 'tasks' | 'milestones' | 'scope' | 'creative' | 'deliverables' | 'assets' | 'time' | 'invoices' | 'activity' | 'closeout'
   >('overview');
   const [creativeSubTab, setCreativeSubTab] = useState<'callSheets' | 'shots' | 'equipment'>('callSheets');
   const [taskFilter, setTaskFilter] = useState<'all' | 'todo' | 'done'>('all');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [newDeliverableTitle, setNewDeliverableTitle] = useState('');
+
+  // Assets Tab state
+  const [selectedAssetSubTab, setSelectedAssetSubTab] = useState<'files' | 'requests'>('files');
+  const [selectedFolder, setSelectedFolder] = useState<string>('all');
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareTargetFile, setShareTargetFile] = useState<ProjectFile | null>(null);
+  const [shareExpiryHours, setShareExpiryHours] = useState(24);
+  const [generatedShareUrl, setGeneratedShareUrl] = useState('');
+  const [shareCopiedToast, setShareCopiedToast] = useState(false);
+
+  const [newUploadName, setNewUploadName] = useState('');
+  const [newUploadFolder, setNewUploadFolder] = useState<ProjectFileFolder>('Deliverables & Exports');
+  const [newUploadSizeMb, setNewUploadSizeMb] = useState(45);
+
+  const [isAssetRequestModalOpen, setIsAssetRequestModalOpen] = useState(false);
+  const [newAssetReqTitle, setNewAssetReqTitle] = useState('');
+  const [newAssetReqDesc, setNewAssetReqDesc] = useState('');
+  const [newAssetReqDueDate, setNewAssetReqDueDate] = useState('2026-10-10');
+
+  // Project notes state
+  const [projectNotes, setProjectNotes] = useState<string | null>(null);
+  const [notesSavedToast, setNotesSavedToast] = useState(false);
 
   // AI Summary state
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -138,6 +204,18 @@ export default function ProjectDetailPage() {
   const { data: equipment = [] } = useQuery({
     queryKey: ['projectEquipment', id],
     queryFn: () => api.creative.equipment.list(id),
+    enabled: Boolean(id),
+  });
+
+  const { data: projectFiles = [] } = useQuery({
+    queryKey: ['projectFiles', id],
+    queryFn: () => api.files.list(id),
+    enabled: Boolean(id),
+  });
+
+  const { data: assetRequests = [] } = useQuery({
+    queryKey: ['projectAssetRequests', id],
+    queryFn: () => api.assetRequests.list(id),
     enabled: Boolean(id),
   });
 
@@ -334,6 +412,86 @@ export default function ProjectDetailPage() {
     },
   });
 
+  const uploadFileMutation = useMutation({
+    mutationFn: (fileData: Partial<ProjectFile>) =>
+      api.files.upload({
+        ...fileData,
+        projectId: id,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectFiles', id] });
+      setIsUploadModalOpen(false);
+      setNewUploadName('');
+    },
+  });
+
+  const deleteFileMutation = useMutation({
+    mutationFn: (fileId: string) => api.files.delete(fileId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectFiles', id] });
+    },
+  });
+
+  const createAssetRequestMutation = useMutation({
+    mutationFn: (data: any) =>
+      api.assetRequests.create({
+        projectId: id,
+        clientId: project?.clientId,
+        ...data,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectAssetRequests', id] });
+      setIsAssetRequestModalOpen(false);
+      setNewAssetReqTitle('');
+      setNewAssetReqDesc('');
+    },
+  });
+
+  const updateAssetRequestMutation = useMutation({
+    mutationFn: ({ reqId, data }: { reqId: string; data: any }) =>
+      api.assetRequests.update(reqId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectAssetRequests', id] });
+    },
+  });
+
+  const deleteAssetRequestMutation = useMutation({
+    mutationFn: (reqId: string) => api.assetRequests.delete(reqId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectAssetRequests', id] });
+    },
+  });
+
+  const saveNotesMutation = useMutation({
+    mutationFn: (notesText: string) => api.projects.update(id, { notes: notesText }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+      setNotesSavedToast(true);
+      setTimeout(() => setNotesSavedToast(false), 2500);
+    },
+  });
+
+  const handleOpenShareModal = async (file: ProjectFile) => {
+    setShareTargetFile(file);
+    try {
+      const res = await api.files.generateShareLink(file.id, shareExpiryHours);
+      setGeneratedShareUrl(res.shareUrl);
+      setIsShareModalOpen(true);
+    } catch {
+      const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/files/download/${encodeURIComponent(file.r2Key)}?token=r2-${Date.now()}&exp=${Math.floor(Date.now() / 1000) + shareExpiryHours * 3600}`;
+      setGeneratedShareUrl(shareUrl);
+      setIsShareModalOpen(true);
+    }
+  };
+
+  const handleCopyShareUrl = () => {
+    if (generatedShareUrl && typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(generatedShareUrl);
+      setShareCopiedToast(true);
+      setTimeout(() => setShareCopiedToast(false), 2500);
+    }
+  };
+
   const isTimerRunningOnThisProject = isTimerRunning && timerProjectId === id;
 
   const handleToggleTimer = async () => {
@@ -519,6 +677,16 @@ export default function ProjectDetailPage() {
               </button>
 
               <button
+                onClick={() => {
+                  setActiveTab('assets');
+                  setIsUploadModalOpen(true);
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border"
+              >
+                + Asset
+              </button>
+
+              <button
                 onClick={() => openQuickCreate('invoice')}
                 className="px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border"
               >
@@ -646,6 +814,16 @@ export default function ProjectDetailPage() {
             }`}
           >
             Deliverables ({deliverables.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('assets')}
+            className={`pb-2.5 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'assets'
+                ? 'border-neutral-900 text-foreground dark:border-white font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Assets & Files ({projectFiles.length})
           </button>
           <button
             onClick={() => setActiveTab('time')}
@@ -831,6 +1009,167 @@ export default function ProjectDetailPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Project Delivery Timeline */}
+            <div className="md:col-span-3 p-5 rounded-lg border border-border bg-card space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                <div>
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-foreground" />
+                    <span>Project Chronology & Milestone Timeline</span>
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Step-by-step contractual milestones, shoot dates, and deliverable handoffs from kickoff to final deadline.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('milestones')}
+                  className="text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 self-start sm:self-auto"
+                >
+                  <span>Manage Milestones ({milestones.length})</span>
+                  <ArrowLeft className="w-3 h-3 rotate-180" />
+                </button>
+              </div>
+
+              <div className="relative pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  {/* Step 1: Kickoff */}
+                  <div className="p-3.5 rounded-lg bg-muted/30 border border-border space-y-1.5 relative">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                        Phase 01 • Kickoff
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    </div>
+                    <div className="text-xs font-semibold text-foreground">Project Commissioned</div>
+                    <div className="text-[11px] font-mono text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{formatDate(project.startDate)}</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground pt-1">
+                      Deposit received & scope locked.
+                    </div>
+                  </div>
+
+                  {/* Step 2: Intermediate Milestones or Creative Shoots */}
+                  {milestones.length > 0 ? (
+                    milestones.slice(0, 2).map((ms, idx) => (
+                      <div key={ms.id} className="p-3.5 rounded-lg bg-muted/30 border border-border space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                            Phase 0{idx + 2} • Milestone
+                          </span>
+                          <span className={`w-2 h-2 rounded-full ${ms.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                        </div>
+                        <div className="text-xs font-semibold text-foreground truncate">{ms.name}</div>
+                        <div className="text-[11px] font-mono text-muted-foreground flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{formatDate(ms.dueDate)}</span>
+                          </span>
+                          <span className="font-semibold text-foreground">{formatCurrency(ms.paymentAmount || 0, project.currency)}</span>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground capitalize">
+                          Status: <strong className={ms.status === 'completed' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>{ms.status.replace('_', ' ')}</strong>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-3.5 rounded-lg bg-muted/30 border border-border space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                          Phase 02 • Production
+                        </span>
+                        <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      </div>
+                      <div className="text-xs font-semibold text-foreground">Creative Execution</div>
+                      <div className="text-[11px] font-mono text-muted-foreground">In progress</div>
+                      <div className="text-[10px] text-muted-foreground pt-1">
+                        {tasks.filter((t) => t.status === 'done').length}/{tasks.length} tasks completed
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Deliverables Review */}
+                  <div className="p-3.5 rounded-lg bg-muted/30 border border-border space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                        Phase 03 • Review
+                      </span>
+                      <span className={`w-2 h-2 rounded-full ${deliverables.some((d) => d.status === 'approved') ? 'bg-emerald-500' : 'bg-purple-500'}`} />
+                    </div>
+                    <div className="text-xs font-semibold text-foreground">Client Deliverables</div>
+                    <div className="text-[11px] font-mono text-muted-foreground">
+                      {deliverables.length} item{deliverables.length === 1 ? '' : 's'} registered
+                    </div>
+                    <div className="text-[10px] text-muted-foreground pt-1">
+                      {project.completedRevisions}/{project.includedRevisions} revisions used
+                    </div>
+                  </div>
+
+                  {/* Step 4: Final Deadline & Closeout */}
+                  <div className="p-3.5 rounded-lg bg-muted/30 border border-border space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                        Phase 04 • Delivery
+                      </span>
+                      <span className={`w-2 h-2 rounded-full ${project.status === 'completed' ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
+                    </div>
+                    <div className="text-xs font-semibold text-foreground">Contractual Hand-off</div>
+                    <div className="text-[11px] font-mono text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{formatDate(project.deadline)}</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground pt-1">
+                      Full sign-off & invoice settlement.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Notes & Production Scratchpad */}
+            <div className="md:col-span-3 p-5 rounded-lg border border-border bg-card space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                <div>
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Edit3 className="w-4 h-4 text-foreground" />
+                    <span>Project Notes & Production Scratchpad</span>
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Internal workspace scratchpad for creative notes, crew phone numbers, zoom links, camera codecs, and client passwords.
+                  </p>
+                </div>
+                {notesSavedToast && (
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-200 dark:border-emerald-800 animate-in fade-in">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Saved to project ledger</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <textarea
+                  rows={4}
+                  value={projectNotes !== null ? projectNotes : (project.notes || '')}
+                  onChange={(e) => setProjectNotes(e.target.value)}
+                  placeholder="Type internal project notes, shoot guidelines, camera codecs (e.g. REDCODE 8:1 8K), Zoom meeting IDs, client FTP passwords..."
+                  className="w-full p-3 text-xs bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-y font-mono leading-relaxed"
+                />
+
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{(projectNotes !== null ? projectNotes : (project.notes || '')).length} characters</span>
+                  <button
+                    onClick={() => saveNotesMutation.mutate(projectNotes !== null ? projectNotes : (project.notes || ''))}
+                    disabled={saveNotesMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md hover:opacity-90 transition-opacity shadow-xs"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{saveNotesMutation.isPending ? 'Saving...' : 'Save Notes'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1626,6 +1965,345 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
+        {/* Tab: Assets & Files (Cloudflare R2 File Manager & Client Asset Requests) */}
+        {activeTab === 'assets' && (
+          <div className="space-y-6">
+            {/* Cloudflare R2 Storage Banner */}
+            <div className="p-4 rounded-lg border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <HardDrive className="w-4 h-4 text-indigo-500" />
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                    Cloudflare R2 Object Storage
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    Bucket: freelanceros-files
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Global multi-region object storage with zero egress bandwidth charges. Secure presigned URLs with custom expiration.
+                </p>
+                <div className="flex items-center gap-4 text-[11px] text-muted-foreground font-mono pt-1">
+                  <span>Files: <strong className="text-foreground">{projectFiles.length}</strong></span>
+                  <span>•</span>
+                  <span>
+                    Storage Used:{' '}
+                    <strong className="text-foreground">
+                      {formatFileSize(projectFiles.reduce((acc, f) => acc + (f.sizeBytes || 0), 0))}
+                    </strong>
+                  </span>
+                  <span>•</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">⚡ 0 Egress Bandwidth Fees</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+                <button
+                  onClick={() => setIsAssetRequestModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted hover:bg-muted/80 rounded-md border border-border text-foreground transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Request Asset from Client</span>
+                </button>
+
+                <button
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload File to R2</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Asset Views Subtabs: R2 Files vs Client Asset Requests */}
+            <div className="flex items-center justify-between border-b border-border pb-2 gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedAssetSubTab('files')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    selectedAssetSubTab === 'files'
+                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                      : 'text-muted-foreground hover:text-foreground bg-muted/40'
+                  }`}
+                >
+                  Project Files ({projectFiles.length})
+                </button>
+                <button
+                  onClick={() => setSelectedAssetSubTab('requests')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    selectedAssetSubTab === 'requests'
+                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                      : 'text-muted-foreground hover:text-foreground bg-muted/40'
+                  }`}
+                >
+                  Client Asset Requests ({assetRequests.length})
+                </button>
+              </div>
+
+              {selectedAssetSubTab === 'files' && (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <Folder className="w-3.5 h-3.5 text-muted-foreground" />
+                  <select
+                    value={selectedFolder}
+                    onChange={(e) => setSelectedFolder(e.target.value)}
+                    className="px-2.5 py-1 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none"
+                  >
+                    <option value="all">All Folders ({projectFiles.length})</option>
+                    <option value="Media & Raw Footage">Media & Raw Footage</option>
+                    <option value="Brand Assets & Vector Logos">Brand Assets & Vector Logos</option>
+                    <option value="Deliverables & Exports">Deliverables & Exports</option>
+                    <option value="Legal & Contracts">Legal & Contracts</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Subtab 1: Project Files Grid & Table */}
+            {selectedAssetSubTab === 'files' && (
+              <div className="space-y-4">
+                {projectFiles.filter((f) => selectedFolder === 'all' || f.folder === selectedFolder).length === 0 ? (
+                  <div className="py-12 text-center border border-border rounded-lg bg-card space-y-3">
+                    <HardDrive className="w-8 h-8 text-muted-foreground mx-auto stroke-1" />
+                    <div className="text-xs font-medium text-foreground">No files in this folder</div>
+                    <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+                      Store high-resolution RAW footage, brand SVG vectors, project agreements, or exports directly in Cloudflare R2.
+                    </p>
+                    <button
+                      onClick={() => setIsUploadModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload First File</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border border-border rounded-lg bg-card overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[700px] text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-border bg-muted/30 text-muted-foreground font-medium">
+                            <th className="py-2.5 px-4">File Name</th>
+                            <th className="py-2.5 px-4">Folder</th>
+                            <th className="py-2.5 px-4">Size</th>
+                            <th className="py-2.5 px-4">Storage Key (R2)</th>
+                            <th className="py-2.5 px-4">Uploaded</th>
+                            <th className="py-2.5 px-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {projectFiles
+                            .filter((f) => selectedFolder === 'all' || f.folder === selectedFolder)
+                            .map((file) => (
+                              <tr key={file.id} className="table-row-hover transition-colors">
+                                <td className="py-3 px-4 font-medium text-foreground">
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="p-1.5 rounded bg-muted/60 shrink-0">
+                                      {getFileIcon(file.name, file.mimeType)}
+                                    </span>
+                                    <span className="truncate max-w-[220px]" title={file.name}>
+                                      {file.name}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-medium bg-muted/50 border border-border text-foreground">
+                                    {file.folder}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 font-mono text-muted-foreground">
+                                  {formatFileSize(file.sizeBytes)}
+                                </td>
+                                <td className="py-3 px-4 font-mono text-[10px] text-muted-foreground max-w-[180px] truncate" title={file.r2Key}>
+                                  {file.r2Key}
+                                </td>
+                                <td className="py-3 px-4 font-mono text-muted-foreground">
+                                  {formatDate(file.uploadedAt)}
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      onClick={() => handleOpenShareModal(file)}
+                                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                      title="Generate Secure Share Link (Signed R2 URL)"
+                                    >
+                                      <Share2 className="w-3.5 h-3.5" />
+                                    </button>
+
+                                    <a
+                                      href={file.publicUrl || '#'}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      download={file.name}
+                                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                      title="Download File"
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                    </a>
+
+                                    <button
+                                      onClick={() => {
+                                        if (confirm(`Delete file "${file.name}" from R2?`)) {
+                                          deleteFileMutation.mutate(file.id);
+                                        }
+                                      }}
+                                      className="p-1.5 rounded hover:bg-rose-500/10 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                                      title="Delete File"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Subtab 2: Client Asset Requests */}
+            {selectedAssetSubTab === 'requests' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-1">
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                      Client Asset Intake & Outstanding Requests
+                    </h4>
+                    <p className="text-[11px] text-muted-foreground">
+                      Collect brand guide PDFs, vector logos, talent releases, and credentials directly from the client.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsAssetRequestModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Request New Asset</span>
+                  </button>
+                </div>
+
+                {assetRequests.length === 0 ? (
+                  <div className="py-12 text-center border border-border rounded-lg bg-card space-y-3">
+                    <Upload className="w-8 h-8 text-muted-foreground mx-auto stroke-1" />
+                    <div className="text-xs font-medium text-foreground">No asset requests pending</div>
+                    <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+                      Send formatted asset requests to your client with due dates and delivery instructions.
+                    </p>
+                    <button
+                      onClick={() => setIsAssetRequestModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Create Asset Request</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {assetRequests.map((req) => (
+                      <div
+                        key={req.id}
+                        className="p-4 rounded-lg border border-border bg-card space-y-3 flex flex-col justify-between hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                              {req.clientName || project.clientName || 'Client'}
+                            </span>
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border uppercase font-mono ${
+                                req.status === 'approved'
+                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200'
+                                  : req.status === 'received'
+                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200'
+                                    : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200'
+                              }`}
+                            >
+                              {req.status.replace('_', ' ')}
+                            </span>
+                          </div>
+
+                          <h4 className="text-xs font-semibold text-foreground line-clamp-1">{req.title}</h4>
+                          <p className="text-[11px] text-muted-foreground line-clamp-2">
+                            {req.description || 'Asset required for project deliverables and production timeline.'}
+                          </p>
+
+                          {req.fileName && (
+                            <div className="p-2 bg-muted/40 rounded border border-border flex items-center gap-2 text-xs">
+                              <File className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                              <span className="truncate font-mono text-[11px] text-foreground">{req.fileName}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="pt-2 border-t border-border space-y-2">
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
+                            <span>Due: {req.dueDate ? formatDate(req.dueDate) : 'Open'}</span>
+                            <span className="text-[10px]">{formatDate(req.createdAt)}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 gap-2">
+                            <button
+                              onClick={() => {
+                                if (confirm(`Remove asset request "${req.title}"?`)) {
+                                  deleteAssetRequestMutation.mutate(req.id);
+                                }
+                              }}
+                              className="text-[11px] text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                            >
+                              Delete
+                            </button>
+
+                            <div className="flex items-center gap-1.5">
+                              {req.status === 'requested' && (
+                                <button
+                                  onClick={() =>
+                                    updateAssetRequestMutation.mutate({
+                                      reqId: req.id,
+                                      data: { status: 'received', fileName: 'Uploaded_Asset.zip' },
+                                    })
+                                  }
+                                  className="px-2 py-1 text-[11px] font-medium bg-muted hover:bg-muted/80 rounded border border-border text-foreground transition-colors"
+                                >
+                                  Mark Received
+                                </button>
+                              )}
+
+                              {req.status === 'received' && (
+                                <button
+                                  onClick={() =>
+                                    updateAssetRequestMutation.mutate({
+                                      reqId: req.id,
+                                      data: { status: 'approved' },
+                                    })
+                                  }
+                                  className="px-2.5 py-1 text-[11px] font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors"
+                                >
+                                  Approve Asset
+                                </button>
+                              )}
+
+                              {req.status === 'approved' && (
+                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 font-mono">
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Approved</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tab 4: Time Tracking */}
         {activeTab === 'time' && (
           <div className="border border-border rounded-lg bg-card overflow-hidden">
@@ -2030,6 +2708,298 @@ export default function ProjectDetailPage() {
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload File to R2 Modal */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-sm font-semibold text-foreground">Upload to Cloudflare R2</h3>
+              </div>
+              <button
+                onClick={() => setIsUploadModalOpen(false)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newUploadName.trim()) return;
+                uploadFileMutation.mutate({
+                  name: newUploadName.trim(),
+                  folder: newUploadFolder,
+                  sizeBytes: newUploadSizeMb * 1024 * 1024,
+                  mimeType: newUploadName.endsWith('.pdf') ? 'application/pdf' : newUploadName.endsWith('.mov') ? 'video/quicktime' : newUploadName.endsWith('.svg') ? 'image/svg+xml' : 'application/octet-stream',
+                  r2Key: `projects/${id}/${Date.now()}-${newUploadName.trim()}`,
+                  publicUrl: `/api/files/download/projects/${id}/${newUploadName.trim()}`,
+                });
+              }}
+              className="space-y-3.5"
+            >
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  File Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Master_Color_Grade_V2.mov, Signed_Contract_Final.pdf"
+                  value={newUploadName}
+                  onChange={(e) => setNewUploadName(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  Target Folder Category *
+                </label>
+                <select
+                  value={newUploadFolder}
+                  onChange={(e) => setNewUploadFolder(e.target.value as ProjectFileFolder)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                >
+                  <option value="Deliverables & Exports">Deliverables & Exports</option>
+                  <option value="Media & Raw Footage">Media & Raw Footage</option>
+                  <option value="Brand Assets & Vector Logos">Brand Assets & Vector Logos</option>
+                  <option value="Legal & Contracts">Legal & Contracts</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  File Size (MB)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10000"
+                  value={newUploadSizeMb}
+                  onChange={(e) => setNewUploadSizeMb(Number(e.target.value))}
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                />
+              </div>
+
+              <div className="p-3 bg-muted/40 rounded border border-border text-xs text-muted-foreground space-y-1">
+                <div className="flex items-center gap-1.5 font-medium text-foreground">
+                  <span>☁️ Destination:</span>
+                  <span className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">r2://freelanceros-files/projects/{id}/</span>
+                </div>
+                <p className="text-[10px]">Direct serverless upload with instant regional edge caching and zero egress cost.</p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsUploadModalOpen(false)}
+                  className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploadFileMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{uploadFileMutation.isPending ? 'Storing in R2...' : 'Upload File'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Secure Share Link Modal */}
+      {isShareModalOpen && shareTargetFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-sm font-semibold text-foreground">Secure R2 Share Link</h3>
+              </div>
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3.5">
+              <div>
+                <span className="text-[11px] text-muted-foreground block font-medium">Selected File</span>
+                <div className="text-xs font-semibold text-foreground truncate mt-0.5">{shareTargetFile.name}</div>
+                <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                  {formatFileSize(shareTargetFile.sizeBytes)} • {shareTargetFile.folder}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  Link Expiration Duration
+                </label>
+                <select
+                  value={shareExpiryHours}
+                  onChange={async (e) => {
+                    const hours = Number(e.target.value);
+                    setShareExpiryHours(hours);
+                    try {
+                      const res = await api.files.generateShareLink(shareTargetFile.id, hours);
+                      setGeneratedShareUrl(res.shareUrl);
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                >
+                  <option value={1}>1 Hour (Quick Review)</option>
+                  <option value={24}>24 Hours (Standard Client Share)</option>
+                  <option value={168}>7 Days (Weekly Review)</option>
+                  <option value={720}>30 Days (Extended Archive Access)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  Cloudflare R2 Presigned Download Link
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={generatedShareUrl}
+                    className="flex-1 px-2.5 py-1.5 text-[11px] font-mono bg-muted/50 border border-border rounded-md text-foreground select-all focus:outline-none"
+                  />
+                  <button
+                    onClick={handleCopyShareUrl}
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md shrink-0 transition-opacity"
+                  >
+                    {shareCopiedToast ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{shareCopiedToast ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-muted/30 rounded border border-border text-[11px] text-muted-foreground space-y-1">
+                <div className="flex items-center gap-1.5 text-foreground font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Token Encrypted & Time-Limited</span>
+                </div>
+                <p>Recipients cannot access other bucket objects. Access automatically revokes after {shareExpiryHours} hours.</p>
+              </div>
+
+              <div className="flex items-center justify-end pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsShareModalOpen(false)}
+                  className="px-3 py-1.5 text-xs font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-md"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request Asset from Client Modal */}
+      {isAssetRequestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md p-4 sm:p-5 bg-card border border-border rounded-lg shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Send className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-sm font-semibold text-foreground">Request Asset from Client</h3>
+              </div>
+              <button
+                onClick={() => setIsAssetRequestModalOpen(false)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newAssetReqTitle.trim()) return;
+                createAssetRequestMutation.mutate({
+                  title: newAssetReqTitle.trim(),
+                  description: newAssetReqDesc.trim(),
+                  dueDate: newAssetReqDueDate || null,
+                  status: 'requested',
+                });
+              }}
+              className="space-y-3.5"
+            >
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  Asset Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Vector Brandmark SVG, Talent Model Release, High-Res Product Photos"
+                  value={newAssetReqTitle}
+                  onChange={(e) => setNewAssetReqTitle(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  Instructions / Specifications for Client
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Explain resolution requirements, acceptable file formats, or upload links..."
+                  value={newAssetReqDesc}
+                  onChange={(e) => setNewAssetReqDesc(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-y"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground mb-1">
+                  Required By (Due Date)
+                </label>
+                <input
+                  type="date"
+                  value={newAssetReqDueDate}
+                  onChange={(e) => setNewAssetReqDueDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground font-mono"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsAssetRequestModalOpen(false)}
+                  className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createAssetRequestMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors shadow-xs"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{createAssetRequestMutation.isPending ? 'Sending...' : 'Dispatch Request'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

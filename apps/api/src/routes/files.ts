@@ -63,3 +63,15 @@ filesRouter.get('/download/:key', async (c) => {
 
   return c.json({ message: 'R2 bucket not available in this environment' }, 404);
 });
+
+filesRouter.get('/', async (c) => {
+  return c.json([]);
+});
+
+filesRouter.delete('/:key', async (c) => {
+  const key = c.req.param('key');
+  if (c.env.R2_BUCKET) {
+    await c.env.R2_BUCKET.delete(key);
+  }
+  return c.json({ success: true, key });
+});

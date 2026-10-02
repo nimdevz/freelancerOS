@@ -1,5 +1,6 @@
 import type {
   Client,
+  ClientContact,
   Lead,
   Project,
   Task,
@@ -22,6 +23,7 @@ import type {
   FinancialReportsData,
   Organization,
   User,
+  ProjectFile,
 } from '@freelanceros/types';
 
 export class ApiError extends Error {
@@ -139,6 +141,8 @@ export class FreelancerOsClient {
     update: (id: string, data: any) => this.request<Client>(`/clients/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: string) => this.request<void>(`/clients/${id}`, { method: 'DELETE' }),
     getTimeline: (id: string) => this.request<ActivityLog[]>(`/clients/${id}/timeline`),
+    addContact: (clientId: string, data: any) => this.request<ClientContact>(`/clients/${clientId}/contacts`, { method: 'POST', body: JSON.stringify(data) }),
+    deleteContact: (clientId: string, contactId: string) => this.request<void>(`/clients/${clientId}/contacts/${contactId}`, { method: 'DELETE' }),
   };
 
   leads = {
@@ -345,5 +349,15 @@ export class FreelancerOsClient {
     proposalDraft: (data: any) => this.request<any>('/ai/proposal-draft', { method: 'POST', body: JSON.stringify(data) }),
     followUpDraft: (type: string, entityId: string) => this.request<{ subject: string; body: string }>('/ai/follow-up-draft', { method: 'POST', body: JSON.stringify({ type, entityId }) }),
     businessQuery: (query: string) => this.request<{ answer: string; data: any[]; actionUrl?: string }>('/ai/business-query', { method: 'POST', body: JSON.stringify({ query }) }),
+  };
+
+  files = {
+    list: (projectId?: string) => this.request<ProjectFile[]>(projectId ? `/files?projectId=${projectId}` : '/files'),
+    getUploadUrl: (fileName: string) =>
+      this.request<{ uploadUrl: string; publicUrl: string; fileKey: string }>('/files/upload-url', {
+        method: 'POST',
+        body: JSON.stringify({ fileName }),
+      }),
+    delete: (key: string) => this.request<void>(`/files/${key}`, { method: 'DELETE' }),
   };
 }

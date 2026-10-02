@@ -190,3 +190,35 @@ clientsRouter.get('/:id/timeline', async (c) => {
 
   return c.json(logs);
 });
+
+clientsRouter.post('/:id/contacts', async (c) => {
+  const db = getDb(c.env);
+  const clientId = c.req.param('id');
+  const data = await c.req.json();
+  const now = new Date().toISOString();
+  const contactId = crypto.randomUUID();
+
+  await db.insert(schema.clientContacts).values({
+    id: contactId,
+    clientId,
+    name: data.name,
+    email: data.email,
+    phone: data.phone || null,
+    role: data.role || 'Contact',
+    isPrimary: data.isPrimary ? 1 : 0,
+    createdAt: now,
+  });
+
+  const created = await db.query.clientContacts.findFirst({
+    where: eq(schema.clientContacts.id, contactId),
+  });
+  return c.json(created, 201);
+});
+
+clientsRouter.delete('/:id/contacts/:contactId', async (c) => {
+  const db = getDb(c.env);
+  const contactId = c.req.param('contactId');
+
+  await db.delete(schema.clientContacts).where(eq(schema.clientContacts.id, contactId));
+  return c.body(null, 204);
+});

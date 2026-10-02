@@ -106,6 +106,8 @@ export const api = {
     update: (id: string, data: any) => tryWithFallback(() => rawClient.clients.update(id, data), () => mockStorage.updateClient(id, data) as any),
     delete: (id: string) => tryWithFallback(() => rawClient.clients.delete(id), () => mockStorage.deleteClient(id)),
     getTimeline: (id: string) => tryWithFallback(() => rawClient.clients.getTimeline(id), () => mockStorage.getClientTimeline(id)),
+    addContact: (clientId: string, data: any) => tryWithFallback(() => rawClient.clients.addContact(clientId, data), () => mockStorage.addClientContact(clientId, data)),
+    deleteContact: (clientId: string, contactId: string) => tryWithFallback(() => rawClient.clients.deleteContact(clientId, contactId), () => mockStorage.deleteClientContact(clientId, contactId)),
   },
 
   leads: {
@@ -269,6 +271,29 @@ export const api = {
     create: (data: any) => tryWithFallback(() => rawClient.assetRequests.create(data), () => mockStorage.createAssetRequest(data)),
     update: (id: string, data: any) => tryWithFallback(() => rawClient.assetRequests.update(id, data), () => mockStorage.updateAssetRequest(id, data)),
     delete: (id: string) => tryWithFallback(() => rawClient.assetRequests.delete(id), () => mockStorage.deleteAssetRequest(id)),
+  },
+
+  files: {
+    list: (projectId?: string) =>
+      tryWithFallback(
+        () => rawClient.files.list(projectId),
+        () => mockStorage.listProjectFiles(projectId)
+      ),
+    upload: (data: any) =>
+      tryWithFallback(
+        async () => mockStorage.uploadProjectFile(data),
+        () => mockStorage.uploadProjectFile(data)
+      ),
+    delete: (id: string) =>
+      tryWithFallback(
+        async () => mockStorage.deleteProjectFile(id),
+        () => mockStorage.deleteProjectFile(id)
+      ),
+    generateShareLink: (fileId: string, hours = 24) =>
+      tryWithFallback(
+        async () => mockStorage.generateShareLink(fileId, hours),
+        () => mockStorage.generateShareLink(fileId, hours)
+      ),
   },
 
   creative: {

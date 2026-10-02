@@ -129,6 +129,24 @@ dashboardRouter.get('/summary', async (c) => {
     }
   });
 
+  // Unbilled time
+  const unbilledMinutes = timeList
+    .filter((t) => t.billable === 1)
+    .reduce((sum, t) => sum + (t.durationMinutes || 0), 0);
+  const unbilledHours = Math.round((unbilledMinutes / 60) * 10) / 10;
+  if (unbilledHours >= 5) {
+    needsAttention.push({
+      id: 'unbilled-time',
+      title: `Unbilled work detected (${unbilledHours} hrs)`,
+      description: `Logged hours ready to be invoiced across active projects.`,
+      severity: 'info',
+      category: 'time',
+      actionUrl: '/time',
+      actionText: 'Invoice Hours',
+      dueDate: today,
+    });
+  }
+
   // 2. Build Upcoming Dates Timeline
   const upcomingDates: any[] = [];
   activeProjects.forEach((p: any) => {

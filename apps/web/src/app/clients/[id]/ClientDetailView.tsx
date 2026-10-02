@@ -23,6 +23,11 @@ import {
   FileSignature,
   Repeat,
   PenTool,
+  UserPlus,
+  Star,
+  Trash2,
+  TrendingUp,
+  X,
 } from 'lucide-react';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 
@@ -35,10 +40,38 @@ export default function ClientDetailPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'invoices' | 'contracts' | 'timeline'>('overview');
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any | null>(null);
 
+  // Multiple contacts state
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactRole, setContactRole] = useState('Creative Lead');
+  const [contactIsPrimary, setContactIsPrimary] = useState(false);
+
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', id],
     queryFn: () => api.clients.get(id),
     enabled: Boolean(id),
+  });
+
+  const addContactMutation = useMutation({
+    mutationFn: (data: any) => api.clients.addContact(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client', id] });
+      setIsAddContactOpen(false);
+      setContactName('');
+      setContactEmail('');
+      setContactPhone('');
+      setContactRole('Creative Lead');
+      setContactIsPrimary(false);
+    },
+  });
+
+  const deleteContactMutation = useMutation({
+    mutationFn: (contactId: string) => api.clients.deleteContact(id, contactId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client', id] });
+    },
   });
 
   const { data: timeline = [] } = useQuery({
@@ -98,6 +131,12 @@ export default function ClientDetailPage() {
   const clientContracts = allContracts.filter((c) => c.clientId === id);
   const clientRetainers = allRetainers.filter((r) => r.clientId === id);
 
+  // Client profitability calculations
+  const totalClientExpenses = projects.reduce((sum: number, p: any) => sum + (p.totalExpenses || 0), 0);
+  const clientNetProfit = (client.totalRevenue || 0) - totalClientExpenses;
+  const clientProfitMargin = (client.totalRevenue || 0) > 0 ? Math.round((clientNetProfit / client.totalRevenue) * 100) : 0;
+  const contactsList = client.contacts || [];
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -126,6 +165,13 @@ export default function ClientDetailPage() {
 
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setIsAddContactOpen(true)}
+                className="px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border inline-flex items-center gap-1.5"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Add Contact</span>
+              </button>
+              <button
                 onClick={() => openQuickCreate('project')}
                 className="px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border"
               >
@@ -141,10 +187,10 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
-        {/* Client Financials Banner */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Client Financials Banner & Profitability */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
           <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block">
               Lifetime Revenue
             </span>
             <div className="text-base sm:text-lg font-semibold text-foreground font-mono mt-1">
@@ -152,7 +198,31 @@ export default function ClientDetailPage() {
             </div>
           </div>
           <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block">
+              Direct Expenses
+            </span>
+            <div className="text-base sm:text-lg font-semibold text-foreground font-mono mt-1">
+              {formatCurrency(totalClientExpenses, client.currency)}
+            </div>
+          </div>
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block">
+              Net Profit
+            </span>
+            <div className={`text-base sm:text-lg font-semibold font-mono mt-1 ${clientNetProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+              {formatCurrency(clientNetProfit, client.currency)}
+            </div>
+          </div>
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block">
+              Profit Margin
+            </span>
+            <div className={`text-base sm:text-lg font-semibold font-mono mt-1 ${clientProfitMargin >= 40 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'}`}>
+              {clientProfitMargin}%
+            </div>
+          </div>
+          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block">
               Outstanding Balance
             </span>
             <div className="text-base sm:text-lg font-semibold font-mono mt-1 text-amber-600 dark:text-amber-400">
@@ -160,19 +230,11 @@ export default function ClientDetailPage() {
             </div>
           </div>
           <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
-              Active Projects
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block">
+              Projects Active
             </span>
             <div className="text-base sm:text-lg font-semibold text-foreground font-mono mt-1">
-              {client.activeProjectsCount}
-            </div>
-          </div>
-          <div className="p-3.5 sm:p-4 rounded-lg border border-border bg-card">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
-              Total Projects
-            </span>
-            <div className="text-base sm:text-lg font-semibold text-foreground font-mono mt-1">
-              {projects.length}
+              {client.activeProjectsCount} / {projects.length}
             </div>
           </div>
         </div>
@@ -187,7 +249,7 @@ export default function ClientDetailPage() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            Overview & Notes
+            Overview & Contacts ({contactsList.length})
           </button>
           <button
             onClick={() => setActiveTab('projects')}
@@ -231,40 +293,120 @@ export default function ClientDetailPage() {
           </button>
         </div>
 
-        {/* Tab 1: Overview & Contact Info */}
+        {/* Tab 1: Overview, Contacts Directory & Notes */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 p-5 rounded-lg border border-border bg-card space-y-4">
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                Contact Details
-              </h3>
-              <div className="space-y-2.5 text-xs">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-3.5 h-3.5" />
-                  <span className="text-foreground">{client.email}</span>
-                </div>
-                {client.phone && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1 p-5 rounded-lg border border-border bg-card space-y-4">
+                <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Primary Location & Office
+                </h3>
+                <div className="space-y-2.5 text-xs">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="w-3.5 h-3.5" />
-                    <span className="text-foreground">{client.phone}</span>
+                    <Mail className="w-3.5 h-3.5" />
+                    <span className="text-foreground">{client.email}</span>
                   </div>
-                )}
-                {client.address && (
-                  <div className="flex items-start gap-2 text-muted-foreground">
-                    <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                    <span className="text-foreground">{client.address}</span>
-                  </div>
-                )}
+                  {client.phone && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span className="text-foreground">{client.phone}</span>
+                    </div>
+                  )}
+                  {client.address && (
+                    <div className="flex items-start gap-2 text-muted-foreground">
+                      <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span className="text-foreground">{client.address}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="md:col-span-2 p-5 rounded-lg border border-border bg-card space-y-3">
+                <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Client Notes & Scope Guidelines
+                </h3>
+                <div className="p-3 bg-muted/40 rounded-md border border-border text-xs text-foreground leading-relaxed whitespace-pre-wrap">
+                  {client.notes || 'No client notes entered.'}
+                </div>
               </div>
             </div>
 
-            <div className="md:col-span-2 p-5 rounded-lg border border-border bg-card space-y-3">
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                Client Notes & Scope Guidelines
-              </h3>
-              <div className="p-3 bg-muted/40 rounded-md border border-border text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                {client.notes || 'No client notes entered.'}
+            {/* Multiple Contacts Directory */}
+            <div className="p-5 rounded-lg border border-border bg-card space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                    Key Contacts & Stakeholders
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Manage direct decision makers, accounts payable officers, and creative leads for this client.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAddContactOpen(true)}
+                  className="px-2.5 py-1 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md border border-border inline-flex items-center gap-1.5"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Add Contact</span>
+                </button>
               </div>
+
+              {contactsList.length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted-foreground border border-dashed border-border rounded-md">
+                  No additional contacts listed. Add client stakeholders to maintain multi-party communications.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {contactsList.map((ct: any) => (
+                    <div
+                      key={ct.id}
+                      className="p-3.5 rounded-md border border-border bg-background space-y-2 hover:border-foreground/30 transition-colors relative group"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-semibold text-foreground">{ct.name}</span>
+                            {ct.isPrimary ? (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-medium inline-flex items-center gap-0.5">
+                                <Star className="w-2.5 h-2.5 fill-current" />
+                                Primary
+                              </span>
+                            ) : null}
+                          </div>
+                          <span className="text-[11px] text-muted-foreground block">{ct.role || 'Contact'}</span>
+                        </div>
+
+                        {!ct.isPrimary && (
+                          <button
+                            onClick={() => deleteContactMutation.mutate(ct.id)}
+                            className="text-muted-foreground/50 hover:text-red-500 p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+                            title="Remove contact"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-1 text-xs pt-1 border-t border-border/60">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Mail className="w-3 h-3 shrink-0" />
+                          <a href={`mailto:${ct.email}`} className="text-foreground hover:underline truncate">
+                            {ct.email}
+                          </a>
+                        </div>
+                        {ct.phone && (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Phone className="w-3 h-3 shrink-0" />
+                            <a href={`tel:${ct.phone}`} className="text-foreground hover:underline">
+                              {ct.phone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -558,6 +700,127 @@ export default function ClientDetailPage() {
           invoice={selectedInvoiceForPayment}
           onClose={() => setSelectedInvoiceForPayment(null)}
         />
+      )}
+
+      {/* Add Contact Modal */}
+      {isAddContactOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-card border border-border rounded-xl w-full max-w-md p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-foreground" />
+                <h3 className="text-sm font-semibold text-foreground">Add Client Contact</h3>
+              </div>
+              <button
+                onClick={() => setIsAddContactOpen(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-md"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!contactName.trim() || !contactEmail.trim()) return;
+                addContactMutation.mutate({
+                  name: contactName.trim(),
+                  email: contactEmail.trim(),
+                  phone: contactPhone.trim() || null,
+                  role: contactRole.trim() || 'Contact',
+                  isPrimary: contactIsPrimary,
+                });
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground uppercase mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Priya Sharma"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-muted-foreground uppercase mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. priya@client.com"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-muted-foreground uppercase mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+1 (555) 000-0000"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-muted-foreground uppercase mb-1">
+                    Role / Position
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Billing & Accounts"
+                    value={contactRole}
+                    onChange={(e) => setContactRole(e.target.value)}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="contact-is-primary"
+                  checked={contactIsPrimary}
+                  onChange={(e) => setContactIsPrimary(e.target.checked)}
+                  className="rounded border-border text-foreground focus:ring-0"
+                />
+                <label htmlFor="contact-is-primary" className="text-xs text-muted-foreground cursor-pointer select-none">
+                  Set as primary decision maker for this client
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsAddContactOpen(false)}
+                  className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground font-medium rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addContactMutation.isPending}
+                  className="px-4 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors"
+                >
+                  {addContactMutation.isPending ? 'Saving...' : 'Add Contact'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </AppShell>
   );

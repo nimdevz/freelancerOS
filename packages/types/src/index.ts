@@ -52,6 +52,7 @@ export interface Client {
   totalRevenue: number;
   outstandingBalance: number;
   lastActivityAt?: string | null;
+  contacts?: ClientContact[];
   projects?: Project[];
   invoices?: Invoice[];
   payments?: Payment[];
@@ -219,6 +220,7 @@ export interface Project {
   includedRevisions: number;
   completedRevisions: number;
   progressPercent: number;
+  notes?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -242,6 +244,9 @@ export interface Task {
   actualHours?: number | null;
   clientVisible: boolean;
   tags?: string[];
+  subtasks?: Array<{ id: string; title: string; completed: boolean }>;
+  dependsOnTaskId?: string | null;
+  dependsOnTaskTitle?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -261,6 +266,8 @@ export interface TimeEntry {
   durationSeconds?: number;
   billable: boolean;
   isBillable?: boolean;
+  isInvoiced?: boolean;
+  invoiceId?: string | null;
   hourlyRate: number;
   revenueAmount: number;
   isRunning: boolean;
@@ -638,6 +645,24 @@ export interface AssetRequest {
   fileName?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ----------------- PROJECT FILES & R2 STORAGE -----------------
+export type ProjectFileFolder = 'Media & Raw Footage' | 'Brand Assets & Vector Logos' | 'Deliverables & Exports' | 'Legal & Contracts' | 'General';
+
+export interface ProjectFile {
+  id: string;
+  organizationId: string;
+  projectId: string;
+  name: string;
+  folder: ProjectFileFolder;
+  sizeBytes: number;
+  mimeType: string;
+  r2Key: string;
+  publicUrl: string;
+  uploadedAt: string;
+  uploadedBy?: string;
+  shareExpiresAt?: string | null;
 }
 
 // ----------------- CREATIVE WORKFLOW -----------------
