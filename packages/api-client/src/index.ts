@@ -187,6 +187,7 @@ export class FreelancerOsClient {
     get: (id: string) => this.request<Quote>(`/quotes/${id}`),
     create: (data: any) => this.request<Quote>('/quotes', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => this.request<Quote>(`/quotes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => this.request<void>(`/quotes/${id}`, { method: 'DELETE' }),
     convertToProject: (id: string) => this.request<Project>(`/quotes/${id}/convert`, { method: 'POST' }),
   };
 
@@ -195,6 +196,7 @@ export class FreelancerOsClient {
     get: (id: string) => this.request<Contract>(`/contracts/${id}`),
     create: (data: any) => this.request<Contract>('/contracts', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => this.request<Contract>(`/contracts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => this.request<void>(`/contracts/${id}`, { method: 'DELETE' }),
     sign: (id: string, signerName: string) => this.request<Contract>(`/contracts/${id}/sign`, { method: 'POST', body: JSON.stringify({ signerName }) }),
   };
 
@@ -205,12 +207,15 @@ export class FreelancerOsClient {
     startTimer: (data: any) => this.request<TimeEntry>('/time-tracking/start', { method: 'POST', body: JSON.stringify(data) }),
     stopTimer: (id: string) => this.request<TimeEntry>(`/time-tracking/${id}/stop`, { method: 'POST' }),
     getActiveTimer: () => this.request<TimeEntry | null>('/time-tracking/active'),
+    delete: (id: string) => this.request<void>(`/time-tracking/${id}`, { method: 'DELETE' }),
   };
 
   deliverables = {
     list: (projectId?: string) => this.request<Deliverable[]>(projectId ? `/deliverables?projectId=${projectId}` : '/deliverables'),
     get: (id: string) => this.request<Deliverable>(`/deliverables/${id}`),
     create: (data: any) => this.request<Deliverable>('/deliverables', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => this.request<Deliverable>(`/deliverables/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => this.request<void>(`/deliverables/${id}`, { method: 'DELETE' }),
     addVersion: (id: string, data: any) => this.request<DeliverableVersion>(`/deliverables/${id}/versions`, { method: 'POST', body: JSON.stringify(data) }),
   };
 
@@ -236,6 +241,7 @@ export class FreelancerOsClient {
     list: () => this.request<Retainer[]>('/retainers'),
     create: (data: any) => this.request<Retainer>('/retainers', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => this.request<Retainer>(`/retainers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => this.request<void>(`/retainers/${id}`, { method: 'DELETE' }),
   };
 
   // Money

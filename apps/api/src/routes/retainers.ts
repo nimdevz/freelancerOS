@@ -94,3 +94,15 @@ retainersRouter.patch('/:id', async (c) => {
 
   return c.json(updated);
 });
+
+retainersRouter.delete('/:id', async (c) => {
+  const db = getDb(c.env);
+  const orgId = c.get('organizationId')!;
+  const id = c.req.param('id');
+
+  await db.delete(schema.retainers)
+    .where(and(eq(schema.retainers.id, id), eq(schema.retainers.organizationId, orgId)));
+
+  return c.body(null, 204);
+});
+

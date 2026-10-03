@@ -3,15 +3,16 @@
 import React, { useState, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency, formatRelativeTime } from '@freelanceros/ui';
-import { Users, Plus, Search, Mail, Phone, ArrowUpRight, Download } from 'lucide-react';
+import { Users, Plus, Search, Mail, Phone, ArrowUpRight, Download, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { exportClientsToCsv } from '@/lib/csv-export';
 
 export default function ClientsPage() {
+  const queryClient = useQueryClient();
   const openQuickCreate = useAppStore((s) => s.openQuickCreate);
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearch = useDeferredValue(searchTerm);
@@ -19,6 +20,14 @@ export default function ClientsPage() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: () => api.clients.list(),
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: (id: string) => api.clients.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
   });
 
   const filteredClients = clients.filter(
@@ -153,13 +162,27 @@ export default function ClientsPage() {
                       {formatRelativeTime(client.lastActivityAt)}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <Link
-                        href={`/clients/${client.id}`}
-                        className="p-1 text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 text-[11px] font-medium"
-                      >
-                        <span>View</span>
-                        <ArrowUpRight className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/clients/${client.id}`}
+                          className="p-1 text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 text-[11px] font-medium"
+                        >
+                          <span>View</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </Link>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Are you sure you want to delete client "${client.name}"?`)) {
+                              deleteClientMutation.mutate(client.id);
+                            }
+                          }}
+                          title="Delete Client"
+                          className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors inline-flex items-center justify-center"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -152,3 +152,15 @@ timeTrackingRouter.post('/:id/stop', async (c) => {
 
   return c.json(updated);
 });
+
+timeTrackingRouter.delete('/:id', async (c) => {
+  const db = getDb(c.env);
+  const orgId = c.get('organizationId')!;
+  const id = c.req.param('id');
+
+  await db.delete(schema.timeEntries)
+    .where(and(eq(schema.timeEntries.id, id), eq(schema.timeEntries.organizationId, orgId)));
+
+  return c.body(null, 204);
+});
+

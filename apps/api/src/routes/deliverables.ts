@@ -184,3 +184,17 @@ deliverablesRouter.post('/:id/versions', async (c) => {
 
   return c.json(createdVersion, 201);
 });
+
+deliverablesRouter.delete('/:id', async (c) => {
+  const db = getDb(c.env);
+  const orgId = c.get('organizationId')!;
+  const id = c.req.param('id');
+
+  await db.delete(schema.feedbackItems).where(and(eq(schema.feedbackItems.deliverableId, id), eq(schema.feedbackItems.organizationId, orgId)));
+  await db.delete(schema.deliverableVersions).where(eq(schema.deliverableVersions.deliverableId, id));
+  await db.delete(schema.deliverables)
+    .where(and(eq(schema.deliverables.id, id), eq(schema.deliverables.organizationId, orgId)));
+
+  return c.body(null, 204);
+});
+

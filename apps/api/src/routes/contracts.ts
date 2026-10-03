@@ -184,3 +184,15 @@ contractsRouter.post('/:id/sign', async (c) => {
 
   return c.json(updated);
 });
+
+contractsRouter.delete('/:id', async (c) => {
+  const db = getDb(c.env);
+  const orgId = c.get('organizationId')!;
+  const id = c.req.param('id');
+
+  await db.delete(schema.contracts)
+    .where(and(eq(schema.contracts.id, id), eq(schema.contracts.organizationId, orgId)));
+
+  return c.body(null, 204);
+});
+

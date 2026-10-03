@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -38,9 +38,19 @@ const RecordPaymentModal = dynamic(
 
 export default function ClientDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
   const queryClient = useQueryClient();
   const openQuickCreate = useAppStore((s) => s.openQuickCreate);
+
+  const deleteClientMutation = useMutation({
+    mutationFn: () => api.clients.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      router.push('/clients');
+    },
+  });
 
   const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'invoices' | 'contracts' | 'timeline'>('overview');
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any | null>(null);
@@ -187,6 +197,19 @@ export default function ClientDetailPage() {
                 className="px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md transition-colors"
               >
                 + New Invoice
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to delete client "${client.name}"? This action cannot be undone.`)) {
+                    deleteClientMutation.mutate();
+                  }
+                }}
+                disabled={deleteClientMutation.isPending}
+                title="Delete Client"
+                className="px-2.5 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 rounded-md transition-colors border border-rose-200 dark:border-rose-900/50 inline-flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
               </button>
             </div>
           </div>

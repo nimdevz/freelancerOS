@@ -14,6 +14,7 @@ import {
   Building,
   CheckCircle2,
   TrendingUp,
+  Trash2,
 } from 'lucide-react';
 import { ClientSelector } from '@/components/common/ClientSelector';
 import {
@@ -56,6 +57,14 @@ export default function RetainersPage() {
       setTitle('');
       setCustomFields([]);
       setCustomNotes('');
+    },
+  });
+
+  const deleteRetainerMutation = useMutation({
+    mutationFn: (id: string) => api.retainers.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['retainers'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -165,15 +174,29 @@ export default function RetainersPage() {
                       <span className="text-[10px] uppercase font-mono font-medium tracking-wider text-muted-foreground">
                         {client?.company || client?.name || 'Client'}
                       </span>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase font-mono ${
-                          retainer.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                            : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
-                        }`}
-                      >
-                        {retainer.status}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase font-mono ${
+                            retainer.status === 'active'
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
+                          }`}
+                        >
+                          {retainer.status}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Are you sure you want to delete retainer "${retainer.title}"?`)) {
+                              deleteRetainerMutation.mutate(retainer.id);
+                            }
+                          }}
+                          title="Delete Retainer"
+                          className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-muted-foreground hover:text-rose-500 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     <h3 className="text-sm font-semibold text-foreground">{retainer.title || `${client?.name || 'Client'} Retainer`}</h3>

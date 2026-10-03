@@ -19,6 +19,7 @@ import {
   Upload,
   Send,
   FileCheck2,
+  Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 
@@ -110,6 +111,14 @@ export default function DeliverablesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['approvals'] });
       queryClient.invalidateQueries({ queryKey: ['deliverables'] });
+    },
+  });
+
+  const deleteDeliverableMutation = useMutation({
+    mutationFn: (id: string) => api.deliverables.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliverables'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -280,14 +289,28 @@ export default function DeliverablesPage() {
 
                       {/* Actions */}
                       <div className="flex items-center justify-between pt-2 border-t border-border gap-2">
-                        <button
-                          onClick={() => requestApprovalMutation.mutate(d.id)}
-                          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-                          title="Request approval"
-                        >
-                          <Send className="w-3 h-3" />
-                          <span>Request Sign-off</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => requestApprovalMutation.mutate(d.id)}
+                            className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                            title="Request approval"
+                          >
+                            <Send className="w-3 h-3" />
+                            <span>Request Sign-off</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Are you sure you want to delete deliverable "${d.title}"?`)) {
+                                deleteDeliverableMutation.mutate(d.id);
+                              }
+                            }}
+                            title="Delete Deliverable"
+                            className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-muted-foreground hover:text-rose-500 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
 
                         <button
                           onClick={() => {

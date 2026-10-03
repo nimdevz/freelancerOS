@@ -218,3 +218,16 @@ quotesRouter.post('/:id/convert', async (c) => {
 
   return c.json(project);
 });
+
+quotesRouter.delete('/:id', async (c) => {
+  const db = getDb(c.env);
+  const orgId = c.get('organizationId')!;
+  const id = c.req.param('id');
+
+  await db.delete(schema.quoteItems).where(eq(schema.quoteItems.quoteId, id));
+  await db.delete(schema.quotes)
+    .where(and(eq(schema.quotes.id, id), eq(schema.quotes.organizationId, orgId)));
+
+  return c.body(null, 204);
+});
+

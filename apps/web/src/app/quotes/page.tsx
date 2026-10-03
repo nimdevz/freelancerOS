@@ -72,6 +72,14 @@ export default function QuotesPage() {
     },
   });
 
+  const deleteQuoteMutation = useMutation({
+    mutationFn: (id: string) => api.quotes.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
   const handleAddItem = () => {
     setItems([...items, { description: '', quantity: 1, unitPrice: 10000 }]);
   };
@@ -204,6 +212,19 @@ export default function QuotesPage() {
                                 <span>Convert to Project</span>
                               </button>
                             )}
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Are you sure you want to delete quote "${quote.title}"?`)) {
+                                  deleteQuoteMutation.mutate(quote.id);
+                                }
+                              }}
+                              title="Delete Quote"
+                              className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-muted-foreground hover:text-rose-500 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </td>
                       </tr>

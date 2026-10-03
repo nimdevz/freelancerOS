@@ -18,6 +18,7 @@ import {
   TrendingUp,
   FolderKanban,
   Download,
+  Trash2,
 } from 'lucide-react';
 import { exportTimeEntriesToCsv } from '@/lib/csv-export';
 
@@ -101,6 +102,15 @@ export default function TimePage() {
       setDescription('');
       setHours('1');
       setMinutes('0');
+    },
+  });
+
+  // Delete entry mutation
+  const deleteTimeMutation = useMutation({
+    mutationFn: (id: string) => api.time.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['time'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -315,12 +325,13 @@ export default function TimePage() {
                   <th className="py-2.5 px-4">Duration</th>
                   <th className="py-2.5 px-4">Billable</th>
                   <th className="py-2.5 px-4 text-right">Value</th>
+                  <th className="py-2.5 px-4 text-right w-16">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {timeEntries.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
                       No time entries logged yet. Start the stopwatch above or log time manually.
                     </td>
                   </tr>
@@ -356,6 +367,19 @@ export default function TimePage() {
                         </td>
                         <td className="py-3 px-4 text-right font-mono text-foreground">
                           {entry.isBillable ? formatCurrency(value) : '—'}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this time entry?')) {
+                                deleteTimeMutation.mutate(entry.id);
+                              }
+                            }}
+                            title="Delete time entry"
+                            className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors inline-flex items-center justify-center"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     );

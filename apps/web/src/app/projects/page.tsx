@@ -26,6 +26,7 @@ import {
   Palette,
   RefreshCw,
   Check,
+  Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { exportProjectsToCsv } from '@/lib/csv-export';
@@ -340,6 +341,14 @@ export default function ProjectsPage() {
     queryFn: () => api.clients.list(),
   });
 
+  const deleteProjectMutation = useMutation({
+    mutationFn: (id: string) => api.projects.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
   const selectedTemplate = PROJECT_TEMPLATES.find((t) => t.id === selectedTemplateId) || PROJECT_TEMPLATES[0];
 
   // Open Template Modal with prefilled defaults
@@ -534,12 +543,13 @@ export default function ProjectsPage() {
                   <th className="py-2.5 px-4 font-medium">Revisions</th>
                   <th className="py-2.5 px-4 font-medium">Hours</th>
                   <th className="py-2.5 px-4 font-medium text-right">Value</th>
+                  <th className="py-2.5 px-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredProjects.length === 0 ? (
                   <tr>
-                    <td colSpan={8}>
+                    <td colSpan={9}>
                       <EmptyState
                         compact
                         icon={FolderKanban}
@@ -592,6 +602,20 @@ export default function ProjectsPage() {
                       <td className="py-3 px-4 font-mono text-[11px]">{p.totalHoursTracked}h</td>
                       <td className="py-3 px-4 text-right font-medium font-mono text-foreground">
                         {formatCurrency(p.budget, p.currency)}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Are you sure you want to delete project "${p.name}"?`)) {
+                              deleteProjectMutation.mutate(p.id);
+                            }
+                          }}
+                          title="Delete Project"
+                          className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors inline-flex items-center justify-center"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </td>
                     </tr>
                   ))

@@ -186,10 +186,10 @@ export const api = {
 
   proposals: {
     list: () => tryWithFallback(() => rawClient.proposals.list(), () => mockStorage.listProposals()),
-    get: (id: string) => tryWithFallback(() => rawClient.proposals.get(id), () => mockStorage.listProposals()[0]),
+    get: (id: string) => tryWithFallback(() => rawClient.proposals.get(id), () => (mockStorage.getProposal(id) || mockStorage.listProposals()[0]) as any),
     create: (data: any) => tryWithFallback(() => rawClient.proposals.create(data), () => mockStorage.createProposal(data)),
-    update: (id: string, data: any) => tryWithFallback(() => rawClient.proposals.update(id, data), () => mockStorage.createProposal(data)),
-    delete: (id: string) => tryWithFallback(() => rawClient.proposals.delete(id), () => {}),
+    update: (id: string, data: any) => tryWithFallback(() => rawClient.proposals.update(id, data), () => mockStorage.updateProposal(id, data) as any),
+    delete: (id: string) => tryWithFallback(() => rawClient.proposals.delete(id), () => mockStorage.deleteProposal(id)),
     send: (id: string) => tryWithFallback(() => rawClient.proposals.send(id), () => mockStorage.listProposals()[0]),
     accept: (id: string) => tryWithFallback(() => rawClient.proposals.accept(id), () => mockStorage.listProposals()[0]),
     decline: (id: string) => tryWithFallback(() => rawClient.proposals.decline(id), () => mockStorage.listProposals()[0]),
@@ -197,17 +197,19 @@ export const api = {
 
   quotes: {
     list: () => tryWithFallback(() => rawClient.quotes.list(), () => mockStorage.listQuotes()),
-    get: (id: string) => tryWithFallback(() => rawClient.quotes.get(id), () => mockStorage.listQuotes()[0]),
+    get: (id: string) => tryWithFallback(() => rawClient.quotes.get(id), () => (mockStorage.getQuote(id) || mockStorage.listQuotes()[0]) as any),
     create: (data: any) => tryWithFallback(() => rawClient.quotes.create(data), () => mockStorage.createQuote(data)),
-    update: (id: string, data: any) => tryWithFallback(() => rawClient.quotes.update(id, data), () => mockStorage.createQuote(data)),
+    update: (id: string, data: any) => tryWithFallback(() => rawClient.quotes.update(id, data), () => mockStorage.updateQuote(id, data) as any),
+    delete: (id: string) => tryWithFallback(() => rawClient.quotes.delete(id), () => mockStorage.deleteQuote(id)),
     convertToProject: (id: string) => tryWithFallback(() => rawClient.quotes.convertToProject(id), () => mockStorage.listProjects()[0]),
   },
 
   contracts: {
     list: () => tryWithFallback(() => rawClient.contracts.list(), () => mockStorage.listContracts()),
-    get: (id: string) => tryWithFallback(() => rawClient.contracts.get(id), () => mockStorage.listContracts()[0]),
+    get: (id: string) => tryWithFallback(() => rawClient.contracts.get(id), () => (mockStorage.getContract(id) || mockStorage.listContracts()[0]) as any),
     create: (data: any) => tryWithFallback(() => rawClient.contracts.create(data), () => mockStorage.createContract(data)),
-    update: (id: string, data: any) => tryWithFallback(() => rawClient.contracts.update(id, data), () => mockStorage.createContract(data)),
+    update: (id: string, data: any) => tryWithFallback(() => rawClient.contracts.update(id, data), () => mockStorage.updateContract(id, data) as any),
+    delete: (id: string) => tryWithFallback(() => rawClient.contracts.delete(id), () => mockStorage.deleteContract(id)),
     sign: (id: string, signerName: string) => tryWithFallback(() => rawClient.contracts.sign(id, signerName), () => mockStorage.signContract(id, signerName) as any),
   },
 
@@ -217,12 +219,15 @@ export const api = {
     startTimer: (data: any) => tryWithFallback(() => rawClient.time.startTimer(data), () => mockStorage.startTimer(data) as any),
     stopTimer: (id: string) => tryWithFallback(() => rawClient.time.stopTimer(id), () => mockStorage.stopTimer(id) as any),
     getActiveTimer: () => tryWithFallback(() => rawClient.time.getActiveTimer(), () => mockStorage.getActiveTimer()),
+    delete: (id: string) => tryWithFallback(() => rawClient.time.delete(id), () => mockStorage.deleteTime(id)),
   },
 
   deliverables: {
     list: (projectId?: string) => tryWithFallback(() => rawClient.deliverables.list(projectId), () => mockStorage.listDeliverables(projectId)),
     get: (id: string) => tryWithFallback(() => rawClient.deliverables.get(id), () => mockStorage.getDeliverable(id) as any),
     create: (data: any) => tryWithFallback(() => rawClient.deliverables.create(data), () => mockStorage.createDeliverable(data)),
+    update: (id: string, data: any) => tryWithFallback(() => rawClient.deliverables.update(id, data), () => mockStorage.updateDeliverable(id, data) as any),
+    delete: (id: string) => tryWithFallback(() => rawClient.deliverables.delete(id), () => mockStorage.deleteDeliverable(id)),
     addVersion: (id: string, data: any) => tryWithFallback(() => rawClient.deliverables.addVersion(id, data), () => mockStorage.addDeliverableVersion(id, data) as any),
   },
 
@@ -247,6 +252,7 @@ export const api = {
     list: () => tryWithFallback(() => rawClient.retainers.list(), () => mockStorage.listRetainers()),
     create: (data: any) => tryWithFallback(() => rawClient.retainers.create(data), () => mockStorage.createRetainer(data)),
     update: (id: string, data: any) => tryWithFallback(() => rawClient.retainers.update(id, data), () => mockStorage.updateRetainer(id, data) as any),
+    delete: (id: string) => tryWithFallback(() => rawClient.retainers.delete(id), () => mockStorage.deleteRetainer(id)),
   },
 
   invoices: {

@@ -16,6 +16,7 @@ import {
   Building,
   ShieldCheck,
   FileText,
+  Trash2,
 } from 'lucide-react';
 import { ClientSelector } from '@/components/common/ClientSelector';
 import {
@@ -76,6 +77,14 @@ export default function ContractsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       setIsSignModalOpen(false);
+    },
+  });
+
+  const deleteContractMutation = useMutation({
+    mutationFn: (id: string) => api.contracts.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -198,6 +207,19 @@ export default function ContractsPage() {
                                 <span>Sign</span>
                               </button>
                             )}
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Are you sure you want to delete agreement "${contract.title}"?`)) {
+                                  deleteContractMutation.mutate(contract.id);
+                                }
+                              }}
+                              title="Delete Agreement"
+                              className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-muted-foreground hover:text-rose-500 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </td>
                       </tr>

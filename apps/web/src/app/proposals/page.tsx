@@ -187,6 +187,22 @@ export default function ProposalsPage() {
     },
   });
 
+  const deleteProposalMutation = useMutation({
+    mutationFn: (id: string) => api.proposals.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
+  const deleteQuoteMutation = useMutation({
+    mutationFn: (id: string) => api.quotes.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
   const handleAddItem = () => {
     setItems([...items, { description: '', quantity: 1, unitPrice: 10000 }]);
   };
@@ -423,6 +439,19 @@ export default function ProposalsPage() {
                                   <span>Convert to Project</span>
                                 </button>
                               )}
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Are you sure you want to delete proposal "${proposal.title}"?`)) {
+                                    deleteProposalMutation.mutate(proposal.id);
+                                  }
+                                }}
+                                title="Delete Proposal"
+                                className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-muted-foreground hover:text-rose-500 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -496,14 +525,28 @@ export default function ProposalsPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => convertQuoteMutation.mutate(q.id)}
-                            disabled={convertQuoteMutation.isPending}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded hover:opacity-90 transition-opacity"
-                          >
-                            <Zap className="w-3 h-3" />
-                            <span>Convert to Project</span>
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => convertQuoteMutation.mutate(q.id)}
+                              disabled={convertQuoteMutation.isPending}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded hover:opacity-90 transition-opacity"
+                            >
+                              <Zap className="w-3 h-3" />
+                              <span>Convert to Project</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Are you sure you want to delete quote "${q.title}"?`)) {
+                                  deleteQuoteMutation.mutate(q.id);
+                                }
+                              }}
+                              title="Delete Quote"
+                              className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-muted-foreground hover:text-rose-500 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

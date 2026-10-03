@@ -30,6 +30,7 @@ import {
   Receipt,
   ArrowUpRight,
   FileCheck2,
+  Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 
@@ -63,6 +64,15 @@ export default function InvoicesPage() {
   const sendMutation = useMutation({
     mutationFn: (id: string) => api.invoices.send(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+  });
+
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: (id: string) => api.invoices.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+    },
   });
 
   // Metrics
@@ -307,6 +317,19 @@ export default function InvoicesPage() {
                                     Record Payment
                                   </button>
                                 )}
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm(`Are you sure you want to delete invoice ${inv.invoiceNumber || inv.number}?`)) {
+                                      deleteInvoiceMutation.mutate(inv.id);
+                                    }
+                                  }}
+                                  title="Delete Invoice"
+                                  className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-muted-foreground hover:text-rose-500 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </td>
                           </tr>

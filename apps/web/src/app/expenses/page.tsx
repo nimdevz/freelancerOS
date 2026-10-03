@@ -257,7 +257,11 @@ export default function ExpensesPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
-                            onClick={() => deleteMutation.mutate(exp.id)}
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to delete expense "${exp.description}"?`)) {
+                                deleteMutation.mutate(exp.id);
+                              }
+                            }}
                             className="p-1 text-muted-foreground hover:text-red-500 rounded transition-colors"
                             title="Delete Expense"
                           >

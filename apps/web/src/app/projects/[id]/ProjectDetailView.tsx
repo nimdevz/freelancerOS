@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -83,6 +83,7 @@ function getFileIcon(fileName: string, mimeType?: string) {
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
   const queryClient = useQueryClient();
   const startTimer = useAppStore((s) => s.startTimer);
@@ -476,6 +477,57 @@ export default function ProjectDetailPage() {
     },
   });
 
+  const deleteProjectMutation = useMutation({
+    mutationFn: () => api.projects.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      router.push('/projects');
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: string) => api.tasks.delete(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectTasks', id] });
+    },
+  });
+
+  const deleteMilestoneMutation = useMutation({
+    mutationFn: (milestoneId: string) => api.milestones.delete(milestoneId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectMilestones', id] });
+    },
+  });
+
+  const deleteDeliverableMutation = useMutation({
+    mutationFn: (delivId: string) => api.deliverables.delete(delivId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectDeliverables', id] });
+    },
+  });
+
+  const deleteTimeMutation = useMutation({
+    mutationFn: (timeId: string) => api.time.delete(timeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectTime', id] });
+    },
+  });
+
+  const deleteShotMutation = useMutation({
+    mutationFn: (shotId: string) => api.creative.shots.delete(shotId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectShots', id] });
+    },
+  });
+
+  const deleteEquipmentMutation = useMutation({
+    mutationFn: (eqId: string) => api.creative.equipment.delete(eqId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectEquipment', id] });
+    },
+  });
+
   const handleOpenShareModal = async (file: ProjectFile) => {
     setShareTargetFile(file);
     try {
@@ -696,6 +748,20 @@ export default function ProjectDetailPage() {
                 className="px-3 py-1.5 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border"
               >
                 + Invoice
+              </button>
+
+              <button
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to delete this project (${project.name})? This action cannot be undone.`)) {
+                    deleteProjectMutation.mutate();
+                  }
+                }}
+                disabled={deleteProjectMutation.isPending}
+                title="Delete Project"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 rounded-md transition-colors border border-rose-200 dark:border-rose-900/50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Delete</span>
               </button>
             </div>
           </div>
@@ -1282,6 +1348,18 @@ export default function ProjectDetailPage() {
                       <span className={`px-2 py-0.5 rounded text-[10px] capitalize border ${getStatusBadgeClass(task.priority)}`}>
                         {task.priority}
                       </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete task "${task.title}"?`)) {
+                            deleteTaskMutation.mutate(task.id);
+                          }
+                        }}
+                        title="Delete Task"
+                        className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))
@@ -1391,6 +1469,18 @@ export default function ProjectDetailPage() {
                         <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(m.status)}`}>
                           {m.status}
                         </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Delete milestone "${m.name}"?`)) {
+                              deleteMilestoneMutation.mutate(m.id);
+                            }
+                          }}
+                          title="Delete Milestone"
+                          className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))
@@ -1769,9 +1859,23 @@ export default function ProjectDetailPage() {
                               </div>
                             </div>
                           </div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono capitalize border ${getStatusBadgeClass(shot.status)}`}>
-                            {shot.status}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono capitalize border ${getStatusBadgeClass(shot.status)}`}>
+                              {shot.status}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Delete shot ${shot.shotNumber}?`)) {
+                                  deleteShotMutation.mutate(shot.id);
+                                }
+                              }}
+                              title="Delete Shot"
+                              className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))
                     )}
@@ -1873,9 +1977,23 @@ export default function ProjectDetailPage() {
                               </span>
                             </div>
                           </div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono capitalize border ${getStatusBadgeClass(eq.status)}`}>
-                            {eq.status}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono capitalize border ${getStatusBadgeClass(eq.status)}`}>
+                              {eq.status}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Delete equipment "${eq.item}"?`)) {
+                                  deleteEquipmentMutation.mutate(eq.id);
+                                }
+                              }}
+                              title="Delete Equipment"
+                              className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))
                     )}
@@ -1952,8 +2070,21 @@ export default function ProjectDetailPage() {
                       ))}
                     </div>
 
-                    {/* Approval Action */}
-                    <div className="pt-2 border-t border-border flex justify-end">
+                    {/* Approval & Delete Actions */}
+                    <div className="pt-2 border-t border-border flex items-center justify-between">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete deliverable "${deliv.title}"?`)) {
+                            deleteDeliverableMutation.mutate(deliv.id);
+                          }
+                        }}
+                        title="Delete Deliverable"
+                        className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded border border-rose-200 dark:border-rose-900/50 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Delete</span>
+                      </button>
                       <button
                         onClick={() => requestApprovalMutation.mutate(deliv.id)}
                         disabled={requestApprovalMutation.isPending}
@@ -2321,12 +2452,13 @@ export default function ProjectDetailPage() {
                     <th className="py-2.5 px-4 font-medium">Duration</th>
                     <th className="py-2.5 px-4 font-medium">Billable</th>
                     <th className="py-2.5 px-4 font-medium text-right">Value</th>
+                    <th className="py-2.5 px-4 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {timeEntries.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
                         No time logged yet on this project.
                       </td>
                     </tr>
@@ -2349,6 +2481,20 @@ export default function ProjectDetailPage() {
                         </td>
                         <td className="py-3 px-4 text-right font-mono font-medium">
                           {formatCurrency(entry.revenueAmount, 'INR')}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm('Delete this time entry?')) {
+                                deleteTimeMutation.mutate(entry.id);
+                              }
+                            }}
+                            title="Delete Time Entry"
+                            className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -2517,6 +2663,19 @@ export default function ProjectDetailPage() {
                     <span>Re-open Project</span>
                   </button>
                 )}
+
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to permanently delete "${project.name}"? All associated data will be removed.`)) {
+                      deleteProjectMutation.mutate();
+                    }
+                  }}
+                  disabled={deleteProjectMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 rounded-md transition-colors border border-rose-200 dark:border-rose-900/50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Project</span>
+                </button>
               </div>
             </div>
 

@@ -1333,6 +1333,71 @@ const INITIAL_BUSINESS_GOAL: BusinessGoal = {
   createdAt: '2026-09-01T00:00:00Z',
 };
 
+const INITIAL_PROPOSALS: Proposal[] = [
+  {
+    id: 'prop-1',
+    organizationId: INITIAL_ORG.id,
+    proposalNumber: 'PROP-2026-001',
+    clientId: '11111111-1111-1111-1111-111111111111',
+    title: 'Q4 Global Brand Film Proposal',
+    status: 'sent',
+    subtotal: 12000,
+    discountPercent: 0,
+    discountAmount: 0,
+    taxPercent: 0,
+    taxAmount: 0,
+    totalAmount: 12000,
+    total: 12000,
+    currency: 'USD',
+    validUntil: '2026-10-15',
+    clientName: 'Nike India',
+    items: [{ id: 'pi-1', description: 'Direction & Post-Production', quantity: 1, unitPrice: 12000, amount: 12000 }],
+    createdAt: '2026-09-20T00:00:00Z',
+    updatedAt: '2026-09-20T00:00:00Z',
+  },
+];
+
+const INITIAL_QUOTES: Quote[] = [
+  {
+    id: 'quote-1',
+    organizationId: INITIAL_ORG.id,
+    clientId: '33333333-3333-3333-3333-333333333333',
+    quoteNumber: 'Q-2026-01',
+    title: 'Motion Assets Package Quote',
+    status: 'accepted',
+    subtotal: 4500,
+    discountAmount: 0,
+    taxAmount: 0,
+    totalAmount: 4500,
+    total: 4500,
+    currency: 'USD',
+    validUntil: '2026-10-10',
+    clientName: 'Acme Corp',
+    items: [{ id: 'qi-1', description: 'Motion Design Package', quantity: 1, unitPrice: 4500, amount: 4500 }],
+    createdAt: '2026-09-18T00:00:00Z',
+    updatedAt: '2026-09-22T00:00:00Z',
+  },
+];
+
+const INITIAL_CONTRACTS: Contract[] = [
+  {
+    id: 'cont-1',
+    organizationId: INITIAL_ORG.id,
+    clientId: '11111111-1111-1111-1111-111111111111',
+    projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
+    title: 'Master Commercial Production Agreement',
+    status: 'signed',
+    startDate: '2026-09-11',
+    terms: 'Standard terms.',
+    content: 'Standard Master Services Agreement covering IP assignment upon final invoice payment.',
+    clientName: 'Nike India',
+    signedAt: '2026-09-11T12:00:00Z',
+    signerName: 'Karan Mehra',
+    createdAt: '2026-09-11T00:00:00Z',
+    updatedAt: '2026-09-11T12:00:00Z',
+  },
+];
+
 // Helper for generating client-side unique IDs
 function makeId(prefix = 'item'): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -1351,6 +1416,9 @@ class MockStorage {
   private retainers: Retainer[] = INITIAL_RETAINERS;
   private timeEntries: TimeEntry[] = INITIAL_TIME_ENTRIES;
   private expenses: Expense[] = INITIAL_EXPENSES;
+  private proposals: Proposal[] = INITIAL_PROPOSALS;
+  private quotes: Quote[] = INITIAL_QUOTES;
+  private contracts: Contract[] = INITIAL_CONTRACTS;
   private milestones: ProjectMilestone[] = INITIAL_MILESTONES;
   private scopes: ProjectScope[] = INITIAL_SCOPES;
   private scopeChanges: ScopeChange[] = INITIAL_SCOPE_CHANGES;
@@ -1415,6 +1483,9 @@ class MockStorage {
         if (data.retainers) this.retainers = data.retainers;
         if (data.timeEntries) this.timeEntries = data.timeEntries;
         if (data.expenses) this.expenses = data.expenses;
+        if (data.proposals) this.proposals = data.proposals;
+        if (data.quotes) this.quotes = data.quotes;
+        if (data.contracts) this.contracts = data.contracts;
         if (data.payments) this.payments = data.payments;
         if (data.milestones) this.milestones = data.milestones;
         if (data.scopes) this.scopes = data.scopes;
@@ -1468,6 +1539,9 @@ class MockStorage {
         retainers: this.retainers,
         timeEntries: this.timeEntries,
         expenses: this.expenses,
+        proposals: this.proposals,
+        quotes: this.quotes,
+        contracts: this.contracts,
         payments: this.payments,
         milestones: this.milestones,
         scopes: this.scopes,
@@ -1508,6 +1582,9 @@ class MockStorage {
     this.retainers = [];
     this.timeEntries = [];
     this.expenses = [];
+    this.proposals = [];
+    this.quotes = [];
+    this.contracts = [];
     this.payments = [];
     this.milestones = [];
     this.scopes = [];
@@ -1543,6 +1620,9 @@ class MockStorage {
     this.retainers = JSON.parse(JSON.stringify(INITIAL_RETAINERS));
     this.timeEntries = JSON.parse(JSON.stringify(INITIAL_TIME_ENTRIES));
     this.expenses = JSON.parse(JSON.stringify(INITIAL_EXPENSES));
+    this.proposals = JSON.parse(JSON.stringify(INITIAL_PROPOSALS));
+    this.quotes = JSON.parse(JSON.stringify(INITIAL_QUOTES));
+    this.contracts = JSON.parse(JSON.stringify(INITIAL_CONTRACTS));
     this.milestones = JSON.parse(JSON.stringify(INITIAL_MILESTONES));
     this.scopes = JSON.parse(JSON.stringify(INITIAL_SCOPES));
     this.scopeChanges = JSON.parse(JSON.stringify(INITIAL_SCOPE_CHANGES));
@@ -1669,6 +1749,9 @@ class MockStorage {
     this.retainers = [];
     this.timeEntries = [];
     this.expenses = [];
+    this.proposals = [];
+    this.quotes = [];
+    this.contracts = [];
     this.payments = [];
     this.activeTimer = null;
 
@@ -2736,6 +2819,11 @@ class MockStorage {
     return this.activeTimer;
   }
 
+  deleteTime(id: string) {
+    this.timeEntries = this.timeEntries.filter((t) => t.id !== id);
+    this.saveToStorage();
+  }
+
   // Deliverables
   listDeliverables(projectId?: string) {
     if (projectId) return this.deliverables.filter((d) => d.projectId === projectId);
@@ -2765,6 +2853,21 @@ class MockStorage {
     this.deliverables.unshift(newDel);
     this.saveToStorage();
     return newDel;
+  }
+
+  updateDeliverable(id: string, data: any) {
+    const idx = this.deliverables.findIndex((d) => d.id === id);
+    if (idx !== -1) {
+      this.deliverables[idx] = { ...this.deliverables[idx], ...data, updatedAt: new Date().toISOString() };
+      this.saveToStorage();
+      return this.deliverables[idx];
+    }
+    return null;
+  }
+
+  deleteDeliverable(id: string) {
+    this.deliverables = this.deliverables.filter((d) => d.id !== id);
+    this.saveToStorage();
   }
 
   addDeliverableVersion(id: string, data: any) {
@@ -2851,6 +2954,11 @@ class MockStorage {
     return null;
   }
 
+  deleteRetainer(id: string) {
+    this.retainers = this.retainers.filter((r) => r.id !== id);
+    this.saveToStorage();
+  }
+
   // Expenses
   listExpenses(projectId?: string) {
     if (projectId) return this.expenses.filter((e) => e.projectId === projectId);
@@ -2893,35 +3001,17 @@ class MockStorage {
 
   // Proposals & Quotes & Contracts
   listProposals(): Proposal[] {
-    return [
-      {
-        id: 'prop-1',
-        organizationId: this.org.id,
-        proposalNumber: 'PROP-2026-001',
-        clientId: '11111111-1111-1111-1111-111111111111',
-        title: 'Q4 Global Brand Film Proposal',
-        status: 'sent',
-        subtotal: 12000,
-        discountPercent: 0,
-        discountAmount: 0,
-        taxPercent: 0,
-        taxAmount: 0,
-        totalAmount: 12000,
-        total: 12000,
-        currency: 'USD',
-        validUntil: '2026-10-15',
-        clientName: 'Nike India',
-        items: [{ id: 'pi-1', description: 'Direction & Post-Production', quantity: 1, unitPrice: 12000, amount: 12000 }],
-        createdAt: '2026-09-20T00:00:00Z',
-        updatedAt: '2026-09-20T00:00:00Z',
-      },
-    ];
+    return this.proposals;
+  }
+
+  getProposal(id: string): Proposal | null {
+    return this.proposals.find((p) => p.id === id) || null;
   }
 
   createProposal(data: any): Proposal {
     const client = this.clients.find((c) => c.id === data.clientId);
     const total = Number(data.items?.[0]?.unitPrice || 4500);
-    return {
+    const newProp: Proposal = {
       id: makeId('prop'),
       organizationId: this.org.id,
       proposalNumber: `PROP-2026-${Math.floor(Math.random() * 89 + 10)}`,
@@ -2942,36 +3032,38 @@ class MockStorage {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    this.proposals.unshift(newProp);
+    this.saveToStorage();
+    return newProp;
+  }
+
+  updateProposal(id: string, data: any): Proposal | null {
+    const idx = this.proposals.findIndex((p) => p.id === id);
+    if (idx !== -1) {
+      this.proposals[idx] = { ...this.proposals[idx], ...data, updatedAt: new Date().toISOString() };
+      this.saveToStorage();
+      return this.proposals[idx];
+    }
+    return null;
+  }
+
+  deleteProposal(id: string): void {
+    this.proposals = this.proposals.filter((p) => p.id !== id);
+    this.saveToStorage();
   }
 
   listQuotes(): Quote[] {
-    return [
-      {
-        id: 'quote-1',
-        organizationId: this.org.id,
-        clientId: '33333333-3333-3333-3333-333333333333',
-        quoteNumber: 'Q-2026-01',
-        title: 'Motion Assets Package Quote',
-        status: 'accepted',
-        subtotal: 4500,
-        discountAmount: 0,
-        taxAmount: 0,
-        totalAmount: 4500,
-        total: 4500,
-        currency: 'USD',
-        validUntil: '2026-10-10',
-        clientName: 'Acme Corp',
-        items: [{ id: 'qi-1', description: 'Motion Design Package', quantity: 1, unitPrice: 4500, amount: 4500 }],
-        createdAt: '2026-09-18T00:00:00Z',
-        updatedAt: '2026-09-22T00:00:00Z',
-      },
-    ];
+    return this.quotes;
+  }
+
+  getQuote(id: string): Quote | null {
+    return this.quotes.find((q) => q.id === id) || null;
   }
 
   createQuote(data: any): Quote {
     const client = this.clients.find((c) => c.id === data.clientId);
     const total = Number(data.items?.[0]?.unitPrice || 3500);
-    return {
+    const newQuote: Quote = {
       id: makeId('quote'),
       organizationId: this.org.id,
       clientId: data.clientId,
@@ -2990,32 +3082,37 @@ class MockStorage {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    this.quotes.unshift(newQuote);
+    this.saveToStorage();
+    return newQuote;
+  }
+
+  updateQuote(id: string, data: any): Quote | null {
+    const idx = this.quotes.findIndex((q) => q.id === id);
+    if (idx !== -1) {
+      this.quotes[idx] = { ...this.quotes[idx], ...data, updatedAt: new Date().toISOString() };
+      this.saveToStorage();
+      return this.quotes[idx];
+    }
+    return null;
+  }
+
+  deleteQuote(id: string): void {
+    this.quotes = this.quotes.filter((q) => q.id !== id);
+    this.saveToStorage();
   }
 
   listContracts(): Contract[] {
-    return [
-      {
-        id: 'cont-1',
-        organizationId: this.org.id,
-        clientId: '11111111-1111-1111-1111-111111111111',
-        projectId: '027c41fa-8f90-4bac-989d-b5f80652ab0c',
-        title: 'Master Commercial Production Agreement',
-        status: 'signed',
-        startDate: '2026-09-11',
-        terms: 'Standard terms.',
-        content: 'Standard Master Services Agreement covering IP assignment upon final invoice payment.',
-        clientName: 'Nike India',
-        signedAt: '2026-09-11T12:00:00Z',
-        signerName: 'Karan Mehra',
-        createdAt: '2026-09-11T00:00:00Z',
-        updatedAt: '2026-09-11T12:00:00Z',
-      },
-    ];
+    return this.contracts;
+  }
+
+  getContract(id: string): Contract | null {
+    return this.contracts.find((c) => c.id === id) || null;
   }
 
   createContract(data: any): Contract {
     const client = this.clients.find((c) => c.id === data.clientId);
-    return {
+    const newCont: Contract = {
       id: makeId('cont'),
       organizationId: this.org.id,
       clientId: data.clientId,
@@ -3029,9 +3126,35 @@ class MockStorage {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    this.contracts.unshift(newCont);
+    this.saveToStorage();
+    return newCont;
+  }
+
+  updateContract(id: string, data: any): Contract | null {
+    const idx = this.contracts.findIndex((c) => c.id === id);
+    if (idx !== -1) {
+      this.contracts[idx] = { ...this.contracts[idx], ...data, updatedAt: new Date().toISOString() };
+      this.saveToStorage();
+      return this.contracts[idx];
+    }
+    return null;
+  }
+
+  deleteContract(id: string): void {
+    this.contracts = this.contracts.filter((c) => c.id !== id);
+    this.saveToStorage();
   }
 
   signContract(id: string, signerName: string) {
+    const contract = this.contracts.find((c) => c.id === id);
+    if (contract) {
+      contract.status = 'signed';
+      contract.signerName = signerName;
+      contract.signedAt = new Date().toISOString();
+      this.saveToStorage();
+      return contract;
+    }
     return { id, status: 'signed', signerName, signedAt: new Date().toISOString() };
   }
 

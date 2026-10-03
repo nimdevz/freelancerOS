@@ -19,6 +19,7 @@ import {
   AlertCircle,
   X,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 
@@ -94,6 +95,14 @@ export default function LeadsPage() {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
+  const deleteLeadMutation = useMutation({
+    mutationFn: (id: string) => api.leads.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
@@ -261,7 +270,7 @@ export default function LeadsPage() {
                                 <button
                                   onClick={() => convertLeadMutation.mutate(lead.id)}
                                   disabled={convertLeadMutation.isPending}
-                                  className="w-full py-1 text-[10px] font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center justify-center gap-1 transition-colors"
+                                  className="flex-1 py-1 text-[10px] font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded flex items-center justify-center gap-1 transition-colors"
                                 >
                                   <CheckCircle2 className="w-3 h-3" />
                                   <span>Convert to Project</span>
@@ -272,7 +281,7 @@ export default function LeadsPage() {
                                   onChange={(e) =>
                                     updateStageMutation.mutate({ id: lead.id, stage: e.target.value })
                                   }
-                                  className="text-[10px] bg-muted text-foreground border border-border/80 rounded px-1.5 py-0.5 w-full focus:outline-none"
+                                  className="text-[10px] bg-muted text-foreground border border-border/80 rounded px-1.5 py-0.5 flex-1 focus:outline-none"
                                 >
                                   {STAGES.map((s) => (
                                     <option key={s.id} value={s.id}>
@@ -281,6 +290,18 @@ export default function LeadsPage() {
                                   ))}
                                 </select>
                               )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Are you sure you want to delete lead "${lead.title}"?`)) {
+                                    deleteLeadMutation.mutate(lead.id);
+                                  }
+                                }}
+                                title="Delete Lead"
+                                className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors shrink-0"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
                             </div>
                           </div>
                         );

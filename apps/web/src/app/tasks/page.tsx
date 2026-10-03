@@ -20,6 +20,7 @@ import {
   X,
   Link2,
   Search,
+  Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 
@@ -232,6 +233,14 @@ export default function TasksPage() {
       api.tasks.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: (id: string) => api.tasks.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -567,7 +576,7 @@ export default function TasksPage() {
                                   </div>
                                 )}
 
-                                <div className="pt-1 border-t border-border/60">
+                                <div className="pt-1 border-t border-border/60 flex items-center gap-1.5">
                                   <select
                                     value={task.status}
                                     onChange={(e) =>
@@ -576,7 +585,7 @@ export default function TasksPage() {
                                         data: { status: e.target.value },
                                       })
                                     }
-                                    className="text-[10px] bg-muted text-foreground border border-border/80 rounded px-1.5 py-0.5 w-full focus:outline-none"
+                                    className="text-[10px] bg-muted text-foreground border border-border/80 rounded px-1.5 py-0.5 flex-1 focus:outline-none"
                                   >
                                     {STATUS_COLUMNS.map((s) => (
                                       <option key={s.id} value={s.id}>
@@ -584,6 +593,18 @@ export default function TasksPage() {
                                       </option>
                                     ))}
                                   </select>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (window.confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                                        deleteTaskMutation.mutate(task.id);
+                                      }
+                                    }}
+                                    title="Delete Task"
+                                    className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors shrink-0"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
                                 </div>
                               </div>
                             );
@@ -610,6 +631,7 @@ export default function TasksPage() {
                         <th className="py-2.5 px-4 font-medium">Status</th>
                         <th className="py-2.5 px-4 font-medium">Priority</th>
                         <th className="py-2.5 px-4 font-medium">Due Date</th>
+                        <th className="py-2.5 px-4 font-medium text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -703,12 +725,26 @@ export default function TasksPage() {
                               <td className="py-3 px-4 text-muted-foreground font-mono text-[11px]">
                                 {formatDate(task.dueDate)}
                               </td>
+                              <td className="py-3 px-4 text-right">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                                      deleteTaskMutation.mutate(task.id);
+                                    }
+                                  }}
+                                  title="Delete Task"
+                                  className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors inline-flex items-center justify-center"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
                             </tr>
 
                             {/* Subtask checklist row in list view */}
                             {isExpanded && (
                               <tr className="bg-muted/20">
-                                <td colSpan={7} className="px-8 py-3">
+                                <td colSpan={8} className="px-8 py-3">
                                   <div className="space-y-2 max-w-md">
                                     <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                                       Subtasks for: {task.title}
