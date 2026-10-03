@@ -1,78 +1,129 @@
 # FreelancerOS
 
-> **Run your freelance business without the chaos.**
+> **The all-in-one business operating system for independent professionals, consultants, and boutique creative studios.**
 
-FreelancerOS is a production-grade business operating system designed for independent creative freelancers, consultants, agency directors, and boutique studios. It replaces scattered spreadsheets, Notion boards, Trello cards, manual invoices, and fragmented communication with an integrated, fast, keyboard-friendly operating system.
+FreelancerOS is a production-grade business management platform designed to replace fragmented spreadsheets, Notion workspaces, Trello boards, disconnected invoice generators, and lost email threads with a single, ultra-fast, keyboard-friendly operating system.
+
+Built from the ground up on a **100% serverless, Cloudflare-native architecture**, FreelancerOS scales down to zero idle costs while providing sub-millisecond global edge response times.
 
 ---
 
 ## 1. Core Architecture & Serverless Infrastructure
 
-FreelancerOS is built on a **100% serverless, Cloudflare-native architecture** designed to eliminate all persistent VPS, Railway, and always-running Node.js server dependencies:
+FreelancerOS eliminates persistent VPS, Railway, and always-on Node.js container dependencies in favor of a modern, edge-native Cloudflare stack:
 
 ```text
-                               FREELANCEROS
-                                    │
-                      ┌─────────────┴─────────────┐
-                      │                           │
-                   Next.js                    API Layer
-                      │                           │
-              Cloudflare Pages             Hono on Workers
-                      │                           │
-                      └─────────────┬─────────────┘
-                                    │
-                           Cloudflare Network
-                                    │
-                ┌───────────────────┼───────────────────┐
-                │                   │                   │
-                ▼                   ▼                   ▼
-              Turso                 R2              Queues & Crons
-            Database              Files            Background Jobs
-                │                   │                   │
-                │                   │                   ▼
-                │                   │             Scheduled Sweep
-                │                   │
-                └───────────────────┴───────────────────
+                              FREELANCEROS
+                                   │
+                     ┌─────────────┴─────────────┐
+                     │                           │
+                  Next.js                    API Layer
+                     │                           │
+             Cloudflare Pages             Hono on Workers
+                     │                           │
+                     └─────────────┬─────────────┘
+                                   │
+                          Cloudflare Network
+                                   │
+               ┌───────────────────┼───────────────────┐
+               │                   │                   │
+               ▼                   ▼                   ▼
+             Turso                 R2              Queues & Crons
+           Database              Files            Background Jobs
+               │                   │                   │
+               │                   │                   ▼
+               │                   │             Scheduled Sweep
+               │                   │
+               └───────────────────┴───────────────────
 ```
 
 ### Infrastructure Components
 - **Frontend (`apps/web`):** Next.js 15 statically compiled (`output: 'export'`) to `apps/web/out` and served from Cloudflare's global edge network.
-- **Serverless API (`apps/api`):** Hono running natively on Cloudflare Workers (`compatibility_flags: ["nodejs_compat"]`). Zero cold starts, global edge latency.
-- **Database:** Hosted on **Turso / libSQL** serverless edge database using HTTP web client (`@libsql/client/web`) and Drizzle ORM.
-- **File Storage:** **Cloudflare R2** bucket (`R2_BUCKET`) for deliverables, version previews, and invoice attachments without hitting Worker memory limits.
-- **Scheduled Jobs:** **Cloudflare Cron Triggers** (`0 * * * *`) for automated overdue invoice detection and sweep.
-- **Asynchronous Jobs:** **Cloudflare Queues** (`BACKGROUND_QUEUE`) for reliable background processing.
-- **$0 Idle Cost:** Scales to zero when not in use. No persistent VM, VPS, Docker daemon, or Railway instance required.
+- **Serverless API (`apps/api`):** [Hono](https://hono.dev) running natively on Cloudflare Workers (`compatibility_flags: ["nodejs_compat"]`). Zero cold starts, sub-10ms global edge routing.
+- **Edge Database:** Hosted on **Turso / libSQL** serverless edge database using HTTP web client (`@libsql/client/web`) and [Drizzle ORM](https://orm.drizzle.team).
+- **Object Storage:** **Cloudflare R2** bucket (`R2_BUCKET`) for project deliverables, asset files, and attachments with direct pre-signed URLs.
+- **Scheduled Jobs:** **Cloudflare Cron Triggers** (`0 * * * *`) for automated invoice reconciliation, overdue status sweeps, and retainer cycle resets.
+- **Asynchronous Jobs:** **Cloudflare Queues** (`BACKGROUND_QUEUE`) for reliable asynchronous background processing without worker thread exhaustion.
+- **$0 Idle Cost:** Scales to absolute zero when idle. No persistent VM, VPS, Docker daemon, or recurring server bills.
 
 ---
 
-## 2. Product Hierarchy & Capabilities
+## 2. Product Modules & Feature Matrix
 
-The application navigation is organized around four clear operational workflows rather than raw database tables:
+FreelancerOS organizes business operations into focused, interconnected operational workflows:
 
 ```text
-HOME          Executive cockpit: Active timers, overdue invoices, pending deliverables, monthly cash flow
+HOME          Executive cockpit: Active timers, overdue invoices, pending deliverables, cash flow overview
 
 WORK
-  ├── Projects      Health status (healthy/at-risk), budgets, timelines, revisions
-  ├── Tasks         Priority kanban, client visibility toggle, time-logging
-  └── Deliverables  Version tracking (V1, V2), timecoded feedback, client approvals
+  ├── Projects      Health status (healthy/at-risk), budgets, timelines, milestones, 4-gate closeout
+  ├── Tasks         Priority kanban, client visibility toggle, time-logging, chained dependencies
+  └── Deliverables  Version tracking (V1, V2+), revision limits, timecoded feedback, client approvals
 
 CLIENTS
-  ├── Clients       Lifetime value, outstanding balance, active projects, contact details
-  └── Leads         Sales pipeline (New, Contacted, Qualified, Proposal, Won, Lost)
+  ├── Clients       Multi-contact directories, communication timeline, lifetime value (LTV), inline creation
+  └── Leads         7-stage sales pipeline (New → Contacted → Qualified → Proposal → Negotiation → Won/Lost)
 
 MONEY
-  ├── Invoices      Multi-item invoices, tax/discount engine, balance due, payment terms
-  └── Expenses      Categorized business expenses, reimbursable flags, profit impact
+  ├── Invoices      Multi-item line item engine, tax/discount calculation, partial payments, payment reminders
+  ├── Retainers     Monthly recurring retainers, capacity usage gauges, automated rollover tracking
+  └── Expenses      Categorized business expenses, receipt attachments, reimbursable flags, profit impact
 
 BUSINESS
-  ├── Proposals     Interactive client proposals with validity dates and auto-calculations
-  ├── Time          Real-time live stopwatch timer, billable rates, time logs
-  └── Reports       Cashflow reports, profit margins, effective hourly rate calculation
+  ├── Proposals     Interactive client proposals, custom packages, optional add-ons, validity windows
+  ├── Quotes        Formal estimates, itemized line items, 1-click conversion to active projects
+  ├── Contracts     Digital contract agreements, signing workflows, scope boundaries
+  ├── Time          Real-time live stopwatch timer, project/task timers, billable rates, manual logging
+  └── Reports       Cashflow reports, profit margins, effective hourly rate (EHR) calculations
 
-SETTINGS        Organization profile, commercial rates, tax ID, wire details
+SETTINGS        Organization profile, commercial rates, tax ID, wire details, tier management
 ```
+
+### Detailed Module Capabilities
+
+#### 📂 Projects & Execution
+- **Milestones & Phasing:** Structure projects into sequential phases with target completion dates and progress tracking.
+- **Project & Task Templates:** Spin up pre-configured workflows for recurring service offerings in seconds.
+- **Subtasks & Chained Dependencies:** Define prerequisite tasks and subtask checklists to keep deliverables on schedule.
+- **Project Scratchpad:** In-context markdown notes and reference links attached directly to active projects.
+- **4-Gate Project Closeout:** Structured completion checklist ensuring deliverables are approved, time is billed, invoices are issued, and assets are archived before archive.
+- **Cascade Deletion:** Delete projects cleanly with relational cleanup of associated tasks, milestones, deliverables, and logs.
+
+#### 👥 CRM, Clients & Leads
+- **Universal Inline Client Creation:** Add new clients directly from any dropdown or modal across the entire app without leaving the current workflow.
+- **Multi-Contact Directory:** Store multiple points of contact per client organization with role tags and direct email links.
+- **Activity & Communication Timeline:** Log meeting notes, calls, emails, and touchpoints chronologically.
+- **7-Stage Lead Pipeline:** Manage prospective deals across `New`, `Contacted`, `Qualified`, `Proposal`, `Negotiation`, `Won`, and `Lost` with follow-up date alerts.
+- **LTV & Profitability Analytics:** Real-time visibility into total billings, outstanding balances, and gross margins per client.
+
+#### 📝 Proposals, Quotes & Contracts
+- **Custom Packages & Add-ons:** Offer tiered proposals (e.g., Base, Pro, Studio) with optional add-on line items.
+- **1-Click Project Conversion:** Instantly convert approved proposals or accepted quotes into active projects with pre-populated budgets and scopes.
+- **Scope Guardianship:** Define clear scope boundaries (included vs. excluded items) and track client change requests with formal change order generation.
+- **Digital Agreements:** Issue formal contracts with scope clauses, payment terms, and status tracking.
+
+#### 📦 Deliverables & Review Hub
+- **Multi-Version Tracking:** Organize assets across iterations (V1, V2, V3) with side-by-side review capabilities.
+- **Revision Limit Guards:** Set contracted revision allowances per deliverable; warn when additional revision rounds require change orders.
+- **Timecoded Feedback:** Capture precise, actionable feedback linked to timestamps or asset regions.
+- **Approval Workflows:** Client sign-off and approval logging for indisputable audit trails.
+
+#### 💳 Financials, Invoicing & Retainers
+- **Comprehensive Invoicing Engine:** Multi-item invoices supporting itemized hours, fixed fees, custom tax rates, and percentage or flat discounts.
+- **Partial Payments:** Record deposit payments and installments with dynamic balance-due tracking.
+- **Automated Overdue Sweeps:** Hourly Cloudflare Cron triggers flag overdue accounts and prompt payment reminders.
+- **Monthly Retainers:** Manage recurring client agreements with real-time capacity utilization gauges and monthly cycle resets.
+- **Expense Tracking:** Log operational expenses by category, tag reimbursable client expenses, and factor expenditures into net profit metrics.
+
+#### ⏱️ Time Tracking & Productivity
+- **Global Live Stopwatch:** Persistent floating stopwatch timer that survives page navigation, reload, and view switching.
+- **Granular Task Association:** Link recorded intervals directly to specific projects and individual tasks.
+- **Billable Rate Multipliers:** Calculate project cost accurately using custom billable hourly rates or fixed-fee milestones.
+
+#### 🗑️ Full-Spectrum Entity Deletion
+- **Universal Deletion Coverage:** Native delete actions across all entities—Projects, Clients, Tasks, Time Entries, Invoices, Leads, Proposals, Quotes, Contracts, Retainers, Deliverables, and Expenses.
+- **Relational Cascade Cleanup:** Server-side cascade deletion ensures database cleanliness with zero orphaned foreign key records.
+- **Confirmation Protection:** Safety dialogs and confirmation states prevent accidental data loss.
 
 ---
 
@@ -80,16 +131,18 @@ SETTINGS        Organization profile, commercial rates, tax ID, wire details
 
 ### Frontend (`apps/web`)
 - **Framework:** Next.js 15 (App Router, React 19, TypeScript strict mode)
-- **Deployment:** Statically exported (`output: 'export'`) for Cloudflare Pages / Workers Static Assets
-- **Styling:** Tailwind CSS, Radix UI primitives, Lucide Icons, Framer Motion
-- **Currency Engine:** Real-time multi-currency switcher defaulting to **USD ($)**, with support for EUR (€), GBP (£), CAD (C$), AUD (A$), and INR (₹)
-- **Authentication:** Integrated Google Identity Services (GIS) OAuth 2.0 with instant fallback
+- **Export Strategy:** Static HTML/JS export (`output: 'export'`) optimized for Cloudflare Pages / Workers Static Assets
+- **Styling & UI:** Tailwind CSS, Radix UI primitives, Lucide Icons, Framer Motion
+- **Currency Engine:** Real-time multi-currency support defaulting to **USD ($)**, with instant switching to EUR (€), GBP (£), CAD (C$), AUD (A$), and INR (₹)
+- **Authentication:** Google Identity Services (GIS) OAuth 2.0 with instant session handling and database profile synchronization
 
 ### Backend API (`apps/api`)
-- **Framework:** **Hono** running on **Cloudflare Workers** (Edge-native, sub-millisecond cold starts, serverless-first)
-- **Database Engine:** **Turso / libSQL** (Distributed SQLite at the edge)
-- **ORM:** **Drizzle ORM** (`drizzle-orm/libsql` & `drizzle-orm/sqlite-core`)
-- **Migrations:** Managed via **Drizzle Kit** (`drizzle-kit`)
+- **Framework:** [Hono](https://hono.dev) running on Cloudflare Workers
+- **Database Engine:** [Turso / libSQL](https://turso.tech) (Distributed SQLite at the edge)
+- **ORM:** [Drizzle ORM](https://orm.drizzle.team) (`drizzle-orm/libsql` & `drizzle-orm/sqlite-core`)
+- **Migrations & Studio:** Drizzle Kit (`drizzle-kit`)
+- **Storage:** Cloudflare R2 object storage for project files and attachments
+- **Queues & Crons:** Cloudflare Queues for async processing and Cron Triggers for scheduled tasks
 
 ### Monorepo Structure
 ```text
@@ -100,12 +153,12 @@ freelanceros/
 ├── packages/
 │   ├── types/             # Shared TypeScript domain models & DTOs
 │   ├── validation/        # Zod validation schemas shared across client & server
-│   ├── api-client/        # Type-safe API client for web & future mobile apps
-│   ├── config/            # Constants, currency definitions, pricing plans
-│   ├── ui/                # Shared UI primitives and formatters
+│   ├── api-client/        # Type-safe API client for web & integrations
+│   ├── config/            # Constants, currency definitions, system configs
+│   ├── ui/                # Shared UI primitives, formatters, and icons
 │   └── tsconfig/          # Base TypeScript configurations
-├── wrangler.json          # Cloudflare Workers / Pages static assets configuration
-└── package.json           # Monorepo scripts
+├── wrangler.json          # Cloudflare Workers / Pages configuration
+└── package.json           # Monorepo scripts & workspaces
 ```
 
 ---
@@ -153,7 +206,7 @@ pnpm run db:generate
 # Apply pending migrations
 pnpm run db:migrate
 
-# Seed realistic demo data into Turso (Nimish Studio, clients, projects, invoices)
+# Seed realistic demo data into Turso (clients, projects, invoices, tasks)
 pnpm run seed
 
 # Open Drizzle Studio (Visual database browser in your browser)
@@ -172,7 +225,7 @@ TURSO_DATABASE_URL=libsql://freelanceros-nimdevz.aws-ap-southeast-2.turso.io
 TURSO_AUTH_TOKEN=your_turso_auth_token_here
 
 # Google OAuth Credentials
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=362907268046-lvln83c11jc8ljqope283kgh9juj944u.apps.googleusercontent.com
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 
 # Networking
@@ -201,11 +254,12 @@ The API runs as a Cloudflare Worker powered by Hono, Drizzle ORM, Turso, R2, and
    npx wrangler secret put TURSO_AUTH_TOKEN
    # Enter your Turso Auth Token
    ```
+
 2. **Deploy the Worker:**
    ```bash
    pnpm run deploy:worker
    ```
-3. Your Worker will deploy instantly to `https://freelanceros-api.<your-subdomain>.workers.dev`.
+   Your Worker will deploy instantly to `https://freelanceros-api.<your-subdomain>.workers.dev`.
 
 ### B. Deploying Static Frontend (`apps/web`)
 1. **Via Cloudflare Dashboard:**
@@ -215,6 +269,7 @@ The API runs as a Cloudflare Worker powered by Hono, Drizzle ORM, Turso, R2, and
      - **Build command:** `pnpm run build`
      - **Build output directory:** `apps/web/out`
    - Leave environment variables blank and click **Save and Deploy**.
+
 2. **Via Wrangler CLI:**
    ```bash
    pnpm run build
@@ -225,7 +280,7 @@ The API runs as a Cloudflare Worker powered by Hono, Drizzle ORM, Turso, R2, and
 
 ## 8. Google OAuth Portal Setup
 
-To test Google Sign-In with your live Cloudflare deployment:
+To configure Google Sign-In with your live Cloudflare deployment:
 
 1. Open **[Google Cloud Console](https://console.cloud.google.com/)** &rarr; **APIs & Services** &rarr; **Credentials**.
 2. Select your **OAuth 2.0 Client ID**:
@@ -255,10 +310,11 @@ Run the full monorepo test suite:
 pnpm run test
 ```
 
-Includes:
+Verification covers:
 - Multi-tenancy and workspace isolation verification.
 - Financial calculation and tax reconciliation tests.
 - Deliverable revision limits and scope-creep guards.
+- Universal cascade deletion integrity across all relational entities.
 - Turso / libSQL integration tests.
 
 ---
